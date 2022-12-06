@@ -7,12 +7,6 @@
 [submodule "Pointnet2_PyTorch"]
 	path = grasp/Pointnet2_PyTorch
 	url = https://github.com/erikwijmans/Pointnet2_PyTorch.git
-; [submodule "vision_utils/detectron2"] ; don't need the repo if installed through pip
-; 	path = vision_utils/detectron2
-; 	url = https://github.com/facebookresearch/detectron2.git
-; [submodule "vision_utils/DenseFusion"]
-; 	path = vision_utils/DenseFusion
-; 	url = https://github.com/j96w/DenseFusion.git
 [submodule "vision_utils/uois"]
 	path = vision_utils/uois
 	url = https://github.com/FANG-Xiaolin/uois.git
@@ -28,9 +22,6 @@
 [submodule "vision_utils/votenet"]
 	path = vision_utils/votenet
 	url = git@github.com:facebookresearch/votenet.git
-[submodule "symk"]
-	path = symk
-	url = https://github.com/speckdavid/symk.git
 [submodule "pybullet_planning"]
 	path = pybullet_planning
 	url = https://github.com/aidan-curtis/pybullet-planning.git
