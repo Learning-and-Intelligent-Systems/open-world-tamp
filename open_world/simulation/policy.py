@@ -188,7 +188,7 @@ class Policy(object):
 
     def get_image(self):
 
-        if self.args.simulated:
+        if not self.args.real:
             [camera] = self.robot.cameras
             camera_image = camera.get_image()  # TODO: remove_alpha
 
@@ -369,7 +369,7 @@ class Policy(object):
             status = SUCCESS_STATUS
         else:
             status = ONGOING_STATUS
-            if self.args.simulated:
+            if not self.args.real:
                 state.assign()
                 iterate_sequence(state, command)
                 aborted = False

@@ -304,7 +304,7 @@ class MovoRobot(Robot):
             for arm in self.arms
         }
 
-        if "args" in kwargs.keys() and kwargs["args"].simulated:
+        if "args" in kwargs.keys() and not kwargs["args"].real:
             cameras = [
                 Camera(
                     self,
@@ -497,7 +497,7 @@ class MovoPolicy(Policy):
     def reset_robot(self, **kwargs):
         conf = self.robot.get_default_conf(**kwargs)
         for group, positions in conf.items():
-            if not self.args.simulated:
+            if self.args.real:
                 new = [pos for pos, name in zip(positions, MOVO_GROUPS[group])]
                 if "arm" in group:
                     motion_gen = get_plan_motion_fn(self.robot)
@@ -523,7 +523,7 @@ class MovoPolicy(Policy):
                 self.robot.set_group_positions(group, positions)
 
     def make_controller(self):
-        if self.args.simulated:
+        if not self.args.real:
             return SimulatedMovoController(self.robot, client=self.client)
         else:
             return MovoController(self.args, self.robot, client=self.client)

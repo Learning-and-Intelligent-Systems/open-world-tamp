@@ -29,5 +29,5 @@
 	path = lisdf_code
 	url = git@github.com:Learning-and-Intelligent-Systems/lisdf.git
 [submodule "tamp"]
-	path = pddlstream_code
+	path = tamp
 	url = https://github.com/aidan-curtis/pddlstream

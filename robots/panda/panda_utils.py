@@ -12,7 +12,7 @@ from robots.panda.panda_controller import PandaController, SimulatedPandaControl
 CAMERA_FRAME = "camera_frame"
 CAMERA_OPTICAL_FRAME = "camera_frame"
 PANDA_INFO = IKFastInfo(
-    module_name="panda.ikfast_panda_arm",
+    module_name="franka_panda.ikfast_panda_arm",
     base_link="panda_link0",
     ee_link="panda_link8",
     free_joints=["panda_joint7"],
@@ -46,7 +46,7 @@ class PandaRobot(Robot):
         }
         panda_ik_infos = {side_from_arm(arm): PANDA_INFO for arm in self.arms}
 
-        if kwargs["args"].simulated:
+        if not kwargs["args"].real:
             cameras = [
                 Camera(
                     self,
@@ -137,7 +137,7 @@ class PandaPolicy(Policy):
     def reset_robot(self, **kwargs):
         conf = self.robot.get_default_conf()
         for group, positions in conf.items():
-            if not self.args.simulated:
+            if self.args.real:
                 group_dict = {
                     name: pos
                     for pos, name in zip(positions, self.robot.joint_groups[group])
@@ -147,7 +147,7 @@ class PandaPolicy(Policy):
                 self.robot.set_group_positions(group, positions)
 
     def make_controller(self):
-        if self.args.simulated:
+        if not self.args.real:
             return SimulatedPandaController(self.robot, client=self.client)
         else:
             return PandaController(self.robot, client=self.client)

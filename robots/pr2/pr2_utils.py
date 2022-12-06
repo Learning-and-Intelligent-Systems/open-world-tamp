@@ -150,7 +150,7 @@ class PR2Policy(Policy):
         super(PR2Policy, self).__init__(args, robot, client=client, **kwargs)
 
     def make_controller(self):
-        if self.args.simulated:
+        if not self.args.real:
             return SimulatedPR2Controller(self.robot, client=self.client)
         else:
             return PR2Controller(self.robot, client=self.client)
@@ -167,7 +167,7 @@ class PR2Policy(Policy):
             if group in [self.robot.base_group]:  # + robot.gripper_groups:
                 continue
             positions = conf[group]
-            if not self.args.simulated:
+            if self.args.real:
                 client = self.controller.command_group(
                     group, positions, timeout=5.0, blocking=False
                 )
@@ -194,7 +194,7 @@ class PR2Robot(Robot):
         self.set_default_conf()
         set_gripper_friction(self, client=self.client)
 
-        if kwargs["args"].simulated:
+        if not kwargs["args"].real:
             cameras = [
                 Camera(
                     self,

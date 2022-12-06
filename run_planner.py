@@ -98,10 +98,10 @@ def create_parser():
     )
 
     parser.add_argument(
-        "-sim",
-        "--simulated",
+        "-real",
+        "--real",
         action="store_true",
-        help="Is the real world simulated or not",
+        help="Is the real world is simulated or not",
         default=False,
     )
     
@@ -217,7 +217,7 @@ def main():
     task.name = args.goal
 
     # Set up the world run the task
-    if args.simulated:
+    if not args.real:
         real_world = robot_simulated_worlds[args.robot](
             args.world, robot, args, client=client
         )
