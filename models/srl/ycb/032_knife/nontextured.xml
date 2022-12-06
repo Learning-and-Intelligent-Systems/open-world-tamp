@@ -1,0 +1,8 @@
+<KinBody name="032_knife">
+  <Body type="static" name="032_knife">
+    <Geom type="trimesh">
+      <Render>./nontextured.stl</Render>
+      <Data>./nontextured.stl</Data>
+    </Geom>
+  </Body>
+</KinBody>

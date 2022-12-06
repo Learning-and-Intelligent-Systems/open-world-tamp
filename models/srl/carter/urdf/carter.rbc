@@ -1,0 +1,54 @@
+{
+	"urdf_scale": 100,
+	"anchor_base": false,
+	"collision_mode": "all_except_self",
+	"use_urdf_inertia_tensors": true,
+	"default_drive_config": {
+		"mode": "idle",
+		"drive_target": 0,
+		"position_drive_stiffness":0,
+		"position_drive_damping":0,
+		"motor_strength":0,
+		"velocity_drive_strength":0
+	},
+	"custom_drive_configs": {
+		"left_wheel": {
+			"mode": "velocity_drive",
+			"drive_target": -3,
+			"position_drive_stiffness":0,
+			"position_drive_damping":0,
+			"motor_strength":1000,
+			"velocity_drive_strength":1000
+		},
+		"right_wheel": {
+			"mode": "velocity_drive",
+			"drive_target": -3,
+			"position_drive_stiffness":0,
+			"position_drive_damping":0,
+			"motor_strength":1000,
+			"velocity_drive_strength":1000
+		}
+	},
+	"custom_link_configs": {
+		"left_wheel_link": {
+			"linear_damping": 0.01,
+			"angular_damping": 0,
+			"is_wheel": true
+		},
+		"right_wheel_link": {
+			"linear_damping": 0.01,
+			"angular_damping": 0,
+			"is_wheel": true
+		},
+		"rear_wheel_link": {
+			"linear_damping": 0.01,
+			"angular_damping": 0,
+			"is_wheel": true
+		},
+		"rear_pivot_link": {
+			"linear_damping": 0.01,
+			"angular_damping": 1.0,
+			"is_wheel": false
+		}
+	}
+}

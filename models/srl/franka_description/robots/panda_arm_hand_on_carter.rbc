@@ -1,0 +1,125 @@
+{
+    "urdf_scale": 100,
+    "anchor_base": true,
+    "physics_type": "articulated",
+    "merge_fixed_joints": false,
+    "collision_mode": "all_except_self",
+    "use_urdf_inertia_tensors": true,
+    "enable_joint_monkey": false,
+    "default_drive_config": {
+        "mode": "position_drive",
+        "drive_target": 0,
+        "postion_drive_stiffness": 1000.0,
+        "position_drive_damping": 10.0,
+        "motor_strength": 100000000
+    },
+    "custom_drive_configs": {
+        "left_wheel": {
+        "mode": "velocity_drive",
+        "drive_target": 0,
+        "postion_drive_stiffness": 0.0,
+        "position_drive_damping": 0.0,
+        "motor_strength": 100000000,
+        "velocity_drive_strength": 1000.0
+        },
+        "right_wheel": {
+        "mode": "velocity_drive",
+        "drive_target": 0,
+        "postion_drive_stiffness": 0.0,
+        "position_drive_damping": 0.0,
+        "motor_strength": 100000000,
+        "velocity_drive_strength": 1000.0
+        },
+        "rear_pivot": {
+        "mode": "idle"
+        },
+        "rear_axle": {
+        "mode": "idle"
+        },
+        "front_pivot": {
+        "mode": "idle"
+        },
+        "front_axle": {
+        "mode": "idle"
+        },
+        "com_offset": {
+        "mode": "idle"
+        },
+        "panda_joint1": {
+        "mode": "position_drive",
+        "postion_drive_stiffness": 1000.0,
+        "position_drive_damping": 30.0,
+        "drive_target": 0.012
+        },
+        "panda_joint2": {
+        "mode": "position_drive",
+        "postion_drive_stiffness": 1000.0,
+        "position_drive_damping": 30.0,
+        "drive_target": -0.57
+        },
+        "panda_joint3": {
+        "mode": "position_drive",
+        "postion_drive_stiffness": 1000.0,
+        "position_drive_damping": 30.0,
+        "drive_target": 0
+        },
+        "panda_joint4": {
+        "mode": "position_drive",
+        "postion_drive_stiffness": 1000.0,
+        "position_drive_damping": 30.0,
+        "drive_target": -2.81
+        },
+        "panda_joint5": {
+        "mode": "position_drive",
+        "postion_drive_stiffness": 1000.0,
+        "position_drive_damping": 30.0,
+        "drive_target": 0
+        },
+        "panda_joint6": {
+        "mode": "position_drive",
+        "postion_drive_stiffness": 1000.0,
+        "position_drive_damping": 30.0,
+        "drive_target": 3.037
+        },
+        "panda_joint7": {
+        "mode": "position_drive",
+        "postion_drive_stiffness": 1000.0,
+        "position_drive_damping": 30.0,
+        "drive_target": 0.741
+        },
+        "panda_finger_joint1": {
+        "mode": "position_drive",
+        "postion_drive_stiffness": 1000.0,
+        "position_drive_damping": 10.0,
+        "drive_target": 0.04
+        },
+        "panda_finger_joint2": {
+        "mode": "position_drive",
+        "postion_drive_stiffness": 1000.0,
+        "position_drive_damping": 10.0,
+        "drive_target": 0.04
+        }
+    },
+    "custom_link_configs": {
+        "left_wheel_link": {
+        "is_wheel": true
+        },
+        "right_wheel_link": {
+        "is_wheel": true
+        },
+        "rear_wheel_link": {
+        "is_wheel": true,
+        "angular_damping": 1
+        },
+        "front_wheel_link": {
+        "is_wheel": true,
+        "angular_damping": 1
+        },
+        "rear_pivot_link": {
+        "angular_damping": 10
+        },
+        "front_pivot_link": {
+        "angular_damping": 10
+        }
+    }
+}

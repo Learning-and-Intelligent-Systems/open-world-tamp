@@ -1,0 +1,16 @@
+<?xml version="0.0"?>
+<robot name="ik_cube_green">
+  <link name="base">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0.0005"/>
+      <!--origin rpy="0 0 0" xyz="0 0 0.0025"/-->
+      <material name="green">
+        <color rgba="0 1 0 0.2"/>
+      </material>
+      <geometry>
+        <box size="0.1 0.1 0.1" />
+        <!--box size="0.2 0.2 0.005" /-->
+      </geometry>
+    </visual>
+  </link>
+</robot>

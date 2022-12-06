@@ -1,0 +1,42 @@
+[submodule "graspnet"]
+	path = grasp/graspnet
+	url = https://github.com/southpawac/pytorch_6dof-graspnet
+[submodule "vision_utils/AtlasNet"]
+	path = vision_utils/AtlasNet
+	url = git@github.com:Learning-and-Intelligent-Systems/AtlasNet.git
+[submodule "Pointnet2_PyTorch"]
+	path = grasp/Pointnet2_PyTorch
+	url = https://github.com/erikwijmans/Pointnet2_PyTorch.git
+; [submodule "vision_utils/detectron2"] ; don't need the repo if installed through pip
+; 	path = vision_utils/detectron2
+; 	url = https://github.com/facebookresearch/detectron2.git
+; [submodule "vision_utils/DenseFusion"]
+; 	path = vision_utils/DenseFusion
+; 	url = https://github.com/j96w/DenseFusion.git
+[submodule "vision_utils/uois"]
+	path = vision_utils/uois
+	url = https://github.com/FANG-Xiaolin/uois.git
+[submodule "grasp/gpd"] ; TODO: Replace with git@github.com:aidan-curtis/gpd_python_interface.git
+	path = grasp/gpd
+	url = https://github.com/atenpas/gpd.git
+[submodule "vision_utils/scene_seg"]
+	path = vision_utils/scene_seg
+	url = git@github.com:CSAILVision/semantic-segmentation-pytorch.git
+[submodule "vision_utils/pointnet_scene_seg"]
+	path = vision_utils/pointnet_scene_seg
+	url = https://github.com/daveredrum/Pointnet2.ScanNet
+[submodule "vision_utils/votenet"]
+	path = vision_utils/votenet
+	url = git@github.com:facebookresearch/votenet.git
+[submodule "symk"]
+	path = symk
+	url = https://github.com/speckdavid/symk.git
+[submodule "pybullet_planning"]
+	path = pybullet_planning
+	url = https://github.com/aidan-curtis/pybullet-planning.git
+[submodule "lisdf_code"]
+	path = lisdf_code
+	url = git@github.com:Learning-and-Intelligent-Systems/lisdf.git
+[submodule "tamp"]
+	path = pddlstream_code
+	url = https://github.com/aidan-curtis/pddlstream

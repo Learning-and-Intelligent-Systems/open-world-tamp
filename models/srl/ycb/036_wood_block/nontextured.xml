@@ -1,0 +1,8 @@
+<KinBody name="036_wood_block">
+  <Body type="static" name="036_wood_block">
+    <Geom type="trimesh">
+      <Render>./nontextured.stl</Render>
+      <Data>./nontextured.stl</Data>
+    </Geom>
+  </Body>
+</KinBody>

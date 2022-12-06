@@ -1,0 +1,8 @@
+<KinBody name="027-b_skillet">
+  <Body type="static" name="027-b_skillet">
+    <Geom type="trimesh">
+      <Render>./nontextured.stl</Render>
+      <Data>./nontextured.stl</Data>
+    </Geom>
+  </Body>
+</KinBody>

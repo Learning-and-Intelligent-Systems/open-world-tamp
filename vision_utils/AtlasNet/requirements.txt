@@ -1,0 +1,12 @@
+easydict
+joblib
+matplotlib
+ninja
+numpy
+scipy
+termcolor
+tornado
+urllib3
+visdom
+websocket-client
+https://github.com/PyMesh/PyMesh/releases/download/v0.2.1/pymesh2-0.2.1-cp36-cp36m-linux_x86_64.whl

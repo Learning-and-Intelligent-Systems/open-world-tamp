@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="panda_carter">
+  <xacro:include filename="$(find carter)/urdf/carter_franka.urdf.xacro" />
+  <xacro:include filename="$(find franka_description)/robots/panda_arm.xacro"/>
+  <xacro:include filename="$(find franka_description)/robots/hand.xacro"/>
+  
+  <xacro:carter_robot />
+  <xacro:panda_arm connected_to="chassis_link" xyz="-.035 0 0.525"/>
+  <xacro:hand ns="panda" rpy="0 0 ${-pi/4}" connected_to="panda_link8"/>
+</robot>

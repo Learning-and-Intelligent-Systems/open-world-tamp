@@ -1,0 +1,8 @@
+<KinBody name="001_chips_can">
+  <Body type="static" name="001_chips_can">
+    <Geom type="trimesh">
+      <Render>./nontextured.stl</Render>
+      <Data>./nontextured.stl</Data>
+    </Geom>
+  </Body>
+</KinBody>

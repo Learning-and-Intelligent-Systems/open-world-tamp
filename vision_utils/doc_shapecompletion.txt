@@ -1,0 +1,6 @@
+1. Move `sc/` to `open-world-tamp/pddlstream/examples/pybullet`
+2. git clone https://github.com/ThibaultGROUEIX/AtlasNet
+3. Specify ATLAS_PATH and CKPT_PATH in `sc/run.py`
+4. Unzip bowl_obj.zip and change TEST_MODEL_PATH 
+5. In `open-world-tamp/pddlstream`, run `python -m examples.pybullet.sc.run`
+

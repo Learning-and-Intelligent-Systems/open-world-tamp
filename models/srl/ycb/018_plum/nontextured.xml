@@ -1,0 +1,8 @@
+<KinBody name="018_plum">
+  <Body type="static" name="018_plum">
+    <Geom type="trimesh">
+      <Render>./nontextured.stl</Render>
+      <Data>./nontextured.stl</Data>
+    </Geom>
+  </Body>
+</KinBody>

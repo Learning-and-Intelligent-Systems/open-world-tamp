@@ -1,0 +1,18 @@
+# cache
+__pycache__ 
+lib/__pycache__
+pointnet2/__pycache__
+preprocessing/__pycache__
+
+# pointnet2 compiled
+pointnet2/build
+pointnet2/dist
+pointnet2/pointnet2.egg-info
+
+# prep data
+preprocessing/scannet_scenes
+preprocessing/label_point_clouds/
+
+# outputs
+outputs/
+logs/

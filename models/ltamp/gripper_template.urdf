@@ -1,0 +1,12 @@
+<?xml version="0.0" ?>
+<robot name="gripper_template.urdf">
+  <link name="baseLink">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+				<mesh filename="gripper_models/panda_gripper.obj"/>
+      </geometry>
+    </visual>
+  </link>
+</robot>
+

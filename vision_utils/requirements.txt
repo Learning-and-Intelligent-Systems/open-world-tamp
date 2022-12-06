@@ -1,0 +1,10 @@
+opencv-python
+easydict
+matplotlib
+numpy
+scipy
+visdom
+pybullet 
+# https://github.com/PyMesh/PyMesh/releases/download/v0.3/pymesh2-0.3-cp37-cp37m-linux_x86_64.whl  # if run into 'platform not supported' error, try https://github.com/PyMesh/PyMesh/releases/download/v0.2.1/pymesh2-0.2.1-cp36-cp36m-linux_x86_64.whl
+termcolor
+trimesh

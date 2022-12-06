@@ -1,0 +1,12 @@
+vision_utils/trained_models/mix.pth filter=lfs diff=lfs merge=lfs -text
+vision_utils/trained_models/mix2.pth filter=lfs diff=lfs merge=lfs -text
+vision_utils/trained_models/mix3.pth filter=lfs diff=lfs merge=lfs -text
+vision_utils/trained_models/msn1.pth filter=lfs diff=lfs merge=lfs -text
+vision_utils/trained_models/maskrcnn_res101_ycb.pth filter=lfs diff=lfs merge=lfs -text
+vision_utils/trained_models/maskrcnn_res50_ycb_2.pth filter=lfs diff=lfs merge=lfs -text
+vision_utils/trained_models/DepthSeedingNetwork_3D_TOD_checkpoint.pth filter=lfs diff=lfs merge=lfs -text
+vision_utils/trained_models/RRN_OID_checkpoint.pth filter=lfs diff=lfs merge=lfs -text
+data/** filter=lfs diff=lfs merge=lfs -text
+vision_utils/trained_models/maskrcnn_res50_ycb_real+syn.pth filter=lfs diff=lfs merge=lfs -text
+vision_utils/trained_models/maskrcnn_rgbd.pth filter=lfs diff=lfs merge=lfs -text
+vision_utils/trained_models/bowlcup_detector.pth filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,13 @@
+This is a checklist for setting up the segmentation and 6d pose estimation stuff.
+
+1. Move `test_vis` and `test_vis_clean` to `open-world-tamp/pddlstream/examples/pybullet/`. Edit paths in `test_vis_*/constant.py` if necessary.
+2. Clone the repo for 6d pose estimation here: https://github.com/j96w/DenseFusion
+3. Download the checkpoints for 6d pose here(trained_checkpoints.zip) : https://drive.google.com/drive/folders/19ivHpaKm9dOrr12fzC8IDFczWRPFxho7
+   Unzip the downloaded checkpoints, move to './vision_utils/DenseFusion/trained_checkpoints'
+4. Install detectron2 (Commands can be found here: https://github.com/facebookresearch/detectron2/blob/master/INSTALL.md). pip installation works fine for me.
+5. Unzip ycb_models.zip in 'vision_utils'
+6. Run: e.g.`python -m examples.pybullet.test_vis_clean.run`
+
+`test_vis_clean` is an example of running segmentation and 6d pose estimation in the pybullet environment. The objective is to recognize and reconstruct the objects on the table through instance segmentation and 6d pose estimation. 
+`test_vis` is an example of integrating the above tools with pddlstream. The objective is to fully observe the area in front of the robot. If any voxel is blocked by some object, the robot will need to move the object.
+

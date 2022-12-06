@@ -1,0 +1,8 @@
+<KinBody name="039_key">
+  <Body type="static" name="039_key">
+    <Geom type="trimesh">
+      <Render>./nontextured.stl</Render>
+      <Data>./nontextured.stl</Data>
+    </Geom>
+  </Body>
+</KinBody>

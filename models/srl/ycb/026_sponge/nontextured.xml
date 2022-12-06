@@ -1,0 +1,8 @@
+<KinBody name="026_sponge">
+  <Body type="static" name="026_sponge">
+    <Geom type="trimesh">
+      <Render>./nontextured.stl</Render>
+      <Data>./nontextured.stl</Data>
+    </Geom>
+  </Body>
+</KinBody>
