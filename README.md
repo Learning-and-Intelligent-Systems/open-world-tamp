@@ -1,4 +1,8 @@
 # open-world-tamp
+<p align="center">
+  <img src="https://github.com/aidan-curtis/open-world-tamp/blob/master/figs/rw.gif" alt="animated" width="1024px" />
+</p>
+
 
 ## Installation
 
@@ -51,6 +55,13 @@ Command line arguments are used to specify the robot, goal, and simulated world.
 python run_planner.py --robot=pr2 --goal=all_green --world=problem0 -v
 ```
 
+
+<p align="center">
+  <img src="https://github.com/aidan-curtis/open-world-tamp/blob/master/figs/sims.gif" alt="animated"  width="1024px"  />
+</p>
+
+
+
 #### Command-line arguments
 `--simulated` Specifies if the run is simulated or in the real-world. True by default.
 
@@ -64,15 +75,21 @@ python run_planner.py --robot=pr2 --goal=all_green --world=problem0 -v
 
 `-v` Is a flag to visualize the resulting plan. False by default.
 
-`--exploration` Is a flag that specifies if mobile-base exploration should proceed manipulation planning
+`--real` Is a flag that specifies if mobile-base exploration should proceed manipulation planning
 
 `--base_planner` Is a flag that specifies the algorithm to use for mobile-base exploration
 
 This is only a subset of the available segmentation flags. See code for more.
 
+### Exploration
+Combine mobile-base exploration with fixed-based manipulation by calling the planner with the following flags
+
+`--exploration` Toggles exploration
+
+`--base_planner` Selects the planner to use for exploration. Default is VA*, but more advanced planners can also be used.
 
 
-## Modules
+<p align="center">
+  <img src="https://github.com/aidan-curtis/open-world-tamp/blob/master/figs/mb.gif" alt="animated"  width="1024px"  />
+</p>
 
-* Shape completion: https://github.mit.edu/Learning-and-Intelligent-Systems/open-world-tamp/tree/shape_completion/vision_utils
-* Grasping: https://github.mit.edu/Learning-and-Intelligent-Systems/open-world-tamp/tree/grasp_new/grasp
