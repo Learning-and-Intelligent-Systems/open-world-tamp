@@ -354,9 +354,7 @@ def create_pddlstream(
 
     init = [
         ("StillActing",),
-        (
-            "ConfidentInState",
-        ),  # TODO(caelan): can incorporate in later for principled replanning
+        ("ConfidentInState",),
         Equal(("PushCost",), BASE_COST + 10),
     ]
     init.extend(task.init)
@@ -476,6 +474,13 @@ def create_pddlstream(
         for obj, surface in product(movable_objects, surfaces)
         if obj != surface
     )
+    
+    new_init.extend(
+        ("Stackable", obj, surface, DEFAULT_SHAPE)
+        for obj, surface in product(movable_objects, movable_objects)
+        if obj != surface
+    )
+
     new_init.extend(
         ("Droppable", obj, container)
         for obj, container in product(movable_objects, containers)

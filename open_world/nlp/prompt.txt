@@ -1,66 +1,69 @@
 I am a highly intelligent logic bot. If you ask me to do something, I will give you a logical description of that request in LISP. 
-My vocabulary consists of the following predicates: [Holding(?o), ArmHolding(?a1, ?o1), Red(?o), Green(?o), Blue(?o), Orange(?o), Purple(?o), On(?o1, ?o2), Right(?a), Left(?a), LeftOf(?o1, ?o2), RightOf(?o1, ?o2), FrontOf(?o1, ?o2), Behind(?o1, ?o2), Touching(?o1, ?o2), SameColor(?o1, ?o2)]
+My vocabulary consists of the following predicates: (Holding ?o), (ArmHolding ?a1 ?o1), (Color ?o ?c), (On ?o1 ?o2), (Right ?a), (Left ?a), (LeftOf ?o1 ?o2), (RightOf ?o1 ?o2), (FrontOf ?o1 ?o2), (Behind ?o1 ?o2), (Touching ?o1 ?o2), (SameColor ?o1 ?o2)
+
+The possible colors are red, green, blue, purple, orange
+The possible arms are right_arm, left_arm
 
 Q: Hold a blue block with your right arm
-A: (exists (?o, ?a) (and (Blue ?o) (Right ?a) (ArmHolding  ?a ?o)))
+A: (exists (?o ?a) (and (Color ?o blue) (ArmHolding right_arm ?o)))
 
 Q: Place a green block on a red block
-A: (exists (?o1, ?o2) (and (Green ?o1)  (Red ?o2) (On ?o1 ?o2)))
+A: (exists (?o1 ?o2) (and (Color ?o1 green) (Color ?o2 red) (On ?o1 ?o2)))
 
 Q: Place a blue block on a red block
-A: (exists (?o1, ?o2) (and  (Red ?o1)  (On ?o2 ?o1) (Blue ?o2)))
+A: (exists (?o1 ?o2) (and (Color ?o1 red)  (On ?o2 ?o1) (Color ?o2 blue)))
 
 Q: Place all blue blocks on an orange block
-A: (forall (?o1) (implies (Blue ?o1) (exists ?o2 (and (Orange ?o2) (On ?o1 ?o2)))))
+A: (forall (?o1) (implies (Color ?o1 blue) (exists ?o2 (and (Color ?o2 orange) (On ?o1 ?o2)))))
 
 Q: Place a purple block on a green block
-A: (exists (?o1, ?o2) (and (Purple ?o1) (Green ?o2) (On ?o1 ?o2)))
+A: (exists (?o1 ?o2) (and (Color ?o1 purple) (Color ?o2 green) (On ?o1 ?o2)))
 
 Q: Place all purple blocks on a single blue block
-A: (exists (?o1) (and (Blue ?o1) (forall (?o2) (implies (Purple ?o2) (On ?o2 ?o1)))))
+A: (exists (?o1) (and (Blue ?o1) (forall (?o2) (implies (Color ?o2 purple) (On ?o2 ?o1)))))
 
 Q: Hold a blue block
-A: (exists (?o) (and (Blue ?o) (Holding ?o)))
+A: (exists (?o) (and (Color ?o blue) (Holding ?o)))
 
 Q: Hold a blue block with your left arm
-A: (exists (?o, ?a) (and (Blue ?o) (Left ?a) (ArmHolding  ?a ?o)))
+A: (exists (?o ?a) (and (Color ?o blue) (ArmHolding left_arm ?o)))
 
 Q: Stack three blocks
-A: (exists (?o1, ?o2, ?o3) (and (On ?o1 ?o2) (On ?o2 ?o3)))
+A: (exists (?o1 ?o2 ?o3) (and (On ?o1 ?o2) (On ?o2 ?o3)))
 
 Q: Stack five blocks
-A: (exists (?o1, ?o2, ?o3, ?o4, ?o5) (and (On ?o1 ?o2) (On ?o2 ?o3) (On ?o3 ?o4) (On ?o4 ?o5)))
+A: (exists (?o1 ?o2 ?o3 ?o4 ?o5) (and (On ?o1 ?o2) (On ?o2 ?o3) (On ?o3 ?o4) (On ?o4 ?o5)))
 
 Q: Hold a blue or green block with either arm
-A: (exists (?o, ?a) (and (or (Blue ?o) (Green ?o)) (or (Right ?a) (Left ?a)) (ArmHolding  ?a ?o)))
+A: (exists (?o ?a) (and (or (Color ?o blue) (Color ?o green)) (or (ArmHolding left_arm ?o) (ArmHolding right_arm ?o))))
 
 Q: Align five blocks horizontally
-A: (exists (?o1, ?o2, ?o3, ?o4, ?o5) (and (LeftOf ?o1 ?o2) (LeftOf ?o2 ?o3) (LeftOf ?o3 ?o4) (LeftOf ?o4 ?o5)))
+A: (exists (?o1 ?o2 ?o3 ?o4 ?o5) (and (LeftOf ?o1 ?o2) (LeftOf ?o2 ?o3) (LeftOf ?o3 ?o4) (LeftOf ?o4 ?o5)))
 
 Q: Align five blocks vertically
-A: (exists (?o1, ?o2, ?o3, ?o4, ?o5) (and (FrontOf ?o1 ?o2) (FrontOf ?o2 ?o3) (FrontOf ?o3 ?o4) (FrontOf ?o4 ?o5)))
+A: (exists (?o1 ?o2 ?o3 ?o4 ?o5) (and (FrontOf ?o1 ?o2) (FrontOf ?o2 ?o3) (FrontOf ?o3 ?o4) (FrontOf ?o4 ?o5)))
 
 Q: Create a staircase from three blocks
-A: (exists (?o1, ?o2, ?o3) (and (RightOf ?o2 ?o1) (On ?o3 ?o2) ))
+A: (exists (?o1 ?o2 ?o3) (and (RightOf ?o2 ?o1) (On ?o3 ?o2) ))
 
 Q: Create a staircase from six blocks
-A: (exists (?o1, ?o2, ?o3, ?o4, ?o5, ?o6) (and (RightOf ?o2 ?o1) (On ?o3 ?o2) (RightOf ?o4 ?o2) (On ?o5 ?o4) (On ?o6 ?o5)))
+A: (exists (?o1 ?o2 ?o3 ?o4 ?o5 ?o6) (and (RightOf ?o2 ?o1) (On ?o3 ?o2) (RightOf ?o4 ?o2) (On ?o5 ?o4) (On ?o6 ?o5)))
 
 Q: Create a staircase from ten blocks
-A: (exists (?o1, ?o2, ?o3, ?o4, ?o5, ?o6, ?o7, ?o8, ?o9, ?o10) (and (RightOf ?o2 ?o1) (On ?o3 ?o2) (RightOf ?o4 ?o2) (On ?o5 ?o4) (On ?o6 ?o5) (RightOf ?o7 ?o4) (On ?o8 ?o7) (RightOf ?o9 ?o8) (On ?o10 ?o9)))
+A: (exists (?o1 ?o2 ?o3 ?o4 ?o5 ?o6 ?o7 ?o8 ?o9 ?o10) (and (RightOf ?o2 ?o1) (On ?o3 ?o2) (RightOf ?o4 ?o2) (On ?o5 ?o4) (On ?o6 ?o5) (RightOf ?o7 ?o4) (On ?o8 ?o7) (RightOf ?o9 ?o8) (On ?o10 ?o9)))
 
 Q:  Create a staircase from 15 blocks
-A: (exists (?o1, ?o2, ?o3, ?o4, ?o5, ?o6, ?o7, ?o8, ?o9, ?o10, ?o11, ?o12, ?o13, ?o14, ?o15) (and (RightOf ?o2 ?o1) (On ?o3 ?o2) (RightOf ?o4 ?o2) (On ?o5 ?o4) (On ?o6 ?o5) (RightOf ?o7 ?o4) (On ?o8 ?o7) (RightOf ?o9 ?o8) (On ?o10 ?o9) (RightOf ?o11 ?o8) (On ?o12 ?o11) (RightOf ?o13 ?o12) (On ?o14 ?o13) (RightOf ?o15 ?o14)))
+A: (exists (?o1 ?o2 ?o3 ?o4 ?o5 ?o6 ?o7 ?o8 ?o9 ?o10 ?o11 ?o12 ?o13 ?o14 ?o15) (and (RightOf ?o2 ?o1) (On ?o3 ?o2) (RightOf ?o4 ?o2) (On ?o5 ?o4) (On ?o6 ?o5) (RightOf ?o7 ?o4) (On ?o8 ?o7) (RightOf ?o9 ?o8) (On ?o10 ?o9) (RightOf ?o11 ?o8) (On ?o12 ?o11) (RightOf ?o13 ?o12) (On ?o14 ?o13) (RightOf ?o15 ?o14)))
 
 Q: Do not hold anything
 A: (not (exists (?o) (Holding ?o)))
 
 Q: Pick up a single blue and purple block
-A: (exists (?o) (and (Blue ?o) (Purple ?o) (Holding ?o)))
+A: (exists (?o) (and (Color ?o blue) (Color ?o purple) (Holding ?o)))
 
 Q: Pickup more than two blocks
-A: (exists (?o1, ?o2, ?o3) (and (Holding ?o1) (Holding ?o2) (Holding ?o3))
+A: (exists (?o1 ?o2 ?o3) (and (Holding ?o1) (Holding ?o2) (Holding ?o3))
 
 Q:  I'm really hungry. I'd like to eat a block but the red blocks are too hot. Hand me something to eat.
-A: (exists (?o) (and (not (Red ?o)) (Holding ?o)))
+A: (exists (?o) (and (not (Color ?o red)) (Holding ?o)))
 

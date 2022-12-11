@@ -17,12 +17,15 @@ from pybullet_tools.utils import (
     set_pose,
     stable_z_on_aabb,
     RED,
-    BLUE
+    BLUE,
+    YELLOW,
+    pairwise_collision,
+    pairwise_collisions,
+    get_pose,
+    enable_gravity,
+    disable_gravity
 )
-
-from open_world.planning.planner import (
-    CategoryOn
-)
+import random
 
 from open_world.simulation.entities import RealWorld
 from open_world.simulation.environment import (
@@ -48,7 +51,6 @@ def create_world(robot, movable=[], fixed=[], surfaces=[], **kwargs):
         **kwargs
     )
 
-
 #######################################################
 
 
@@ -68,6 +70,101 @@ def problem0(args, robot, **kwargs):
     )
     real_world = create_world(
         robot, movable=[obj1], fixed=obstacles, surfaces=[table, region], **kwargs
+    )
+
+    return real_world
+
+def create_pybullet_block(color,
+                          half_extents, 
+                          mass,
+                          friction, 
+                          orientation):
+    """A generic utility for creating a new block.
+
+    Returns the PyBullet ID of the newly created block.
+    """
+    # The poses here are not important because they are overwritten by
+    # the state values when a task is reset.
+    pose = (0, 0, 0)
+
+    # Create the collision shape.
+    collision_id = p.createCollisionShape(p.GEOM_BOX,
+                                          halfExtents=half_extents)
+
+    # Create the visual_shape.
+    visual_id = p.createVisualShape(p.GEOM_BOX,
+                                    halfExtents=half_extents,
+                                    rgbaColor=color)
+
+    # Create the body.
+    block_id = p.createMultiBody(baseMass=mass,
+                                 baseCollisionShapeIndex=collision_id,
+                                 baseVisualShapeIndex=visual_id,
+                                 basePosition=pose,
+                                 baseOrientation=orientation)
+    p.changeDynamics(
+        block_id,
+        linkIndex=-1,  # -1 for the base
+        lateralFriction=friction)
+
+    return block_id
+
+def problem_five_blocks(args, robot, **kwargs):
+    arms = args.arms  # ARM_NAMES
+    table, obstacles = create_default_env(arms=arms, **kwargs)
+
+
+    table_width=0.6
+    table_length=1.2
+    table_height=0.73
+    table_pose = get_pose(table)[0]
+
+    block_size = 0.045
+    _obj_colors = [
+        (0.95, 0.05, 0.1, 1.),
+        (0.05, 0.95, 0.1, 1.),
+        (0.1, 0.05, 0.95, 1.),
+        (0.95, 0.95, 0.1, 1.),
+        (0.1, 0.1, 0.1, 1.),
+    ]
+
+    # Object parameters.
+    _obj_mass = 0.5
+    _obj_friction = 1.2
+    _default_orn = [0.0, 0.0, 0.0, 1.0]
+
+    objs = []
+    for i in range(5):
+        color = _obj_colors[i % len(_obj_colors)]
+        half_extents = (block_size / 2.0, block_size / 2.0,
+                        block_size / 2.0)
+        objs.append(
+            create_pybullet_block(color, half_extents, _obj_mass,
+                                    _obj_friction, _default_orn))
+
+    for block_index, block_id in enumerate(objs):
+        found_collision_free = False
+        timeout = 100
+        padding = 0.1
+        while(not found_collision_free or timeout>0):
+            timeout -= 1
+            rx = random.uniform(table_pose[0]-table_width/2.0+padding, table_pose[0]+table_width/2.0-padding)
+            ry = random.uniform(table_pose[1]-table_length/2.0+padding, table_pose[1]+table_length/2.0-padding)
+            print(rx, ry)
+            p.resetBasePositionAndOrientation(
+                block_id, [rx, ry, table_height+block_size/2.0],
+                _default_orn)
+            collision = False
+            for placed_block in objs[:block_index]:
+                if(pairwise_collision(block_id, placed_block)):
+                    collision = True
+                    break
+            if(not collision):
+                break
+
+
+    real_world = create_world(
+        robot, movable=[objs], fixed=obstacles, surfaces=[table], **kwargs
     )
 
     return real_world
@@ -251,19 +348,6 @@ def place_tray(args, robot, **kwargs):
         robot, movable=[obj1], fixed=obstacles, surfaces=[table, region]
     )
 
-    task = Task(
-        goal_parts=[
-            ("On", obj1, region, FLOOR_SHAPE),
-        ]
-    )
-
-    task = Task(
-        goal_parts=[
-            CategoryOn(category=obj1.category, surface=region, shape=FLOOR_SHAPE),
-        ],
-        assume={"category": [obj1.category]},
-    )
-
     return real_world
 
 
@@ -350,8 +434,6 @@ def stow_cubbies(args, robot, **kwargs):
     real_world = create_world(
         robot, movable=[obj1], fixed=obstacles, surfaces=[table, region]
     )
-
-    shape = CUBBY_SHAPE_TEMPLATE.format(row=1, col=1, name=FLOOR_SHAPE)
 
     return real_world
 
@@ -814,6 +896,7 @@ WORLDS = [
     tight_pack,
     tight_pack_occlusion,
     from_lisdf,
+    problem_five_blocks
 ]
 
 

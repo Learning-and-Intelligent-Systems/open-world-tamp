@@ -205,15 +205,17 @@ def setup_robot_pybullet(args):
 def get_task(args):
     problem_from_name = {fn.__name__: fn for fn in GOALS}
     if(args.voice_interactive):
-        task_from_goal(args, get_goal_audio())
+        return task_from_goal(args, get_goal_audio())
     elif(args.text_interactive):
-        task_from_goal(args, text_to_goal(wait_for_user()))
+        return task_from_goal(args, text_to_goal(wait_for_user()))
     else:    
         if args.goal not in problem_from_name:
             raise ValueError(args.goal)
         problem_fn = problem_from_name[args.goal]
         task = problem_fn(args)
         task.name = args.goal
+        return task
+
 
 def main():
 
