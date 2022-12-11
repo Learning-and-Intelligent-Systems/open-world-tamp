@@ -1,6 +1,6 @@
 # open-world-tamp
 <p align="center">
-  <img src="https://github.com/aidan-curtis/open-world-tamp/blob/master/figs/rw.gif" alt="animated" width="1024px" />
+  <img src="https://github.com/Learning-and-Intelligent-Systems/open-world-tamp/blob/master/figs/rw.gif" alt="animated" width="1024px" />
 </p>
 
 
@@ -57,7 +57,7 @@ python run_planner.py --robot=pr2 --goal=all_green --world=problem0 -v
 
 
 <p align="center">
-  <img src="https://github.com/aidan-curtis/open-world-tamp/blob/master/figs/sims.gif" alt="animated"  width="1024px"  />
+  <img src="https://github.com/Learning-and-Intelligent-Systems/open-world-tamp/blob/master/figs/sims.gif" alt="animated"  width="1024px"  />
 </p>
 
 
@@ -90,6 +90,6 @@ Combine mobile-base exploration with fixed-based manipulation by calling the pla
 
 
 <p align="center">
-  <img src="https://github.com/aidan-curtis/open-world-tamp/blob/master/figs/mb.gif" alt="animated"  width="1024px"  />
+  <img src="https://github.com/Learning-and-Intelligent-Systems/open-world-tamp/blob/master/figs/mb.gif" alt="animated"  width="1024px"  />
 </p>
 
