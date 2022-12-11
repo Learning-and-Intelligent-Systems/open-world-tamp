@@ -13,11 +13,11 @@ from itertools import product
 
 import pybullet_utils.bullet_client as bc
 from pybullet_tools.pr2_utils import ARM_NAMES, LEFT_ARM
-from pybullet_tools.utils import (load_pybullet, connect)
+from pybullet_tools.utils import (load_pybullet, connect, wait_for_user)
 
 from open_world.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
 from open_world.simulation.policy import run_policy, run_exploration_policy
-from open_world.simulation.tasks import GOALS 
+from open_world.simulation.tasks import GOALS, task_from_goal
 
 from open_world.exploration.base_planners.a_star_search import AStarSearch
 from open_world.exploration.base_planners.snowplow import Snowplow
@@ -25,6 +25,8 @@ from open_world.exploration.base_planners.namo import Namo
 from open_world.exploration.base_planners.rrt import RRT
 from open_world.exploration.base_planners.lamb import Lamb
 
+from open_world.nlp.speech_to_goal import get_goal_audio
+from open_world.nlp.text_to_goal import text_to_goal
 
 from robots.movo.movo_utils import MOVO_PATH, MovoPolicy, MovoRobot
 from robots.movo.movo_worlds import movo_world_from_problem
@@ -182,12 +184,15 @@ def create_parser():
     parser.add_argument("-w", "--world", default="problem0", help="Specifies the task.")
 
     # exploration    
-    parser.add_argument("-exp", "--exploration", action="store_true", help="Specifies the task.")
-    parser.add_argument("-bp", "--base_planner", default="lamb", help="Specifies the task.")
-
+    parser.add_argument("-exp", "--exploration", action="store_true", help="Use exploration prior to running m0m")
+    parser.add_argument("-bp", "--base_planner", default="lamb", help="Specifies the planner to use for base navigation")
 
     # robot
     parser.add_argument("-r", "--robot", default="pr2", help="Specifies the robot.")
+
+    # interactive goals
+    parser.add_argument("-ti", "--text_interactive",  action="store_true", help="Use text input to specify the goal")
+    parser.add_argument("-vi", "--voice_interactive",  action="store_true", help="Use audio input to specify the goal")
 
     return parser
 
@@ -197,10 +202,22 @@ def setup_robot_pybullet(args):
     robot_body = load_pybullet(robot_paths[args.robot], fixed_base=True, client=None)
     return robot_body, None
 
+def get_task(args):
+    problem_from_name = {fn.__name__: fn for fn in GOALS}
+    if(args.voice_interactive):
+        task_from_goal(args, get_goal_audio())
+    elif(args.text_interactive):
+        task_from_goal(args, text_to_goal(wait_for_user()))
+    else:    
+        if args.goal not in problem_from_name:
+            raise ValueError(args.goal)
+        problem_fn = problem_from_name[args.goal]
+        task = problem_fn(args)
+        task.name = args.goal
+
 def main():
 
     # Parse the args
-    problem_from_name = {fn.__name__: fn for fn in GOALS}
     parser = create_parser()
     args = parser.parse_args()
 
@@ -208,13 +225,6 @@ def main():
     robot_body, client = setup_robot_pybullet(args)
 
     robot = robot_entities[args.robot](robot_body, client=client, args=args)
-
-    # Create the task
-    if args.goal not in problem_from_name:
-        raise ValueError(args.goal)
-    problem_fn = problem_from_name[args.goal]
-    task = problem_fn(args)
-    task.name = args.goal
 
     # Set up the world run the task
     if not args.real:
@@ -224,14 +234,25 @@ def main():
         policy = robot_policies[args.robot](
             args, robot, known=real_world.known, client=client
         )
-        if(args.exploration):
-            run_exploration_policy(policy, task, real_world=real_world, client=client, \
-                room = real_world.room, base_planner=base_planners[args.base_planner])
-        else:
-            run_policy(policy, task, real_world=real_world, client=client)
+        done = False
+        while(not done): 
+            task = get_task(args)
+            if(args.exploration):
+                run_exploration_policy(policy, task, real_world=real_world, client=client, \
+                    room = real_world.room, base_planner=base_planners[args.base_planner])
+            else:
+                run_policy(policy, task, real_world=real_world, client=client)
+
+            done = not args.voice_interactive and not args.text_interactive
     else:
-        policy = robot_policies[args.robot](args, robot, known=[], client=client)
-        run_policy(policy, task, client=client)
+        done = False
+        while(not done): 
+            task = get_task(args)
+            policy = robot_policies[args.robot](args, robot, known=[], client=client)
+            run_policy(policy, task, client=client)
+            
+            done = not args.voice_interactive and not args.text_interactive
+
 
 if __name__ == "__main__":
     main()

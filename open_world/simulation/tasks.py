@@ -3,8 +3,7 @@
 
 from pddlstream.utils import str_from_object
 from pybullet_tools.pr2_utils import ARM_NAMES
-from pybullet_tools.utils import PI, CameraImage, get_pairs
-
+from pybullet_tools.utils import get_pairs
 from open_world.planning.planner import (
     DEFAULT_SHAPE,
     PARAM,
@@ -14,6 +13,7 @@ from open_world.planning.planner import (
     Imply,
     On
 )
+
 from open_world.simulation.entities import DEFAULT_SHAPE
 
 SKILLS = ["pick", "push"]
@@ -25,6 +25,7 @@ PARAM3 = "?o3"
 DEFAULT_SKILLS = ["pick"]
 COLORS = ["red", "green", "blue", "yellow"]
 CATEGORIES = ["mustard_bottle"]
+BOWL = "bowl"
 DEPTH_SCALE = 3.0
 NUMS = list(range(2, 3 + 1))
 
@@ -57,8 +58,15 @@ class Task(object):
         return "{}{}".format(self.__class__.__name__, str_from_object(self.__dict__))
 
 
+def task_from_goal(args, goal):
+    task = Task(
+        goal_parts=[goal],
+        arms=args.arms,
+        skills=DEFAULT_SKILLS,
+    )
+    return task
+
 def holding(args):  # For testing grasping
-    # Holding object
     task = Task(
         goal_parts=[
             Exists(
@@ -66,19 +74,12 @@ def holding(args):  # For testing grasping
                 And(
                     ("Graspable", PARAM1),
                     ("Holding", PARAM1),
-                    # ('ArmHolding', arm_from_side(args.arms[0]), PARAM1),
                 ),
             ),
-            # Exists([PARAM2], And(('Graspable', PARAM2), ('ArmHolding', arm_from_side(args.arms[-1]), PARAM2))),
-            # HoldingCategory(category=args.ycb), # Remove HandEmpty reset condition
-            # CategoryOn(category=args.ycb, surface=region),
-            # AllCategoryOn(category=args.ycb, surface=region),
         ],
         arms=args.arms,
         skills=DEFAULT_SKILLS,
     )
-    # assume = {'category' : [args.ycb]}
-
     return task
 
 
@@ -86,9 +87,6 @@ def all_bowl(args):
     # All objects in the bowl that is closet to their color
     return Task(
         goal_parts=[
-            # ForAll([PARAM1, PARAM2], Imply(
-            #     And(('Graspable', PARAM1), ('Category', PARAM2, BOWL), Not(Equal(PARAM1, PARAM2))),
-            #     ('In', PARAM1, PARAM2))),
             ForAll(
                 [PARAM1],
                 Imply(
@@ -113,7 +111,6 @@ def all_bowl(args):
 
 
 GOALS = [
-    # TODO: integrate with the simulated tasks
     holding,
     all_bowl,
 ]
@@ -177,7 +174,7 @@ for color in COLORS:
             skills=DEFAULT_SKILLS,
         )
     )
-    GOALS[-1].__name__ = f"closest_{color}"  # .format(color)
+    GOALS[-1].__name__ = f"closest_{color}" 
 
     # Object of a particular color on a region
     GOALS.append(
@@ -201,7 +198,7 @@ for color in COLORS:
                 ForAll(
                     [PARAM1],
                     Imply(
-                        ("Graspable", PARAM1),  # Not(('Category', PARAM1, BOWL)),
+                        ("Graspable", PARAM1),
                         Exists(
                             [PARAM2],
                             And(
