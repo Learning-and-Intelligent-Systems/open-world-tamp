@@ -21,15 +21,15 @@
     :certified (CFreeTrajPose ?j ?t ?o2 ?p2))
 
   (:stream test-nominal-left
-    :inputs (?o ?p ?s ?sp ?l)
-    :domain (and (Pose ?o ?p) (Pose ?s ?sp) (Supported ?o ?p ?s ?sp ?l))
-    :certified (RegionLeft ?o ?p ?s ?sp ?l)
+    :inputs (?o ?p ?s ?sp)
+    :domain (and (Pose ?o ?p) (Pose ?s ?sp) (Supported ?o ?p ?s ?sp))
+    :certified (RegionLeft ?o ?p ?s ?sp)
   )
 
   (:stream test-nominal-right
-    :inputs (?o ?p ?s ?sp ?l)
-    :domain (and (Pose ?o ?p) (Pose ?s ?sp) (Supported ?o ?p ?s ?sp ?l))
-    :certified (RegionRight ?o ?p ?s ?sp ?l)
+    :inputs (?o ?p ?s ?sp)
+    :domain (and (Pose ?o ?p) (Pose ?s ?sp) (Supported ?o ?p ?s ?sp))
+    :certified (RegionRight ?o ?p ?s ?sp)
   )
 
   (:stream test-reachable
@@ -48,10 +48,10 @@
   )
 
   (:stream sample-placement ; TODO: condition on the initial conf
-    :inputs (?o ?s ?sp ?l)
-    :domain (and (Stackable ?o ?s ?l) (Pose ?s ?sp)) ; TODO: (Reachable ?a ?s ?bq)
+    :inputs (?o ?s ?sp)
+    :domain (and (Stackable ?o ?s) (Pose ?s ?sp)) ; TODO: (Reachable ?a ?s ?bq)
     :outputs (?p)
-    :certified (and (Supported ?o ?p ?s ?sp ?l) (Pose ?o ?p))
+    :certified (and (Supported ?o ?p ?s ?sp) (Pose ?o ?p))
   )
 
   ;--------------------------------------------------
@@ -75,8 +75,8 @@
   )
 
   (:stream plan-push
-    :inputs (?a ?o ?p1 ?s ?sp ?l ?bq)
-    :domain (and (Arm ?a) (InitPose ?o ?p1) (Supported ?o ?p1 ?s ?sp ?l) (CanPush ?o) (InitConf @base ?bq))
+    :inputs (?a ?o ?p1 ?s ?sp ?bq)
+    :domain (and (Arm ?a) (InitPose ?o ?p1) (Supported ?o ?p1 ?s ?sp) (CanPush ?o) (InitConf @base ?bq))
     :outputs (?p2 ?aq1 ?aq2 ?at)
     :certified (and (Push ?a ?o ?p1 ?p2 ?bq ?aq1 ?aq2 ?at)
             (Pose ?o ?p2) (Conf ?a ?aq1) (Conf ?a ?aq2) (Traj ?a ?at))

@@ -235,7 +235,7 @@ class PR2Robot(Robot):
 
     def base_sample_gen(self, pose):
         return directed_pose_generator(
-            robot, pose.get_pose(), reachable_range=(0.8, 0.8)
+            self.robot, pose.get_pose(), reachable_range=(0.8, 0.8)
         )
 
         

@@ -450,7 +450,6 @@ def stack_mem(args, robot, **kwargs):
         create_ycb("potted_meat_can", **kwargs), table, Pose2D(y=-0.1), **kwargs
     )  # table, Pose2D(y=0.2))
     # place_object_rotate(obj1.body, table, roll=np.pi/2)
-    # region = place_surface(create_pillar(width=0.18), table)
     real_world = create_world(
         robot, movable=[obj1, obj2, obj3], fixed=obstacles, surfaces=[table]
     )

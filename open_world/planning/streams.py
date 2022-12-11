@@ -560,9 +560,9 @@ def get_placement_gen_fn(
 ):  # max_distance=PR2_WINGSPAN
     base_pose = get_link_pose(robot, robot.base_link, **kwargs)
 
-    def gen_fn(obj, surface, surface_pose, shape):
+    def gen_fn(obj, surface, surface_pose):
         surface_pose.assign()
-        surface_oobb = surface.get_shape_oobb(shape)  # TODO: change to as long as the COM is on
+        surface_oobb = surface.get_shape_oobb()  # TODO: change to as long as the COM is on
         # draw_oobb(surface_oobb)
         obstacles = set(environment) - {obj, surface}  # TODO: surface might have walls
 

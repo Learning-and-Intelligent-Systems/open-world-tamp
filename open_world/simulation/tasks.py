@@ -5,7 +5,6 @@ from pddlstream.utils import str_from_object
 from pybullet_tools.pr2_utils import ARM_NAMES
 from pybullet_tools.utils import get_pairs
 from open_world.planning.planner import (
-    DEFAULT_SHAPE,
     PARAM,
     And,
     Exists,
@@ -14,7 +13,6 @@ from open_world.planning.planner import (
     On
 )
 
-from open_world.simulation.entities import DEFAULT_SHAPE
 
 SKILLS = ["pick", "push"]
 
@@ -222,7 +220,7 @@ for num in NUMS:
     # Tower of num objects
     parameters = ["?o{}".format(i + 1) for i in range(num)]
     conditions = [("Graspable", param) for param in parameters] + [
-        ("On", param1, param2, DEFAULT_SHAPE)
+        ("On", param1, param2)
         for param1, param2, in get_pairs(parameters)
     ]  # Graspable | Movable
     GOALS.append(

@@ -14,7 +14,7 @@
     (Graspable ?o)
     (Controllable ?j)
     (Droppable ?o ?b)
-    (Stackable ?o ?s ?l)
+    (Stackable ?o ?s)
     (Region ?s)
 
     (CanPush ?o)
@@ -39,7 +39,7 @@
     (Pour ?a ?o1 ?p1 ?o2 ?g ?aq1 ?aq2 ?at)
     (Drop ?a ?o ?g ?b ?bp ?bq ?aq ?at)
     (Inspect ?a ?o ?g ?bq ?aq ?at)
-    (Supported ?o ?p ?s ?sp ?l)
+    (Supported ?o ?p ?s ?sp)
 
     (CFreePosePose ?o1 ?p1 ?o2 ?p2)
     (CFreePregraspPose ?a ?o1 ?p1 ?g1 ?o2 ?p2)
@@ -48,8 +48,8 @@
     (AtLeft ?o ?p ?s)
     (AtRight ?o ?p ?s)
 
-    (RegionLeft ?o ?p ?s ?sp ?l)
-    (RegionRight ?o ?p ?s ?sp ?l)
+    (RegionLeft ?o ?p ?s ?sp)
+    (RegionRight ?o ?p ?s ?sp)
 
     ; Fluent
     (AtConf ?j ?q)
@@ -194,8 +194,8 @@
   ;))
 
   (:action place ; TODO: pick and drop action for testing grasp success
-    :parameters (?a ?g ?o ?p ?s ?sp ?l ?bq ?aq ?at)
-    :precondition (and (Place ?a ?o ?p ?g ?bq ?aq ?at) (Supported ?o ?p ?s ?sp ?l)
+    :parameters (?a ?g ?o ?p ?s ?sp ?bq ?aq ?at)
+    :precondition (and (Place ?a ?o ?p ?g ?bq ?aq ?at) (Supported ?o ?p ?s ?sp)
                        (AtGrasp ?a ?o ?g) (AtPose ?s ?sp) (AtConf ?a ?aq) (AtConf @base ?bq)
                        (not (UnsafePose ?o ?p))
                        (not (UnsafePregrasp ?a ?o ?p ?g))
@@ -264,12 +264,11 @@
   ;                    (ArmHolding ?a ?o)))
   ;)
   (:derived (On ?o ?s)
-    (exists (?p ?sp) (and (Supported ?o ?p ?s ?sp ?l)
-                          ; (AtPose ?s ?sp)
+    (exists (?p ?sp) (and (Supported ?o ?p ?s ?sp)
                           (AtPose ?o ?p)))
   )
   (:derived (Supporting ?s)
-    (exists (?o ?l) (and (Stackable ?o ?s ?l)
+    (exists (?o) (and (Stackable ?o ?s)
                          (On ?o ?s))))
 
   (:derived (UnsafePose ?o1 ?p1) (and (Pose ?o1 ?p1)
@@ -287,13 +286,13 @@
                            (not (CFreeTrajPose ?j ?t ?o2 ?p2))
                            (AtPose ?o2 ?p2)))))
 
-  (:derived (AtRight ?o ?s ?l) 
-    (exists (?p ?sp) (and (Supported ?o ?p ?s ?sp ?l) (RegionRight ?o ?p ?s ?sp ?l)
+  (:derived (AtRight ?o ?s) 
+    (exists (?p ?sp) (and (Supported ?o ?p ?s ?sp) (RegionRight ?o ?p ?s ?sp)
                           (AtPose ?o ?p) (AtPose ?s ?sp))
   ))
 
-  (:derived (AtLeft ?o ?s ?l) 
-    (exists (?p ?sp) (and (Supported ?o ?p ?s ?sp ?l) (RegionLeft ?o ?p ?s ?sp ?l)
+  (:derived (AtLeft ?o ?s) 
+    (exists (?p ?sp) (and (Supported ?o ?p ?s ?sp) (RegionLeft ?o ?p ?s ?sp)
                           (AtPose ?o ?p) (AtPose ?s ?sp))
   ))
 

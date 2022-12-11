@@ -62,7 +62,7 @@ from open_world.planning.streams import (
     get_test_cfree_pose_pose,
 )
 from open_world.simulation.control import simulate_controller
-from open_world.simulation.entities import BOWL, DEFAULT_SHAPE
+from open_world.simulation.entities import BOWL
 from open_world.simulation.environment import BIN, set_gripper_friction
 from open_world.simulation.utils import (
     find_closest_color,
@@ -187,20 +187,20 @@ def HoldingCategory(category, arm):
     return ExistsObject(("Category", PARAM, category), ("ArmHolding", arm, PARAM))
 
 
-def On(surface, shape=DEFAULT_SHAPE):
-    return ("On", PARAM, surface, shape)
+def On(surface):
+    return ("On", PARAM, surface)
 
 
 def Contains(material):
     return ("Contains", PARAM, material)
 
 
-def ObjectLeft(surface, shape=DEFAULT_SHAPE):
-    return ExistsObject(("Movable", PARAM), ("AtLeft", PARAM, surface, shape))
+def ObjectLeft(surface):
+    return ExistsObject(("Movable", PARAM), ("AtLeft", PARAM, surface))
 
 
-def ObjectRight(surface, shape=DEFAULT_SHAPE):
-    return ExistsObject(("Movable", PARAM), ("AtRight", PARAM, surface, shape))
+def ObjectRight(surface):
+    return ExistsObject(("Movable", PARAM), ("AtRight", PARAM, surface))
 
 
 def ObjectOn(surface, **kwargs):
@@ -447,7 +447,7 @@ def create_pddlstream(
                 [
                     ("Movable", obj),
                     ("Graspable", obj),
-                    ("Stackable", obj, table, DEFAULT_SHAPE),
+                    ("Stackable", obj, table),
                     # ('CanPush', obj),
                     ("CanPick", obj),
                     # ('CanContain', obj) # TODO: unused
@@ -470,13 +470,13 @@ def create_pddlstream(
     new_init = []
     # new_init.extend(infer_affordances(task, init, objects))
     new_init.extend(
-        ("Stackable", obj, surface, DEFAULT_SHAPE)
+        ("Stackable", obj, surface)
         for obj, surface in product(movable_objects, surfaces)
         if obj != surface
     )
-    
+
     new_init.extend(
-        ("Stackable", obj, surface, DEFAULT_SHAPE)
+        ("Stackable", obj, surface)
         for obj, surface in product(movable_objects, movable_objects)
         if obj != surface
     )
@@ -491,7 +491,7 @@ def create_pddlstream(
     for fact in set(new_init):
         pred = get_prefix(fact)
         if pred == "Stackable":
-            obj, surface, shape = get_args(fact)
+            obj, surface = get_args(fact)
             place_cost = BASE_COST
             if surface != table:
                 pass
@@ -502,7 +502,7 @@ def create_pddlstream(
             init.append(Equal(("PlaceCost", obj, surface), place_cost))
             if is_center_on_aabb(
                 obj,
-                surface.get_shape_aabb(shape),
+                surface.get_shape_aabb(),
                 above_epsilon=INF,
                 below_epsilon=INF,
                 **kwargs
@@ -515,8 +515,7 @@ def create_pddlstream(
                         obj,
                         init_poses[obj],
                         surface,
-                        init_poses[surface],
-                        shape,
+                        init_poses[surface]
                     )
                 )
         elif pred == "Droppable":
