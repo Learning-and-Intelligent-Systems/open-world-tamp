@@ -45,11 +45,12 @@
     (CFreePregraspPose ?a ?o1 ?p1 ?g1 ?o2 ?p2)
     (CFreeTrajPose ?j ?t ?o2 ?p2)
 
-    (AtLeft ?o ?p ?s)
-    (AtRight ?o ?p ?s)
+    (PoseLeftOf ?o1 ?p1 ?o2 ?p2)
+    (PoseRightOf ?o1 ?p1 ?o2 ?p2)
+    (PoseAheadOf ?o1 ?p1 ?o2 ?p2)
+    (PoseBehind ?o1 ?p1 ?o2 ?p2)
 
-    (RegionLeft ?o ?p ?s ?sp)
-    (RegionRight ?o ?p ?s ?sp)
+
 
     ; Fluent
     (AtConf ?j ?q)
@@ -73,6 +74,11 @@
     (Holding ?o)
     (On ?o ?s)
     (Supporting ?s)
+
+    (LeftOf ?o1 ?o2)
+    (RightOf ?o1 ?o2)
+    (AheadOf ?o1 ?o2)
+    (Behind ?o1 ?o2)
 
     (Handoff ?a1 ?a2 ?g1 ?g2 ?o ?bq ?aq1 ?aq2 ?at1 ?at2)
     (DidHandoff ?o) ; TODO: Just for debugging, remove
@@ -263,6 +269,27 @@
   (:derived (On ?o ?s)
     (exists (?p ?sp) (and (Supported ?o ?p ?s ?sp)
                           (AtPose ?o ?p)))
+  )
+
+  (:derived (LeftOf ?o1 ?o2)
+    (exists (?p1 ?p2) (and (AtPose ?o1 ?p1) 
+                           (AtPose ?o2 ?p2)
+                           (PoseLeftOf ?o1 ?p1 ?o2 ?p2)))
+  )
+  (:derived (RightOf ?o1 ?o2)
+    (exists (?p1 ?p2) (and (AtPose ?o1 ?p1) 
+                           (AtPose ?o2 ?p2)
+                           (PoseRightOf ?o1 ?p1 ?o2 ?p2)))
+  )
+  (:derived (AheadOf ?o1 ?o2)
+    (exists (?p1 ?p2) (and (AtPose ?o1 ?p1) 
+                           (AtPose ?o2 ?p2)
+                           (PoseAheadOf ?o1 ?p1 ?o2 ?p2)))
+  )
+  (:derived (Behind ?o1 ?o2)
+    (exists (?p1 ?p2) (and (AtPose ?o1 ?p1) 
+                           (AtPose ?o2 ?p2)
+                           (PoseBehind ?o1 ?p1 ?o2 ?p2)))
   )
 
   (:derived (Supporting ?s)

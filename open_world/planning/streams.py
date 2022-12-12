@@ -671,6 +671,31 @@ def get_pose_cost_fn(robot, cost_per_m=1.0, **kwargs):
 
     return cost_fn
 
+def get_cardinal_sample(robot, direction, **kwargs):
+
+    def fn(obj1, pose, obj2):
+
+        pose1 = pose.get_pose()
+
+        if(direction == "leftof"):
+            set_pose(obj2, [ (pose1[0][0]-0.2, pose1[0][1], pose1[0][2]), pose1[1]])
+        if(direction == "rightof"):
+            set_pose(obj2, [ (pose1[0][0]+0.2, pose1[0][1], pose1[0][2]), pose1[1]])
+        if(direction == "aheadof"):
+            set_pose(obj2, [ (pose1[0][0], pose1[0][1]+0.2, pose1[0][2]), pose1[1]])
+        if(direction == "behind"):
+            set_pose(obj2, [ (pose1[0][0], pose1[0][1]-0.2, pose1[0][2]), pose1[1]])
+
+        rel_pose = RelativePose(
+            obj2,
+            parent=ParentBody(obj1, **kwargs),
+            parent_state=pose1,
+            **kwargs
+        )  # , relative_pose=pose)
+       
+        return Tuple(rel_pose)
+
+    return fn
 
 def get_reachability_test(
     robot, step_size=1e-1, max_iterations=200, draw=False, **kwargs

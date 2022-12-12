@@ -48,7 +48,6 @@ from open_world.planning.streams import (
     get_cfree_pregrasp_pose_test,
     get_cfree_traj_pose_test,
     get_grasp_gen_fn,
-    get_nominal_test,
     get_placement_gen_fn,
     get_plan_drop_fn,
     get_plan_inspect_fn,
@@ -60,6 +59,7 @@ from open_world.planning.streams import (
     get_pose_cost_fn,
     get_reachability_test,
     get_test_cfree_pose_pose,
+    get_cardinal_sample
 )
 from open_world.simulation.control import simulate_controller
 from open_world.simulation.entities import BOWL
@@ -244,6 +244,10 @@ def create_streams(belief, obstacles=[], mobile_base = False, grasp_mode="mesh",
         'test-cfree-pose-pose': from_test(get_test_cfree_pose_pose(**kwargs)),
         'test-cfree-pregrasp-pose': from_test(get_cfree_pregrasp_pose_test(robot)),
         'test-cfree-traj-pose': from_test(get_cfree_traj_pose_test(robot)),
+
+        # 'sample-leftof': from_fn(get_cardinal_sample(robot, direction="leftof", **kwargs)),
+        # 'sample-aheadof': from_fn(get_cardinal_sample(robot, direction="aheadof", **kwargs)),
+
         'sample-grasp': from_gen_fn(get_grasp_gen_fn(robot, [table], grasp_mode=grasp_mode, **kwargs)),
         'sample-placement': from_gen_fn(get_placement_gen_fn(robot, [table], environment=obstacles, **kwargs)),
         'plan-push': from_fn(get_plan_push_fn(robot, environment=obstacles, **kwargs)),
@@ -255,6 +259,10 @@ def create_streams(belief, obstacles=[], mobile_base = False, grasp_mode="mesh",
         'plan-motion': from_fn(get_plan_motion_fn(robot, environment=obstacles, **kwargs)),
         'plan-drop': from_fn(get_plan_drop_fn(robot, environment=obstacles, **kwargs)),
         'plan-inspect': from_fn(get_plan_inspect_fn(robot, environment=obstacles, **kwargs)),
+
+
+
+
         'PoseCost': get_pose_cost_fn(robot),
     }
 
@@ -284,7 +292,10 @@ def create_streams(belief, obstacles=[], mobile_base = False, grasp_mode="mesh",
         'test-cfree-traj-pose':  StreamInfo(p_success=1e-1, verbose=verbose),
 
         # 'sample-grasp': StreamInfo(),
-        'sample-placement': StreamInfo(overhead=1e1, opt_gen_fn=PartialInputs(unique=True)),
+        # 'sample-leftof': StreamInfo(overhead=1e1, opt_gen_fn=PartialInputs(unique=True)),
+        # 'sample-aheadof': StreamInfo(overhead=1e1, opt_gen_fn=PartialInputs(unique=True)),
+        'sample-placement': StreamInfo(overhead=1e1, opt_gen_fn=PartialInputs(unique=False)),
+
         'plan-push': StreamInfo(overhead=1e1, eager=True),
         'plan-pour': StreamInfo(overhead=1e1),
         'plan-pick': StreamInfo(overhead=1e1),

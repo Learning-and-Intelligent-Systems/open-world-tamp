@@ -26,6 +26,7 @@
     :certified (Reachable ?a ?o ?p ?bq)
   )
 
+
   ;--------------------------------------------------
 
   (:stream sample-grasp
@@ -41,6 +42,21 @@
     :outputs (?p)
     :certified (and (Supported ?o ?p ?s ?sp) (Pose ?o ?p))
   )
+
+
+  ;(:stream sample-leftof
+  ;  :inputs (?o1 ?p1 ?o2)
+  ;  :domain (and (Movable ?o1) (Movable ?o2) (Pose ?o1 ?p1))
+  ;  :outputs (?p2)
+  ;  :certified (and (Pose ?o2 ?p2) (PoseLeftOf ?o1 ?p1 ?o2 ?p2) (PoseRightOf ?o2 ?p2 ?o1 ?p1))
+  ;)
+
+  ;(:stream sample-aheadof
+  ;  :inputs (?o1 ?p1 ?o2)
+  ;  :domain (and (Movable ?o1) (Movable ?o2) (Pose ?o1 ?p1))
+  ;  :outputs (?p2)
+  ;  :certified (and (Pose ?o2 ?p2) (PoseAheadOf ?o1 ?p1 ?o2 ?p2) (PoseBehind ?o2 ?p2 ?o1 ?p1))
+  ;)
 
   ;--------------------------------------------------
 
