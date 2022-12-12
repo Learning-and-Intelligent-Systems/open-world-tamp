@@ -2,12 +2,25 @@ import os
 import openai
 from pyparsing import OneOrMore, nestedExpr, ParseResults
 
-def to_list(parsed):
+QUANTIFIERS = ["forall", "exists"]
+
+def to_unique_list(parsed):
     if(isinstance(parsed, ParseResults)):
         nlist = []
-        for q in parsed:
-            nlist.append(to_list(q))
+        if(parsed[0] in QUANTIFIERS):
+            for o1 in parsed[1]:
+                for o2 in parsed[1]:
+                    if(o1 != o2):
+                        nlist.append(["not", ["=", o1, o2]])
+            return [to_unique_list(parsed[0]), 
+                    to_unique_list(parsed[1]), 
+                    ["and"] + to_unique_list(parsed[2:]) + nlist]
+        else:
+            for q in parsed:
+                nlist.append(to_unique_list(q))
         return nlist
+    elif(isinstance(parsed, list)):
+        return [to_unique_list(q) for q in parsed]
     else:
         return parsed
 
@@ -25,7 +38,8 @@ def text_to_goal(command):
     try:
         response_text = response['choices'][0]['text'].replace("A:", "").replace("\n", "")
         data = OneOrMore(nestedExpr()).parseString(response_text)
-        return to_list(data)[0], response_text
+        print("Translation: " + response_text)
+        return to_unique_list(data)[0], response_text
     except:
         print("Error: invalid LISP")
         exit()

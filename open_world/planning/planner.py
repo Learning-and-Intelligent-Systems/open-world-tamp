@@ -25,7 +25,7 @@ from pddlstream.language.conversion import replace_expression
 from pddlstream.language.external import never_defer
 from pddlstream.language.function import FunctionInfo
 from pddlstream.language.generator import from_fn, from_gen_fn, from_test
-from pddlstream.language.stream import StreamInfo
+from pddlstream.language.stream import StreamInfo, PartialInputs
 from pddlstream.utils import Profiler, get_file_path, lowercase, read
 from pybullet_tools.utils import (
     CHROMATIC_COLORS,
@@ -244,13 +244,7 @@ def create_streams(belief, obstacles=[], mobile_base = False, grasp_mode="mesh",
         'test-cfree-pose-pose': from_test(get_test_cfree_pose_pose(**kwargs)),
         'test-cfree-pregrasp-pose': from_test(get_cfree_pregrasp_pose_test(robot)),
         'test-cfree-traj-pose': from_test(get_cfree_traj_pose_test(robot)),
-        'test-nominal-left': from_test(get_nominal_test(robot, side="left")),
-        'test-nominal-right': from_test(get_nominal_test(robot, side="right")),
-
-        # TODO: side grasp stream for pouring
         'sample-grasp': from_gen_fn(get_grasp_gen_fn(robot, [table], grasp_mode=grasp_mode, **kwargs)),
-        # 'sample-grasp': from_gen_fn(get_graspnet_gen_fn(robot, table, grasp_mode=grasp_mode, **kwargs)),
-
         'sample-placement': from_gen_fn(get_placement_gen_fn(robot, [table], environment=obstacles, **kwargs)),
         'plan-push': from_fn(get_plan_push_fn(robot, environment=obstacles, **kwargs)),
         'plan-pour': from_fn(get_plan_pour_fn(robot, environment=obstacles, **kwargs)),
@@ -259,10 +253,8 @@ def create_streams(belief, obstacles=[], mobile_base = False, grasp_mode="mesh",
         'plan-place': from_fn(get_plan_place_fn(robot, environment=obstacles, **kwargs)),
         # 'plan-mobile-place': from_gen_fn(get_plan_mobile_place_fn(robot, environment=obstacles, **kwargs)),
         'plan-motion': from_fn(get_plan_motion_fn(robot, environment=obstacles, **kwargs)),
-
         'plan-drop': from_fn(get_plan_drop_fn(robot, environment=obstacles, **kwargs)),
         'plan-inspect': from_fn(get_plan_inspect_fn(robot, environment=obstacles, **kwargs)),
-
         'PoseCost': get_pose_cost_fn(robot),
     }
 
@@ -291,11 +283,8 @@ def create_streams(belief, obstacles=[], mobile_base = False, grasp_mode="mesh",
         'test-cfree-pregrasp-pose': StreamInfo(p_success=1e-2, verbose=verbose),
         'test-cfree-traj-pose':  StreamInfo(p_success=1e-1, verbose=verbose),
 
-        'test-nominal-left':  StreamInfo(p_success=1e-3, defer_fn=never_defer),
-        'test-nominal-right':  StreamInfo(p_success=1e-3, defer_fn=never_defer),
-
         # 'sample-grasp': StreamInfo(),
-        # 'sample-placement': StreamInfo(),
+        'sample-placement': StreamInfo(overhead=1e1, opt_gen_fn=PartialInputs(unique=True)),
         'plan-push': StreamInfo(overhead=1e1, eager=True),
         'plan-pour': StreamInfo(overhead=1e1),
         'plan-pick': StreamInfo(overhead=1e1),
@@ -327,6 +316,8 @@ def create_pddlstream(
     robot = belief.robot
     # obstacles = belief.obstacles # belief.surfaces
     arms = sorted(robot.manipulators)
+    print("Num arms: "+str(arms))
+    
     surfaces = belief.known_surfaces
     table = surfaces[0]
     regions = surfaces[1:]

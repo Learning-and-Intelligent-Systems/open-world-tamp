@@ -73,6 +73,7 @@
     (Holding ?o)
     (On ?o ?s)
     (Supporting ?s)
+
     (Handoff ?a1 ?a2 ?g1 ?g2 ?o ?bq ?aq1 ?aq2 ?at1 ?at2)
     (DidHandoff ?o) ; TODO: Just for debugging, remove
 
@@ -132,8 +133,12 @@
   (:action pick
     :parameters (?a ?g ?o ?p ?bq ?aq ?at)
     :precondition (and (CanPick ?o)
+                       (not (Supporting ?o))
                        (Pick ?a ?o ?p ?g ?bq ?aq ?at)
-                       (AtPose ?o ?p) (ArmEmpty ?a) (AtConf ?a ?aq) (AtConf @base ?bq)
+                       (AtPose ?o ?p) 
+                       (ArmEmpty ?a) 
+                       (AtConf ?a ?aq) 
+                       (AtConf @base ?bq)
                        (not (UnsafePregrasp ?a ?o ?p ?g))
                        (not (UnsafeTraj ?a ?at))
                   )
@@ -255,21 +260,15 @@
     (exists (?a) (and (Arm ?a) (not (= ?j ?a))
                       (not (Resting ?a)))))
 
-  ;(:derived (ArmHolding ?a ?o)
-  ;  (exists (?g) (and (Arm ?a) (Grasp ?a ?o ?g)
-  ;                    (AtGrasp ?a ?o ?g)))
-  ;)
-  ;(:derived (Holding ?o)
-  ;  (exists (?a) (and (Arm ?a) (Graspable ?o)
-  ;                    (ArmHolding ?a ?o)))
-  ;)
   (:derived (On ?o ?s)
     (exists (?p ?sp) (and (Supported ?o ?p ?s ?sp)
                           (AtPose ?o ?p)))
   )
+
   (:derived (Supporting ?s)
-    (exists (?o) (and (Stackable ?o ?s)
-                         (On ?o ?s))))
+    (exists (?p ?sp ?o) (and (Supported ?o ?p ?s ?sp)
+                             (AtPose ?o ?p)))
+  )
 
   (:derived (UnsafePose ?o1 ?p1) (and (Pose ?o1 ?p1)
     (exists (?o2 ?p2) (and (Pose ?o2 ?p2) (not (= ?o1 ?o2)) (Movable ?o2)
@@ -285,16 +284,6 @@
     (exists (?o2 ?p2) (and (Pose ?o2 ?p2) (Movable ?o2)
                            (not (CFreeTrajPose ?j ?t ?o2 ?p2))
                            (AtPose ?o2 ?p2)))))
-
-  (:derived (AtRight ?o ?s) 
-    (exists (?p ?sp) (and (Supported ?o ?p ?s ?sp) (RegionRight ?o ?p ?s ?sp)
-                          (AtPose ?o ?p) (AtPose ?s ?sp))
-  ))
-
-  (:derived (AtLeft ?o ?s) 
-    (exists (?p ?sp) (and (Supported ?o ?p ?s ?sp) (RegionLeft ?o ?p ?s ?sp)
-                          (AtPose ?o ?p) (AtPose ?s ?sp))
-  ))
 
   ; TODO: use to simplify structure
   ;(:derived (UnsafePick ?a ?o ?p ?g ?bq ?aq ?at) (and (Pick ?a ?o ?p ?g ?bq ?aq ?at)

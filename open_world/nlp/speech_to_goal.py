@@ -13,7 +13,6 @@ def get_goal_audio():
             text = r.recognize_google(audio)
             print("You said: " + text)
             robot_goal, direct = text_to_goal(text)
-            print("Translation: " + direct)
             return robot_goal
 
         except sr.UnknownValueError:

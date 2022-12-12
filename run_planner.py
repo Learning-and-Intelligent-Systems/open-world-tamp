@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 from itertools import product
 
 import pybullet_utils.bullet_client as bc
-from pybullet_tools.pr2_utils import ARM_NAMES, LEFT_ARM
+from pybullet_tools.pr2_utils import ARM_NAMES, LEFT_ARM, RIGHT_ARM
 from pybullet_tools.utils import (load_pybullet, connect, wait_for_user)
 
 from open_world.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
@@ -207,7 +207,8 @@ def get_task(args):
     if(args.voice_interactive):
         return task_from_goal(args, get_goal_audio())
     elif(args.text_interactive):
-        return task_from_goal(args, text_to_goal(wait_for_user()))
+        goal, _ = text_to_goal(wait_for_user("Enter a command: \n"))
+        return task_from_goal(args, goal)
     else:    
         if args.goal not in problem_from_name:
             raise ValueError(args.goal)

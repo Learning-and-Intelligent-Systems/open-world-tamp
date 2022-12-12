@@ -20,18 +20,6 @@
     :domain (and (Traj ?j ?t) (Pose ?o2 ?p2))
     :certified (CFreeTrajPose ?j ?t ?o2 ?p2))
 
-  (:stream test-nominal-left
-    :inputs (?o ?p ?s ?sp)
-    :domain (and (Pose ?o ?p) (Pose ?s ?sp) (Supported ?o ?p ?s ?sp))
-    :certified (RegionLeft ?o ?p ?s ?sp)
-  )
-
-  (:stream test-nominal-right
-    :inputs (?o ?p ?s ?sp)
-    :domain (and (Pose ?o ?p) (Pose ?s ?sp) (Supported ?o ?p ?s ?sp))
-    :certified (RegionRight ?o ?p ?s ?sp)
-  )
-
   (:stream test-reachable
     :inputs (?a ?o ?p ?bq)
     :domain (and (Arm ?a) (Pose ?o ?p) (InitConf @base ?bq))

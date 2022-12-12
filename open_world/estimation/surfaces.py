@@ -279,7 +279,7 @@ def create_surface(
     return surface
 
 
-def surface_point_filter(surface, labeled_points, min_z=1e-2):
+def surface_point_filter(surface, labeled_points, min_z=1e-3):
     # from pybullet_tools.utils import is_point_on_surface
     # from trimesh.path.polygons import projected
     # import trimesh

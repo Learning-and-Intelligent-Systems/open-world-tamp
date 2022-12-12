@@ -178,8 +178,8 @@ class PR2Policy(Policy):
 
 
 class PR2Robot(Robot):
-    def __init__(self, robot_body, client=None, *args, **kwargs):
-        self.arms = ["left_arm"]
+    def __init__(self, robot_body, client=None, args=None, **kwargs):
+        self.arms = [arm + "_arm" for arm in args.arms]
         base_side = 5.0
         base_limits = -base_side * np.ones(2) / 2, +base_side * np.ones(2) / 2
         custom_limits = custom_limits_from_base_limits(
@@ -194,7 +194,7 @@ class PR2Robot(Robot):
         self.set_default_conf()
         set_gripper_friction(self, client=self.client)
 
-        if not kwargs["args"].real:
+        if not args.real:
             cameras = [
                 Camera(
                     self,
@@ -229,7 +229,6 @@ class PR2Robot(Robot):
             manipulators=manipulators,
             disabled_collisions=PR2_DISABLED_COLLISIONS,
             client=client,
-            *args,
             **kwargs
         )
 

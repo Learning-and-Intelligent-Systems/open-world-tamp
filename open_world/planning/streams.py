@@ -114,7 +114,7 @@ from open_world.simulation.entities import WORLD_BODY, ParentBody
 # from control_tools.ik.pr2_ik import get_arm_ik_generator
 # from plan_tools.samplers.generators import solve_inverse_kinematics
 
-SWITCH_BEFORE = "pregrasp"  # contact | grasp | pregrasp | arm | none # TODO: tractor
+SWITCH_BEFORE = "grasp"  # contact | grasp | pregrasp | arm | none # TODO: tractor
 BASE_COST = 1
 PROXIMITY_COST_TERM = False
 REORIENT = False
@@ -215,10 +215,6 @@ def get_grasp_candidates(robot, obj, grasp_mode="mesh", gripper_width=INF, **kwa
     if grasp_mode in LEARNED_MODES:
         [camera] = robot.cameras
         if grasp_mode == "gpd":
-            assert isinstance(obj, EstimatedObject)
-            # TODO: condition on a pose
-            # TODO: sample points on estimated mesh
-            # TODO: align grasps such that fingers make contact at the same time
             grasps_world, scores = gpd_predict_grasps(
                 obj.points, camera.get_pose(), use_tool=True
             )  # world_from_tool
@@ -410,8 +406,6 @@ def get_grasp_gen_fn(
 
 def get_test_cfree_pose_pose(obj_obj_collisions=True, **kwargs):
     def test_cfree_pose_pose(obj1, pose1, obj2, pose2):
-        if not obj_obj_collisions:
-            return True
         if (obj1 == obj2): # or (pose2 is None): # TODO: skip if in the environment
            return True
         if obj2 in pose1.ancestors():
@@ -793,17 +787,18 @@ def get_plan_mobile_detach_fn(robot, **kwargs):
     return fn
 
 
-def get_plan_pick_fn(robot, **kwargs):
+def get_plan_pick_fn(robot,  environment=[], **kwargs):
     robot_saver = BodySaver(robot, client=robot.client)
-
+    environment = environment
+    
     def fn(arm, obj, pose, grasp, base_conf):
         # TODO: generator instead of a function
         # TODO: add the ancestors as collision obstacles
         robot_saver.restore()
         base_conf.assign()
         arm_path = plan_prehensile(robot, arm, obj, pose, grasp, **kwargs)
+        
         if arm_path is None:
-            print("Arm path none")
             return None
 
         arm_group, gripper_group, tool_name = robot.manipulators[

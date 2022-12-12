@@ -13,6 +13,8 @@ from pybullet_tools.utils import (
     Saver,
     State,
     WorldSaver,
+    get_aabb,
+    get_aabb_extent,
     add_fixed_constraint,
     add_segments,
     adjust_path,
@@ -335,12 +337,13 @@ class Switch(Command):
             #    robot, finger_links, body, max_distance=1e-2)]
 
             gripper_width = robot.get_gripper_width(gripper_joints)
+            max_width = robot.get_max_gripper_width(robot.get_group_joints(gripper_group))
 
             max_distance = gripper_width / 2.0
             collision_bodies = [
                 body
                 for body in movable_bodies
-                if all(
+                if (all(
                     get_closest_points(
                         robot,
                         body,
@@ -349,7 +352,7 @@ class Switch(Command):
                         client=robot.client,
                     )
                     for link in finger_links
-                )
+                ) and all([e<=max_width for e in get_aabb_extent(get_aabb(body))]) )
             ]
 
             if len(collision_bodies) > 0:
