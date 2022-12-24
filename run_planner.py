@@ -13,7 +13,7 @@ from itertools import product
 
 import pybullet_utils.bullet_client as bc
 from pybullet_tools.pr2_utils import ARM_NAMES, LEFT_ARM, RIGHT_ARM
-from pybullet_tools.utils import (load_pybullet, connect, wait_for_user)
+from pybullet_tools.utils import (load_pybullet, connect, wait_for_user, wait_if_gui)
 
 from open_world.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
 from open_world.simulation.policy import run_policy, run_exploration_policy
@@ -239,6 +239,7 @@ def main():
         )
         done = False
         while(not done): 
+            wait_if_gui("Press enter")
             task = get_task(args)
             if(args.exploration):
                 run_exploration_policy(policy, task, real_world=real_world, client=client, \

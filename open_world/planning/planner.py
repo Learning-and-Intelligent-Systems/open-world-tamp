@@ -294,7 +294,7 @@ def create_streams(belief, obstacles=[], mobile_base = False, grasp_mode="mesh",
         # 'sample-grasp': StreamInfo(),
         # 'sample-leftof': StreamInfo(overhead=1e1, opt_gen_fn=PartialInputs(unique=True)),
         # 'sample-aheadof': StreamInfo(overhead=1e1, opt_gen_fn=PartialInputs(unique=True)),
-        'sample-placement': StreamInfo(overhead=1e1, opt_gen_fn=PartialInputs(unique=False)),
+        'sample-placement': StreamInfo(overhead=1e1, opt_gen_fn=PartialInputs(unique=True)),
 
         'plan-push': StreamInfo(overhead=1e1, eager=True),
         'plan-pour': StreamInfo(overhead=1e1),
