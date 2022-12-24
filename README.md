@@ -31,7 +31,7 @@ export PATH=/usr/local/cuda-11.4/bin:$PATH
 
 Build FastDownward:
 ```
-./pddlstream/downward/build.py
+./tamp/downward/build.py
 ```
 
 ### IKFast
