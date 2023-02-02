@@ -49,6 +49,12 @@ Make sure your submodules are up-to-date:
 git pull --recurse-submodules
 ```
 
+## Segmentation
+
+If you're looking to use the segmentation network with the `--segmentation` flag, you will need to download the pretrained UCN checkpoint from
+[here](https://drive.google.com/file/d/1O-ymMGD_qDEtYxRU19zSv17Lgg6fSinQ/view) and place the checkpoints folder in `vision_utils/ucn/data`
+
+
 ### Estimator, Planner, Controller, and Simulation:
 Command line arguments are used to specify the robot, goal, and simulated world.
 ```
