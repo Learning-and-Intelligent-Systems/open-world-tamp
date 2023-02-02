@@ -18,3 +18,4 @@ transforms3d
 SpeechRecognition
 scikit-learn
 openai
+pyyaml==5.4.1

@@ -111,7 +111,7 @@ temp_meshes/
 temp/
 statistics/
 data/images/
-data/
+run_data/
 
 vision_utils/trained_models/checkpoints.zip
 debug*

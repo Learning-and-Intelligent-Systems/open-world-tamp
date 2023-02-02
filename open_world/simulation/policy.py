@@ -132,7 +132,7 @@ class Policy(object):
         self.executions = []
 
         # TODO: could store surfaces, objects, etc.
-        self.data_folder = "data"
+        self.data_folder = "run_data"
 
         if not os.path.exists(self.data_folder):
             # Create a new directory because it does not exist
