@@ -12,9 +12,9 @@ rtree
 zmq
 matplotlib
 open3d>=0.13.0
-git+https://github.com/facebookresearch/detectron2.git
 plyfile
 prefetch_generator
 transforms3d
-pyrealsense2
 SpeechRecognition
+scikit-learn
+openai
