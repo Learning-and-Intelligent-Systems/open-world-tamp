@@ -55,7 +55,7 @@ If you're looking to use the segmentation network with the `--segmentation` flag
 [here](https://drive.google.com/file/d/1O-ymMGD_qDEtYxRU19zSv17Lgg6fSinQ/view) and place the checkpoints folder in `vision_utils/ucn/data`
 
 
-### Estimator, Planner, Controller, and Simulation:
+## Estimator, Planner, Controller, and Simulation:
 Command line arguments are used to specify the robot, goal, and simulated world.
 ```
 python run_planner.py --robot=pr2 --goal=all_green --world=problem0 -v
@@ -68,7 +68,7 @@ python run_planner.py --robot=pr2 --goal=all_green --world=problem0 -v
 
 
 
-#### Command-line arguments
+### Command-line arguments
 `--simulated` Specifies if the run is simulated or in the real-world. True by default.
 
 `--world` If simulated, this argument tells OWT how to set up the simulated world
