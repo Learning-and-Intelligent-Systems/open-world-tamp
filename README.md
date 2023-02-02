@@ -8,7 +8,7 @@
 
 Clone the repo and its submodules (may take a while due to the large amount of logged data):
 ```
-git clone git@github.mit.edu:Learning-and-Intelligent-Systems/open-world-tamp.git
+git clone git@github.com:Learning-and-Intelligent-Systems/open-world-tamp.git
 cd open-world-tamp
 git checkout stable
 git submodule update --init --recursive
