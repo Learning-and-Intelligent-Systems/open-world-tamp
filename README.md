@@ -42,14 +42,7 @@ cd pybullet_planning/pybullet_tools/ikfast/<robot-name>
 python setup.py
 ```
 
-## Development
-
-Make sure your submodules are up-to-date:
-```
-git pull --recurse-submodules
-```
-
-## Segmentation
+### Segmentation
 
 If you're looking to use the segmentation network with the `--segmentation` flag, you will need to download the pretrained UCN checkpoint from
 [here](https://drive.google.com/file/d/1O-ymMGD_qDEtYxRU19zSv17Lgg6fSinQ/view) and place the checkpoints folder in `vision_utils/ucn/data`
