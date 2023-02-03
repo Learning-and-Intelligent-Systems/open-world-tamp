@@ -881,7 +881,7 @@ def get_plan_pick_fn(robot,  environment=[], **kwargs):
 
 
 def get_plan_mobile_pick_fn(robot, max_attempts=5, **kwargs):
-    from scene_graph.drake_controller import drake_ik
+    from open_world.planning.drake.drake_controller import drake_ik
 
     robot_saver = BodySaver(robot, client=robot.client)
     pick_fn = get_plan_pick_fn(robot, **kwargs)
