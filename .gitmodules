@@ -13,15 +13,6 @@
 [submodule "grasp/gpd"] ; TODO: Replace with git@github.com:aidan-curtis/gpd_python_interface.git
 	path = grasp/gpd
 	url = https://github.com/atenpas/gpd.git
-[submodule "vision_utils/scene_seg"]
-	path = vision_utils/scene_seg
-	url = git@github.com:CSAILVision/semantic-segmentation-pytorch.git
-[submodule "vision_utils/pointnet_scene_seg"]
-	path = vision_utils/pointnet_scene_seg
-	url = https://github.com/daveredrum/Pointnet2.ScanNet
-[submodule "vision_utils/votenet"]
-	path = vision_utils/votenet
-	url = git@github.com:facebookresearch/votenet.git
 [submodule "pybullet_planning"]
 	path = pybullet_planning
 	url = https://github.com/aidan-curtis/pybullet-planning.git
