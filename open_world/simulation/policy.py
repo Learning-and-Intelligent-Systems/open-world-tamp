@@ -413,74 +413,31 @@ class Policy(object):
 
     def save_data(self):
         date_name = time.time()
+        filename = "run_{}.pkl".format(date_name)
+        path_name = os.path.join(self.data_folder, filename)
 
-        if self.args.save_format == "pkl":
-            filename = "run_{}.pkl".format(date_name)
-            path_name = os.path.join(self.data_folder, filename)
+        # TODO: KeyboardInterrupt if the event that I kill it
+        data = {
+            "args": self.args,
+            "runtimes": self.runtimes,
+            "observations": self.observations,
+            "estimates": self.estimates,
+            "renders": self.renders,
+            "plans": self.plans,
+            "executions": self.executions,
+        }
+        self.data.append(data)
 
-            # TODO: KeyboardInterrupt if the event that I kill it
-            data = {
-                "args": self.args,
-                "runtimes": self.runtimes,
-                "observations": self.observations,
-                "estimates": self.estimates,
-                "renders": self.renders,
-                "plans": self.plans,
-                "executions": self.executions,
-            }
-            self.data.append(data)
-
-            # data = self.data # Save the history of data
-            write_pickle(path_name, data)
-
-
-        elif self.args.save_format == "lisdf":
-            from lisdf.planner_output.plan import LISDFPlan
-            filename = "run_{}.json".format(date_name)
-            path_name = os.path.join(self.data_folder, filename)
-            action_sequence = post_process(self.plans[0]['plan'])
-            lisdf_commands = action_sequence.to_lisdf()
-            lisdf_plan = LISDFPlan(lisdf_path="lisdf/lisdf-models/models/m0m", version="0.1", commands=lisdf_commands)
-            plan_json = lisdf_plan.to_json()
-            json_file = open(path_name, "w")
-            json_file.write(plan_json)
-            json_file.close()
+        write_pickle(path_name, data)
             
         print("Saved data to {}".format(path_name))
-
-
-        
-
-##################################################
-
-
-def run_observer(policy, task, num_iterations=INF):
-    start_time = time.time()
-    policy.reset_robot()
-    for iteration in irange(num_iterations):  # TODO: max time?
-        policy.estimate_state(task)
-        response = user_input(
-            "Iteration: {} | Time: {:.3f} | Save: ".format(
-                iteration, elapsed_time(start_time)
-            )
-        )
-        if response == "q":
-            break
-        if response == "n":
-            continue
-        policy.save_data()
-    return policy.data
-
 
 def run_policy(
     policy,
     task,
     num_iterations=INF,
     always_save=True,
-    always_reset=GRASP_EXPERIMENT,
     terminate=not GRASP_EXPERIMENT,
-    preview=True,
-    real_world=None,
     client=None,
     **kwargs
 ):

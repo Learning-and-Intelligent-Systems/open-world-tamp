@@ -25,9 +25,6 @@
 [submodule "pybullet_planning"]
 	path = pybullet_planning
 	url = https://github.com/aidan-curtis/pybullet-planning.git
-[submodule "lisdf_code"]
-	path = lisdf_code
-	url = git@github.com:Learning-and-Intelligent-Systems/lisdf.git
 [submodule "tamp"]
 	path = tamp
 	url = https://github.com/aidan-curtis/pddlstream

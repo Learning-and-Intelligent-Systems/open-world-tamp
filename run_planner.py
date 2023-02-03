@@ -78,14 +78,6 @@ def create_parser():
         action="store_true",
         help="Saves the RGD, depth, and segmented images.",
     )
-    parser.add_argument(
-        "-sf",
-        "--save-format",
-        type=str,
-        default="pkl",
-        choices=["pkl", "lisdf"],
-        help="The format in which to save the output of the planner",
-    )
 
     parser.add_argument(
         "-v", "--viewer", action="store_true", help="Enables the PyBullet viewer."
