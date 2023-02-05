@@ -22,7 +22,6 @@ from pybullet_tools.utils import (
 class MovoController(Controller):
     def __init__(self, robot, verbose=True, **kwargs):
         self.robot = robot
-        self.args=args
         super(MovoController, self).__init__(self.robot)
 
     def simulate_trajectory(self, positions, joint_names):
