@@ -1,6 +1,6 @@
 import random
 
-from pybullet_tools.utils import (GREEN, LockRenderer, create_cylinder, joints_from_names,
+from pybullet_tools.utils import (GREEN, LockRenderer, create_cylinder,
                                                     set_joint_positions, joint_from_name,
                                                     Point, Pose, Euler,
                                                     set_pose, create_box, TAN, get_link_pose,
@@ -12,12 +12,11 @@ from pybullet_tools.utils import (GREEN, LockRenderer, create_cylinder, joints_f
                                                     aabb_union, aabb_overlap, scale_aabb, get_aabb_center,
                                                     draw_aabb, aabb_intersection, get_joint_positions,
                                                     get_aabb_volume, load_model, get_link_names, 
-                                                    get_all_links, BLACK, wait_for_user)
+                                                    get_all_links, BLACK)
 from pybullet_tools.voxels import (VoxelGrid)
 from open_world.exploration.utils_graph import Graph
-from open_world.exploration.utils_motion_planning_interface import DEFAULT_JOINTS, LEFT_ATTACH_CONF, RIGHT_ATTACH_CONF, \
-    LEFT_ARM_JOINT_NAMES, RIGHT_ARM_JOINT_NAMES
-from open_world.exploration.utils import iterate_point_cloud, save_camera_images
+from open_world.exploration.utils_motion_planning_interface import DEFAULT_JOINTS
+from open_world.exploration.utils import iterate_point_cloud
 import pybullet as p
 import os
 import numpy as np
@@ -71,11 +70,12 @@ def suppress_stdout():
 
 class Environment(ABC):
 
-    def __init__(self, vis=True, debug=False, save_dir = False):
+    def __init__(self, vis=True, debug=False, save_dir = False, client=None):
         self.vis = vis
         self.push_only = []
         self.debug = debug
         self.save_dir = save_dir
+        self.client=client
 
     def restrict_configuration(self, G):
         return
@@ -95,7 +95,7 @@ class Environment(ABC):
         # TODO change how intersections with walls are found, right now it
         # finds collisions easily because of how we check the collisions with the voxels
         for wall in self.room.walls:
-            for voxel in self.occupancy_grid.voxels_from_aabb(scale_aabb(get_aabb(wall), 0.98)):
+            for voxel in self.occupancy_grid.voxels_from_aabb(scale_aabb(get_aabb(wall, client=self.client), 0.98)):
                 self.occupancy_grid.set_occupied(voxel)
 
         for q, attachment in plan:
@@ -294,7 +294,7 @@ class Environment(ABC):
                     vox_aabb = AABB(lower=vox_aabb[0] + np.ones(3) * 0.01,
                                     upper=vox_aabb[1] - np.ones(3) * 0.01)
                     for elem in self.room.walls + self.objects:
-                        obj_aabb = get_aabb(elem)
+                        obj_aabb = get_aabb(elem, client=self.client)
                         if aabb_overlap(obj_aabb, vox_aabb):
                             voxels.add(voxel)
                             flag = True
@@ -354,10 +354,10 @@ class Environment(ABC):
         # Defines two grids, one for visualization, and a second one for keeping track of regions during
         # planning.
         grid = VoxelGrid(
-            resolutions, world_from_grid=surface_origin, aabb=surface_aabb, color=BLUE
+            resolutions, world_from_grid=surface_origin, aabb=surface_aabb, color=BLUE, client=self.client
         )
         static_grid = VoxelGrid(
-            resolutions, world_from_grid=surface_origin, aabb=surface_aabb, color=BLACK
+            resolutions, world_from_grid=surface_origin, aabb=surface_aabb, color=BLACK, client=self.client
         )
         for voxel in grid.voxels_from_aabb(surface_aabb):
             grid.set_occupied(voxel)
@@ -695,7 +695,7 @@ class Environment(ABC):
         # Check whether the object is push only, and handle it accordingly.
         obj = None
         for obj in self.objects:
-            if aabb_contains_point(get_aabb_center(movable_object.aabb), get_aabb(obj)):
+            if aabb_contains_point(get_aabb_center(movable_object.aabb), get_aabb(obj, client=self.client)):
                 break
 
         # TODO: Only sampling as if push, just to make the process of moving easier. Change later if needed
@@ -758,7 +758,7 @@ class Environment(ABC):
         # Look for which object the oobb corresponds to in the environment.
         obj = None
         for obj in self.objects:
-            if aabb_contains_point(get_aabb_center(coll_obj.aabb), get_aabb(obj)):
+            if aabb_contains_point(get_aabb_center(coll_obj.aabb), get_aabb(obj, client=self.client)):
                 break
         # If the object can only be pushed then restrict its possible placements
         if obj in self.push_only:
@@ -778,7 +778,7 @@ class Environment(ABC):
         while not good:
             rand_q = G.rand_vex(self)
             # TODO: Get rid of restricting to floor 1. It just makes search faster for these envs.
-            if not aabb_contains_point(list(rand_q[:2]) + [0], get_aabb(self.room.floors[0])):
+            if not aabb_contains_point(list(rand_q[:2]) + [0], get_aabb(self.room.floors[0], client=self.client)):
                 continue
 
             aabb = self.movable_object_oobb_from_q(coll_obj, rand_q, base_grasp).aabb
@@ -911,14 +911,14 @@ class Environment(ABC):
             attachment (list): A list of an attached object's oobb, its attachment grasp, and the
                                 object's code in the environment.
         """
-        set_joint_positions(self.robot, joints, q)
+        set_joint_positions(self.robot, joints, q, client=self.client)
         if attachment is not None:
             robot_pose = Pose(
                 point=Point(x=q[0], y=q[1]),
                 euler=Euler(yaw=q[2]),
             )
             obj_pose = multiply(robot_pose, attachment[1])
-            set_pose(attachment[2], obj_pose)
+            set_pose(attachment[2], obj_pose, client=self.client)
 
     def update_vision_from_voxels(self, voxels):
         """
@@ -1155,7 +1155,7 @@ class Environment(ABC):
         surface_origin = Pose(Point(z=0.01))
         surface_aabb = self.room.aabb
         grid = VoxelGrid(
-            resolutions, world_from_grid=surface_origin, aabb=surface_aabb, color=RED
+            resolutions, world_from_grid=surface_origin, aabb=surface_aabb, color=RED, client=self.client
         )
         self.occupancy_grid = grid
 
@@ -1172,8 +1172,8 @@ class Environment(ABC):
         Args:
             robot (int): The id of the robot object in the environment.
         """
-        joints, values = zip(*[(joint_from_name(robot, k), v) for k, v in DEFAULT_JOINTS.items()])
-        set_joint_positions(robot, joints, values)
+        joints, values = zip(*[(joint_from_name(robot, k, client=self.client), v) for k, v in DEFAULT_JOINTS.items()])
+        set_joint_positions(robot, joints, values, client=self.client)
 
     def setup_robot(self):
         """
@@ -1181,7 +1181,7 @@ class Environment(ABC):
         """
         MOVO_URDF = "models/srl/movo_description/movo_robotiq_collision.urdf"
         MOVO_PATH = os.path.abspath(MOVO_URDF)
-        robot_body = load_pybullet(MOVO_PATH, fixed_base=True, scale=1.15)
+        robot_body = load_pybullet(MOVO_PATH, fixed_base=True, scale=1.15, client=self.client)
 
         self.set_defaults(robot_body)
 
@@ -1204,7 +1204,7 @@ class Environment(ABC):
         """
         movable_handles = []
         with suppress_stdout():
-            with LockRenderer():
+            with LockRenderer(client=self.client):
                 p.removeAllUserDebugItems()
                 if visibility:
                     self.visibility_grid.draw_intervals()
@@ -1224,10 +1224,10 @@ class Environment(ABC):
         """
 
         # 13 is the link of the optical frame of the rgb camera
-        camera_link = link_from_name(self.robot, "kinect2_rgb_optical_frame")
-        camera_pose = get_link_pose(self.robot, camera_link)
+        camera_link = link_from_name(self.robot, "kinect2_rgb_optical_frame", client=self.client)
+        camera_pose = get_link_pose(self.robot, camera_link, client=self.client)
 
-        camera_image = get_image_at_pose(camera_pose, CAMERA_MATRIX, far=FAR, segment=True)
+        camera_image = get_image_at_pose(camera_pose, CAMERA_MATRIX, far=FAR, segment=True, client=self.client)
 
         return camera_pose, camera_image
 
@@ -1258,7 +1258,7 @@ class Environment(ABC):
             GOAL_RADIUS = 0.4
             GOAL_HEIGHT = 4
             goal_pole = create_cylinder(GOAL_RADIUS, GOAL_HEIGHT, color=RGBA(0, 0.9, 0, 0.4))
-            set_pose(goal_pole, Pose(Point(x=goal[0], y=goal[1], z=-GOAL_HEIGHT/2.0+0.1)))
+            set_pose(goal_pole, Pose(Point(x=goal[0], y=goal[1], z=-GOAL_HEIGHT/2.0+0.1)), client=self.client)
             return goal_pole
 
     def create_closed_room(self, length, width, center=[0, 0], wall_height=2, movable_obstacles=[]):
@@ -1276,21 +1276,21 @@ class Environment(ABC):
         """
 
         floor = self.create_pillar(width=width, length=length, color=TAN)
-        set_pose(floor, Pose(Point(x=center[0], y=center[1])))
+        set_pose(floor, Pose(Point(x=center[0], y=center[1])), client=self.client)
 
         wall_thickness = 0.1
         wall_1 = self.create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY)
         set_pose(wall_1,
-                 Pose(point=Point(x=center[0], y=center[1] + length / 2 + wall_thickness / 2, z=wall_height / 2)))
+                 Pose(point=Point(x=center[0], y=center[1] + length / 2 + wall_thickness / 2, z=wall_height / 2)), client=self.client)
         wall_2 = self.create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY)
         set_pose(wall_2,
-                 Pose(point=Point(x=center[0], y=center[1] - (length / 2 + wall_thickness / 2), z=wall_height / 2)))
+                 Pose(point=Point(x=center[0], y=center[1] - (length / 2 + wall_thickness / 2), z=wall_height / 2)), client=self.client)
         wall_3 = self.create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY)
         set_pose(wall_3,
-                 Pose(point=Point(y=center[1], x=center[0] + width / 2 + wall_thickness / 2, z=wall_height / 2)))
+                 Pose(point=Point(y=center[1], x=center[0] + width / 2 + wall_thickness / 2, z=wall_height / 2)), client=self.client)
         wall_4 = self.create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY)
         set_pose(wall_4,
-                 Pose(point=Point(y=center[1], x=center[0] - (width / 2 + wall_thickness / 2), z=wall_height / 2)))
+                 Pose(point=Point(y=center[1], x=center[0] - (width / 2 + wall_thickness / 2), z=wall_height / 2)), client=self.client)
         aabb = AABB(lower=(center[0] - width / 2.0, center[1] - length / 2.0, 0.05),
                     upper=(center[0] + width / 2.0, center[1] + length / 2.0, 0 + GRID_HEIGHT))
         return Room([wall_1, wall_2, wall_3, wall_4], [floor], aabb, movable_obstacles)
@@ -1317,7 +1317,7 @@ class Environment(ABC):
             The centered aabb.
         """
         # TODO: Using the base aabb for simplicity. Change later
-        centered_aabb, _ = recenter_oobb((get_aabb(self.robot, link=4), Pose()))
+        centered_aabb, _ = recenter_oobb((get_aabb(self.robot, link=4, client=self.client), Pose()))
         centered_aabb.lower[2] += centered_aabb.upper[2]
         centered_aabb.upper[2] += centered_aabb.upper[2]
         # Uncmmment these lines if you want the aabb to account for rotations.
@@ -1334,7 +1334,7 @@ class Environment(ABC):
             The centered oobb.
         """
         # TODO: Using the base aabb for simplicity. Change later
-        aabb = get_aabb(self.robot, link=4)
+        aabb = get_aabb(self.robot, link=4, client=self.client)
         centered_aabb, pose = recenter_oobb((aabb, Pose()))
         return OOBB(centered_aabb, pose)
 

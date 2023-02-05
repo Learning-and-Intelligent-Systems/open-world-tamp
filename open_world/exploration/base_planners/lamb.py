@@ -17,11 +17,12 @@ USE_COST = True
 
 
 class Lamb(Planner):
-    def __init__(self, env):
+    def __init__(self, env, client=None):
         # Sets up the environment and necessary data structures for the planner
         super(Lamb, self).__init__()
 
         self.env = env
+        self.client=client
 
         # Initializes a graph that contains the available movements
         self.G = Graph()
@@ -31,9 +32,9 @@ class Lamb(Planner):
         self.env.setup_default_vision(self.G)
 
         # Specific joints to move the robot in simulation
-        self.joints = [joint_from_name(self.env.robot, "x"),
-                       joint_from_name(self.env.robot, "y"),
-                       joint_from_name(self.env.robot, "theta")]
+        self.joints = [joint_from_name(self.env.robot, "x", client=client),
+                       joint_from_name(self.env.robot, "y", client=client),
+                       joint_from_name(self.env.robot, "theta", client=client)]
 
         # Structure used to save voxels that cannot be accessed by the robot, hence occupied
         self.occupied_voxels = dict()
@@ -81,11 +82,10 @@ class Lamb(Planner):
             #     for voxel in self.env.occupancy_grid.voxels_from_aabb(scale_aabb(get_aabb(wall), 0.98)):
             #         self.env.occupancy_grid.set_occupied(voxel)
 
-            set_joint_positions(self.env.robot, self.joints, self.current_q)
+            set_joint_positions(self.env.robot, self.joints, self.current_q, client=self.client)
             for i, obj in enumerate(self.env.room.movable_obstacles):
                 set_pose(obj, self.object_poses[i])
             self.env.plot_grids(True, True, True)
-            print("State loaded")
 
 
 

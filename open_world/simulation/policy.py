@@ -451,7 +451,7 @@ class Policy(object):
         base_planner = None,
         **kwargs
     ):
-        env = Environment()
+        env = Environment(client=self.client)
         # From init of simple navigation
         env.start = (0, 0, 0)
         env.goal = (0, 0, np.pi*2.0-np.pi/2.0)  # TODO: Create separate class for configuration space
@@ -474,11 +474,12 @@ class Policy(object):
         env.goal = (2.2, 1, env.goal[2])
         env.initialized = True
 
-        with LockRenderer():
+        with LockRenderer(client=self.client):
             env.set_defaults(self.robot.body, client=client)
             env.objects += real_world.room.movable_obstacles
             env.camera_pose = get_link_pose(self.robot.body,
-                                            link_from_name(self.robot.body, "kinect2_rgb_optical_frame"))
+                                            link_from_name(self.robot.body, "kinect2_rgb_optical_frame", client=client),
+                                            client=self.client)
 
             env.joints = [joint_from_name(self.robot.body, "x", client=client),
                         joint_from_name(self.robot.body, "y", client=client),
@@ -495,12 +496,12 @@ class Policy(object):
                 env.randomize_env()
             env.display_goal(env.goal)
 
-            env.joints = [joint_from_name(env.robot, "x"),
-                        joint_from_name(env.robot, "y"),
-                        joint_from_name(env.robot, "theta")]
-            set_joint_positions(env.robot, env.joints, env.start)
+            env.joints = [joint_from_name(env.robot, "x", client=client),
+                        joint_from_name(env.robot, "y", client=client),
+                        joint_from_name(env.robot, "theta", client=client)]
+            set_joint_positions(env.robot, env.joints, env.start, client=client)
 
-        planner = base_planner(env)
+        planner = base_planner(env, client=client)
         plan = planner.get_plan(loadfile=None)
         
         p.removeAllUserDebugItems()

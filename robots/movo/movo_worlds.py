@@ -138,7 +138,7 @@ def red_block_mobile(args, robot, vg=None, **kwargs):
 
 
 def vanamo_m0m_chair(args, robot, **kwargs):
-    return vanamo_m0m(args, robot, has_blocking_chair=True, **kwargs)
+    return vanamo_m0m(robot, has_blocking_chair=True, **kwargs)
 
 def vanamo_m0m(robot, has_blocking_chair=False, **kwargs):
     width = 4
@@ -146,29 +146,29 @@ def vanamo_m0m(robot, has_blocking_chair=False, **kwargs):
     wall_height = 2
     center = [1, 2]
 
-    floor1 = create_pillar(width=width, length=length, color=TAN)
-    set_pose(floor1, Pose(Point(x=center[0], y=center[1])))
+    floor1 = create_pillar(width=width, length=length, color=TAN, **kwargs)
+    set_pose(floor1, Pose(Point(x=center[0], y=center[1])), **kwargs)
 
     wall_thickness = 0.1
-    wall_1 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY)
+    wall_1 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
     set_pose(wall_1,
-                Pose(point=Point(x=center[0], y=center[1] + length / 2 + wall_thickness / 2, z=wall_height / 2)))
+                Pose(point=Point(x=center[0], y=center[1] + length / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
 
-    wall_2 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY)
+    wall_2 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
     set_pose(wall_2,
-                Pose(point=Point(x=center[0], y=center[1] - (length / 2 + wall_thickness / 2), z=wall_height / 2)))
+                Pose(point=Point(x=center[0], y=center[1] - (length / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
 
-    wall_3 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY)
+    wall_3 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
     set_pose(wall_3,
-                Pose(point=Point(y=center[1], x=center[0] + width / 2 + wall_thickness / 2, z=wall_height / 2)))
+                Pose(point=Point(y=center[1], x=center[0] + width / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
 
-    wall_4 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY)
+    wall_4 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
     set_pose(wall_4,
-                Pose(point=Point(y=center[1], x=center[0] - (width / 2 + wall_thickness / 2), z=wall_height / 2)))
+                Pose(point=Point(y=center[1], x=center[0] - (width / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
 
-    wall_5 = create_pillar(length=4.4, width=wall_thickness, height=wall_height, color=LIGHT_GREY)
+    wall_5 = create_pillar(length=4.4, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
     set_pose(wall_5,
-                Pose(point=Point(y=1.2, x=1.2, z=wall_height / 2)))
+                Pose(point=Point(y=1.2, x=1.2, z=wall_height / 2)), **kwargs)
 
     walls = [wall_1, wall_2, wall_3, wall_4, wall_5]
     floors = [floor1]
@@ -177,18 +177,16 @@ def vanamo_m0m(robot, has_blocking_chair=False, **kwargs):
 
     movable_obstacles = []
     if(has_blocking_chair):
-        blocking_chair1 = load_model(
-                "../models/partnet_mobility/179/mobility.urdf", scale=0.5
-        )
+        blocking_chair1 = load_model("../models/partnet_mobility/179/mobility.urdf", scale=0.5, **kwargs)
         chair_color = (0.8,0.8,0,1)
-        link_names = get_link_names(blocking_chair1, get_all_links(blocking_chair1))
-        set_joint_position(blocking_chair1, 17, math.pi)
+        link_names = get_link_names(blocking_chair1, get_all_links(blocking_chair1, **kwargs), **kwargs)
+        set_joint_position(blocking_chair1, 17, math.pi, **kwargs)
 
-        p.changeVisualShape(blocking_chair1, link_names.index("link_15"), rgbaColor=chair_color)
-        p.changeVisualShape(blocking_chair1, link_names.index("link_15_helper"), rgbaColor=chair_color)
+        kwargs["client"].changeVisualShape(blocking_chair1, link_names.index("link_15"), rgbaColor=chair_color)
+        kwargs["client"].changeVisualShape(blocking_chair1, link_names.index("link_15_helper"), rgbaColor=chair_color)
         
         chair_pos1 = (1.4, 4.3, 0.42)
-        set_pose(blocking_chair1, Pose(point=Point(x=chair_pos1[0], y=chair_pos1[1], z=chair_pos1[2])))
+        set_pose(blocking_chair1, Pose(point=Point(x=chair_pos1[0], y=chair_pos1[1], z=chair_pos1[2])), **kwargs)
 
         movable_obstacles = [blocking_chair1]
         print("Movable obstacles: "+str(movable_obstacles))
@@ -269,6 +267,7 @@ def namo(args, robot, random_widths=False, **kwargs):
                         movability_prior(block_width, mean_width=mean_box_width)
                     ],
                     mass=box_mass,
+                    **kwargs
                 )
             )
             set_pose(
@@ -279,14 +278,13 @@ def namo(args, robot, random_widths=False, **kwargs):
                         y=-floor_size / 2 + total_width + spacing + block_width / 2,
                         z=block_width / 2.0,
                     )
-                ),
+                ), **kwargs
             )
 
             total_width += block_width
             total_width += spacing
             blocking_boxes.append(blocking_box)
             width_list.append(block_width)
-        print(width_list)
     else:
         width_list = [
             0.35954404643140534,
