@@ -1,0 +1,27 @@
+directives:
+- add_model:
+    name: pr2
+    file: package://drake/manipulation/models/franka_description/urdf/panda_arm_hand.urdf
+- add_model:
+    name: potted_meat
+    file: package://drake/manipulation/models/ycb/sdf/010_potted_meat_can.sdf
+    default_free_body_pose:
+        base_link_meat:
+            translation: [0.5, -0.5, 0.03]
+            rotation: !Rpy { deg: [-90, 0, 0] }
+- add_model:
+    name: floor
+    file: package://open-world-tamp/models/misc/short_floor.urdf
+- add_weld:
+    parent: world
+    child: floor::base_link
+    X_PC:
+        translation: [0, 0, -0.04]
+- add_model:
+    name: pillar
+    file: package://open-world-tamp/models/misc/green_pillar.urdf
+- add_weld:
+    parent: world
+    child: pillar::base_link
+    X_PC:
+        translation: [0.5, 0, -0.02]

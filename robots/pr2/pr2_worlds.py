@@ -25,6 +25,9 @@ from pybullet_tools.utils import (
     enable_gravity,
     disable_gravity
 )
+from pydrake.all import (
+    RobotDiagramBuilder
+)
 import random
 
 from open_world.simulation.entities import RealWorld

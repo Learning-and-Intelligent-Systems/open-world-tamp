@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 from __future__ import print_function
+import os
+import pathlib
 import sys
 import argparse
 import warnings
@@ -14,6 +16,8 @@ from itertools import product
 import pybullet_utils.bullet_client as bc
 from pybullet_tools.pr2_utils import ARM_NAMES, LEFT_ARM, RIGHT_ARM
 from pybullet_tools.utils import (load_pybullet, connect, wait_for_user, wait_if_gui)
+
+from pydrake.all import RobotDiagramBuilder, FindResourceOrThrow, StartMeshcat, MeshcatVisualizer
 
 from open_world.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
 from open_world.simulation.policy import run_policy, run_exploration_policy
@@ -42,6 +46,8 @@ SHAPE_MODELS = ["msn", "atlas"]
 robot_paths = {"pr2": PR2_PATH, "panda": PANDA_PATH, "movo": MOVO_PATH}
 robot_policies = {"pr2": PR2Policy, "panda": PandaPolicy, "movo": MovoPolicy}
 robot_entities = {"pr2": PR2Robot, "panda": PandaRobot, "movo": MovoRobot}
+
+meshcat = StartMeshcat()
 
 robot_simulated_worlds = {
     "pr2": pr2_world_from_problem,
@@ -189,6 +195,19 @@ def create_parser():
     return parser
 
 
+def setup_pydrake(args):
+    directives = f'robots/{args.robot}/{args.world}.dmd.yaml'
+    if not os.path.exists(directives):
+        print('This robot/world combination is not supported in Drake yet')
+        return None
+    builder = RobotDiagramBuilder(time_step=0.001)
+    builder.parser().package_map().AddPackageXml(
+        f"{pathlib.Path(__file__).parent.resolve()}/package.xml")
+    builder.parser().AddModels(directives)
+    MeshcatVisualizer.AddToBuilder(builder.builder(), builder.scene_graph(),
+                                   meshcat)
+    return builder.BuildDiagram()
+
 def setup_robot_pybullet(args):
     connect(use_gui=args.viewer)
     robot_body = load_pybullet(robot_paths[args.robot], fixed_base=True, client=None)
@@ -218,6 +237,11 @@ def main():
 
     # Create the robot
     robot_body, client = setup_robot_pybullet(args)
+    drake_diagram = setup_pydrake(args)
+    if drake_diagram:
+        # Just draw the scene once (for now)
+        context = drake_diagram.CreateDefaultContext()
+        drake_diagram.ForcedPublish(context)
 
     robot = robot_entities[args.robot](robot_body, client=client, args=args)
 

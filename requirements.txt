@@ -1,6 +1,7 @@
 numpy
 scipy
 pybullet
+drake
 trimesh
 torch
 torchvision
