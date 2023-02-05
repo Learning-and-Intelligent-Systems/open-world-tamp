@@ -73,8 +73,11 @@ from pybullet_tools.utils import (
     pixel_from_ray,
     invert,
     multiply,
-    dimensions_from_camera_matrix
+    dimensions_from_camera_matrix, 
+    joint_from_name, 
+    set_joint_position
 )
+
 
 # from open_world.simulation.utils import get_color
 from open_world.simulation.utils import get_rigid_ancestor
@@ -569,12 +572,20 @@ class Robot(Object):
         self.joint_resolutions = dict(joint_resolutions)
         self.components = {}  # grippers
 
+
+    def update_conf(self, client=None, **kwargs):
+        conf = dict(self.controller.joint_positions)
+        for name, position in conf.items():
+            joint = joint_from_name(self, name, client=client)  # TODO: do in batch
+            set_joint_position(self, joint, position, client=client)
+        return conf
+
     def get_relative_pose(self, link1, link2=BASE_LINK):
         world_from_link1 = self.get_link_pose(link1)
         world_from_link2 = self.get_link_pose(link2)
         link2_from_link1 = multiply(invert(world_from_link2), world_from_link1)
         return link2_from_link1
-
+    
     @property
     def default_mobile_base_arm(self):
         return COMPACT_LEFT_ARM

@@ -22,13 +22,14 @@ from pybullet_tools.utils import (
     sample_directed_reachable_base
 )
 
-from robots.movo.movo_controller import MovoController, SimulatedMovoController
+from robots.movo.movo_controller import MovoController
+from open_world.simulation.controller import SimulatedController
+
 from robots.movo.movo_sender import get_color_image, get_depth_image, get_pointcloud
 from open_world.planning.primitives import GroupConf
 from open_world.planning.streams import get_plan_motion_fn
 from open_world.simulation.entities import Camera, Manipulator, Robot
 from open_world.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
-from open_world.simulation.policy import Policy
 
 #######  pr2_problems  ########
 
@@ -290,9 +291,12 @@ RIGHT_ATTACH_CONF = [-0.021811289327748895, -0.5591495793058756, 0.0951528316014
 LEFT_ATTACH_CONF = [-0.2760957691629127, 0.5009078441624968, 0.2956304885223213, 1.2349056669408707, -0.012336294801464476, -0.3835782875974208, 1.7257314490066005]
 
 class MovoRobot(Robot):
-    def __init__(self, robot_body, client=None, *args, **kwargs):
+    def __init__(self, robot_body, client=None, real_execute=False, real_camera=False, arms = ["right_arm"], **kwargs):
+
+        self.real_execute = real_execute
+        self.real_camera = real_camera
         self.body = robot_body
-        self.arms = ["right_arm"]
+        self.arms = arms
         self.client = client
 
         self.CAMERA_OPTICAL_FRAME = "kinect2_rgb_optical_frame"
@@ -304,7 +308,7 @@ class MovoRobot(Robot):
             for arm in self.arms
         }
 
-        if "args" in kwargs.keys() and not kwargs["args"].real:
+        if not real_camera:
             cameras = [
                 Camera(
                     self,
@@ -323,6 +327,12 @@ class MovoRobot(Robot):
 
 
         self.command_joint_groups = COMMAND_MOVO_GROUPS
+
+        if not self.real_execute:
+            self.controller = SimulatedController(self.robot, client=self.client)
+        else:
+            self.controller =  MovoController(self.args, self.robot, client=self.client)
+
         super(MovoRobot, self).__init__(
             robot_body,
             joint_groups=MOVO_GROUPS,
@@ -331,9 +341,9 @@ class MovoRobot(Robot):
             cameras=cameras,
             disabled_collisions=MOVO_DISABLED_COLLISIONS,
             client=client,
-            *args,
             **kwargs
         )
+
         self.min_z = 0.0
         self.intrinsics = np.asarray(KINECT_INTRINSICS).reshape(3, 3)
         self.max_depth = 3.0
@@ -448,15 +458,12 @@ class MovoRobot(Robot):
             )
             and "tip" in link_names[linki]
         ]
-        # for link in finger_links:
-        #     set_color(robot, BLUE, link=link)
         if len(finger_links) != 2:
             raise RuntimeError(finger_links)
         return finger_links
 
     def get_group_limits(self, group):
         if group == "right_gripper":
-            # the right gripper only has one actually controllable joint
             group_joints = self.get_group_joints(group)
             group_joint_min = [
                 MOVO_CLOSED_CONF[j]
@@ -475,7 +482,6 @@ class MovoRobot(Robot):
         return pointcloud_data
 
     def get_parent_from_tool(self, manipulator):
-        _, gripper_group, _ = self.manipulators[manipulator]
         tool_link = self.get_tool_link(manipulator)
         parent_link = link_from_name(self, "right_wrist_3_link", client=self.client)
         return get_relative_pose(self.robot, tool_link, parent_link, client=self.client)
@@ -484,46 +490,30 @@ class MovoRobot(Robot):
     def base_link(self):
         return link_from_name(self.robot, BASE_LINK, client=self.client)
 
-
-class MovoPolicy(Policy):
-    def __init__(self, args, robot, client=None, **kwargs):
-
-        self.args = args
-        self.robot = robot
-        self.client = client
-
-        super(MovoPolicy, self).__init__(args, robot, client=client, **kwargs)
-
-    def reset_robot(self, **kwargs):
-        conf = self.robot.get_default_conf(**kwargs)
+    def reset(self, **kwargs):
+        conf = self.get_default_conf(**kwargs)
         for group, positions in conf.items():
-            if self.args.real:
+            if self.real_execute:
                 new = [pos for pos, name in zip(positions, MOVO_GROUPS[group])]
                 if "arm" in group:
-                    motion_gen = get_plan_motion_fn(self.robot)
+                    motion_gen = get_plan_motion_fn(self)
                     current = [
-                        get_joint_position(self.robot, joint_from_name(self.robot, j))
+                        get_joint_position(self, joint_from_name(self, j))
                         for j in MOVO_GROUPS[group]
                     ]
-                    q1 = GroupConf(self.robot, group, positions=current)
-                    q2 = GroupConf(self.robot, group, positions=new)
+                    q1 = GroupConf(self, group, positions=current)
+                    q2 = GroupConf(self, group, positions=new)
                     (traj,) = motion_gen(group, q1, q2)
                     path = traj.commands[0].path
                     self.controller.command_group_trajectory(
                         group, path, [], dt=0
                     )
-                        # p.stepSimulation()
                 else:
-                    # self.controller.command_group(group, new)
                     self.controller.command_group_dict(
                         group,
                         {name: pos for pos, name in zip(positions, MOVO_GROUPS[group])},
                     )
             else:
-                self.robot.set_group_positions(group, positions)
+                self.set_group_positions(group, positions)
 
-    def make_controller(self):
-        if not self.args.real:
-            return SimulatedMovoController(self.robot, client=self.client)
-        else:
-            return MovoController(self.args, self.robot, client=self.client)
+

@@ -6,8 +6,9 @@ from pybullet_tools.ikfast.utils import IKFastInfo
 from pybullet_tools.utils import link_from_name
 from open_world.simulation.entities import Camera, Manipulator, Robot
 from open_world.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
-from open_world.simulation.policy import Policy
-from robots.panda.panda_controller import PandaController, SimulatedPandaController
+from robots.panda.panda_controller import PandaController
+from open_world.simulation.controller import SimulatedController
+
 
 CAMERA_FRAME = "camera_frame"
 CAMERA_OPTICAL_FRAME = "camera_frame"
@@ -21,12 +22,14 @@ PANDA_PATH = os.path.abspath("models/srl/franka_description/robots/panda_arm_han
 
 
 class PandaRobot(Robot):
-    def __init__(self, robot_body, link_names={}, client=None, *args, **kwargs):
+    def __init__(self, robot_body, link_names={}, client=None, real_camera=False, real_execute=False, arms = ["main_arm"], **kwargs):
 
         self.link_names = link_names
         self.body = robot_body
         self.client = client
-        self.arms = ["main_arm"]
+        self.arms = arms
+        self.real_camera = real_camera
+        self.real_execute = real_execute
 
         PANDA_GROUPS = {
             "base": [],
@@ -35,7 +38,7 @@ class PandaRobot(Robot):
         }
 
         PANDA_TOOL_FRAMES = {
-            "main_arm": "panda_tool_tip",  # l_gripper_palm_link | l_gripper_tool_frame
+            "main_arm": "panda_tool_tip", 
         }
 
         panda_manipulators = {
@@ -46,7 +49,7 @@ class PandaRobot(Robot):
         }
         panda_ik_infos = {side_from_arm(arm): PANDA_INFO for arm in self.arms}
 
-        if not kwargs["args"].real:
+        if not real_camera:
             cameras = [
                 Camera(
                     self,
@@ -61,6 +64,11 @@ class PandaRobot(Robot):
         else:
             cameras = []
 
+        if not self.real_execute:
+            self.controller = SimulatedController(self.robot, client=self.client)
+        else:
+            self.controller = PandaController(self.robot, client=self.client)
+
         super(PandaRobot, self).__init__(
             robot_body,
             ik_info=panda_ik_infos,
@@ -69,13 +77,13 @@ class PandaRobot(Robot):
             joint_groups=PANDA_GROUPS,
             link_names=link_names,
             client=client,
-            *args,
             **kwargs
         )
         self.max_depth = 3.0
         self.min_z = 0.0
         self.BASE_LINK = "panda_link0"
         self.MAX_PANDA_FINGER = 0.045
+        
 
     def get_default_conf(self):
         conf = {
@@ -126,31 +134,17 @@ class PandaRobot(Robot):
     def base_link(self):
         return link_from_name(self.robot, self.BASE_LINK, client=self.client)
 
-
-class PandaPolicy(Policy):
-    def __init__(self, args, robot, client=None, **kwargs):
-        self.args = args
-        self.robot = robot
-        self.client = client
-        super(PandaPolicy, self).__init__(args, robot, client=client, **kwargs)
-
-    def reset_robot(self, **kwargs):
-        conf = self.robot.get_default_conf()
+    def reset(self, **kwargs):
+        conf = self.get_default_conf()
         for group, positions in conf.items():
-            if self.args.real:
+            if self.real_execute:
                 group_dict = {
                     name: pos
-                    for pos, name in zip(positions, self.robot.joint_groups[group])
+                    for pos, name in zip(positions, self.joint_groups[group])
                 }
                 self.controller.command_group_dict(group, group_dict)
             else:
-                self.robot.set_group_positions(group, positions)
-
-    def make_controller(self):
-        if not self.args.real:
-            return SimulatedPandaController(self.robot, client=self.client)
-        else:
-            return PandaController(self.robot, client=self.client)
+                self.set_group_positions(group, positions)
 
 
 def side_from_arm(arm):

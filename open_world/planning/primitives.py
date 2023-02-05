@@ -703,15 +703,6 @@ class Trajectory(Command):
         return "t{}".format(id(self) % 1000)
         # return '{}x{}'.format(len(self.joints), self.path)
 
-
-def update_conf(controller, robot, client=None, **kwargs):
-    conf = dict(controller.joint_positions)
-    for name, position in conf.items():
-        joint = joint_from_name(robot, name, client=client)  # TODO: do in batch
-        set_joint_position(robot, joint, position, client=client)
-    return conf
-
-
 class GroupTrajectory(Trajectory):
     def __init__(self, body, group, path, *args, **kwargs):
         joints = body.get_group_joints(group)

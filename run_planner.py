@@ -4,19 +4,16 @@ from __future__ import print_function
 import sys
 import argparse
 import warnings
-import pybullet as p
 
 sys.path.extend(["tamp","pybullet_planning"])
 warnings.filterwarnings("ignore")
 
 from itertools import product
 
-import pybullet_utils.bullet_client as bc
-from pybullet_tools.pr2_utils import ARM_NAMES, LEFT_ARM, RIGHT_ARM
 from pybullet_tools.utils import (load_pybullet, connect, wait_for_user, wait_if_gui)
 
 from open_world.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
-from open_world.simulation.policy import run_policy, run_exploration_policy
+from open_world.simulation.policy import Policy
 from open_world.simulation.tasks import GOALS, task_from_goal
 
 from open_world.exploration.base_planners.a_star_search import AStarSearch
@@ -28,11 +25,11 @@ from open_world.exploration.base_planners.lamb import Lamb
 from open_world.nlp.speech_to_goal import get_goal_audio
 from open_world.nlp.text_to_goal import text_to_goal
 
-from robots.movo.movo_utils import MOVO_PATH, MovoPolicy, MovoRobot
+from robots.movo.movo_utils import MOVO_PATH, MovoRobot
 from robots.movo.movo_worlds import movo_world_from_problem
-from robots.panda.panda_utils import PANDA_PATH, PandaPolicy, PandaRobot
+from robots.panda.panda_utils import PANDA_PATH, PandaRobot
 from robots.panda.panda_worlds import panda_world_from_problem
-from robots.pr2.pr2_utils import PR2_PATH, PR2Policy, PR2Robot
+from robots.pr2.pr2_utils import PR2_PATH, PR2Robot
 from robots.pr2.pr2_worlds import pr2_world_from_problem
 
 ROBOTS = ["pr2", "panda", "movo"]
@@ -40,7 +37,6 @@ SEG_MODELS = ["maskrcnn", "uois", "ucn", "all"]
 SHAPE_MODELS = ["msn", "atlas"]
 
 robot_paths = {"pr2": PR2_PATH, "panda": PANDA_PATH, "movo": MOVO_PATH}
-robot_policies = {"pr2": PR2Policy, "panda": PandaPolicy, "movo": MovoPolicy}
 robot_entities = {"pr2": PR2Robot, "panda": PandaRobot, "movo": MovoRobot}
 
 robot_simulated_worlds = {
@@ -62,8 +58,7 @@ GRASP_MODES = GEOMETRIC_MODES + [
 
 def create_parser():
     parser = argparse.ArgumentParser()
-    # parser.add_argument('-c', '--cfree', action='store_true',
-    #                     help='When enabled, disables collision checking (for debugging).')
+
     parser.add_argument("-d", "--debug", action="store_true", help="")
     parser.add_argument(
         "-o",
@@ -92,13 +87,20 @@ def create_parser():
     )
 
     parser.add_argument(
-        "-real",
-        "--real",
+        "-rc",
+        "--real_camera",
         action="store_true",
-        help="Is the real world is simulated or not",
+        help="Use a realsense camera for perception",
         default=False,
     )
-    
+
+    parser.add_argument(
+        "-re",
+        "--real_execute",
+        action="store_true",
+        help="Execute the positions commands on a real robot",
+        default=False,
+    )
 
     # shape completion
     parser.add_argument(
@@ -161,15 +163,6 @@ def create_parser():
         choices=GRASP_MODES,
         help="Selects the grasp generation strategy.",
     )
-    parser.add_argument(
-        "-arms",
-        "--arms",
-        nargs="+",
-        type=str,
-        default=[LEFT_ARM],
-        choices=ARM_NAMES,
-        help="Specifies which robot arms to use.",
-    )  # nargs='+'
 
     # task
     parser.add_argument("-p", "--goal", default="all_green", help="Specifies the task.")
@@ -219,36 +212,27 @@ def main():
     # Create the robot
     robot_body, client = setup_robot_pybullet(args)
 
-    robot = robot_entities[args.robot](robot_body, client=client, args=args)
+    robot = robot_entities[args.robot](robot_body, 
+                                       client=client, 
+                                       real_execute = args.real_execute, 
+                                       real_camera = args.real_camera)
 
     # Set up the world run the task
-    if not args.real:
-        real_world = robot_simulated_worlds[args.robot](
-            args.world, robot, args, client=client
-        )
-        policy = robot_policies[args.robot](
-            args, robot, known=real_world.known, client=client
-        )
-        done = False
-        while(not done): 
-            wait_if_gui("Press enter")
-            task = get_task(args)
-            if(args.exploration):
-                run_exploration_policy(policy, task, real_world=real_world, client=client, \
-                    room = real_world.room, base_planner=base_planners[args.base_planner])
-            else:
-                run_policy(policy, task, real_world=real_world, client=client)
+    real_world = robot_simulated_worlds[args.robot](
+        args.world, robot, args, client=client
+    )
+    policy = Policy(args, robot, known=real_world.known, client=client)
+    done = False
+    while(not done): 
+        wait_if_gui("Press enter")
+        task = get_task(args)
+        if(args.exploration):
+            policy.run_exploration(task, real_world=real_world, client=client, \
+                room = real_world.room, base_planner=base_planners[args.base_planner])
+        else:
+            policy.run(task, real_world=real_world, client=client)
 
-            done = not args.voice_interactive and not args.text_interactive
-    else:
-        done = False
-        while(not done): 
-            task = get_task(args)
-            policy = robot_policies[args.robot](args, robot, known=[], client=client)
-            run_policy(policy, task, client=client)
-            
-            done = not args.voice_interactive and not args.text_interactive
-
+        done = not args.voice_interactive and not args.text_interactive
 
 if __name__ == "__main__":
     main()

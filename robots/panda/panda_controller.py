@@ -1,6 +1,6 @@
 import time
 
-from open_world.simulation.controller import SimulatedController
+from open_world.simulation.controller import Controller
 from robots.panda.panda_sender import (
     capture_realsense,
     close_gripper,
@@ -10,13 +10,7 @@ from robots.panda.panda_sender import (
     open_gripper,
 )
 
-
-class SimulatedPandaController(SimulatedController):
-    def __init__(self, robot, verbose=True, **kwargs):
-        super(SimulatedPandaController, self).__init__(robot, **kwargs)
-
-
-class PandaController(object):
+class PandaController(Controller):
     def __init__(self, robot, verbose=True, **kwargs):
         self.robot = robot
         super(PandaController, self).__init__(**kwargs)

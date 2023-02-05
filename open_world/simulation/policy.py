@@ -6,7 +6,6 @@ import warnings
 
 warnings.filterwarnings("ignore")  # , category=DeprecationWarning)
 
-from pybullet_planning.pybullet_tools.utils import connect
 import os
 
 import numpy as np
@@ -27,7 +26,6 @@ from pybullet_planning.pybullet_tools.utils import (
     invert,
     irange,
     multiply,
-    user_input,
     wait_if_gui,
     write_pickle,
     link_from_name
@@ -38,7 +36,7 @@ from open_world.estimation.dnn import init_sc, init_seg
 from open_world.estimation.geometry import cloud_from_depth
 from open_world.estimation.tables import estimate_surfaces
 from open_world.planning.planner import iterate_sequence, plan_pddlstream, post_process
-from open_world.planning.primitives import WorldState, update_conf
+from open_world.planning.primitives import WorldState
 from open_world.simulation.entities import get_label_counts
 from open_world.simulation.tasks import Task
 from pybullet_planning.pybullet_tools.utils import (
@@ -138,8 +136,7 @@ class Policy(object):
             # Create a new directory because it does not exist
             os.makedirs(self.data_folder)
 
-        self.controller = self.make_controller()
-        self.update_robot()
+        self.robot.update_conf()
         if args.segmentation:
             self.seg_network = init_seg(
                 branch=self.args.segmentation_model,
@@ -160,24 +157,14 @@ class Policy(object):
         )
 
     ##################################################
-    def make_controller(self):
-        raise NotImplementedError
-
-    def update_robot(self):
-        return update_conf(self.controller, self.robot, client=self.client)
-
-    def reset_robot(self, **kwargs):
-        raise NotImplementedError
-
     def open_grippers(self, blocking=False, timeout=5.0):
         clients = [
-            self.controller.open_gripper(arm, blocking=blocking)
+            self.robot.controller.open_gripper(arm, blocking=blocking)
             for arm in self.robot.arms
         ]
-        return self.controller.wait_for_clients(clients, timeout=timeout)
+        return self.robot.controller.wait_for_clients(clients, timeout=timeout)
 
     def reset_belief(self):
-        # remove_all_debug()
         self.belief.reset()
         for surface in self.belief.known_surfaces:
             surface.remove()
@@ -188,7 +175,7 @@ class Policy(object):
 
     def get_image(self):
 
-        if not self.args.real:
+        if not self.args.real_camera:
             [camera] = self.robot.cameras
             camera_image = camera.get_image()  # TODO: remove_alpha
 
@@ -216,11 +203,10 @@ class Policy(object):
 
         else:
             camera_link = link_from_name(self.robot, self.robot.CAMERA_OPTICAL_FRAME)
-            camera_image = self.controller.get_segmented_image(self.seg_network)
+            camera_image = self.robot.controller.get_segmented_image(self.seg_network)
             rgb, depth, seg, _, matrix = camera_image
 
-            self.update_robot()
-            # base_pose = get_link_pose(self.robot, link_from_name(robot, BASE_FRAME))
+            self.robot.update_conf()
             camera_pose = get_link_pose(self.robot, camera_link)
             camera_image = CameraImage(rgb, depth, seg, camera_pose, matrix)
 
@@ -232,27 +218,7 @@ class Policy(object):
     def update_rendered_image(self, **kwargs):
         return self.robot.cameras[0].get_image(**kwargs)
 
-    def saver_render(self):
-        # TODO: screenshots
-        rendered_image = self.update_rendered_image()
-        save_camera_images(rendered_image, prefix="pybullet_", predicted=False)
-        rgb, depth, seg, camera_pose, matrix = rendered_image
-        self.renders.append(
-            {
-                "date": datetime.datetime.now(),
-                "rgb": rgb,
-                "depth": depth,
-                "segmented": image_from_segmented(seg),  # seg
-                "camera_pose": camera_pose,
-                "camera_matrix": matrix,
-                # 'conf': conf,
-                # 'cloud': None,
-            }
-        )
-        return rendered_image
-
     def estimate_state(self, task, max_attempts=5):
-        # for attempt in range(max_attempts):
         self.reset_belief()
 
         real_image = self.get_image()
@@ -369,28 +335,22 @@ class Policy(object):
             status = SUCCESS_STATUS
         else:
             status = ONGOING_STATUS
-            if not self.args.real:
+            if not self.args.real_execute:
                 state.assign()
                 iterate_sequence(state, command)
                 aborted = False
             else:
-                aborted = not command.execute(
-                    self.controller
-                )  # TODO: record which commands were actually executed
+                aborted = not command.execute(self.robot.controller)
             
 
             self.executed = True
-            # TODO: decide success or failure afterward
             data.update(
                 {
                     "command": command,
                 }
             )
 
-        # Todo reinstate for memory
-        # self.predstate_command(executed_commands)
-
-        conf = self.update_robot()
+        conf = self.robot.update_conf()
 
         if not save:
             return status, aborted
@@ -432,152 +392,149 @@ class Policy(object):
             
         print("Saved data to {}".format(path_name))
 
-def run_policy(
-    policy,
-    task,
-    num_iterations=INF,
-    always_save=True,
-    terminate=not GRASP_EXPERIMENT,
-    client=None,
-    **kwargs
-):
-    print("=" * 30)
-    start_time = time.time()
-    for iteration in irange(num_iterations):  # TODO: max time?
-        policy.reset_robot()
-        belief = policy.estimate_state(task)
-        if not policy.args.debug:  # Intentional
+    def run(
+        self,
+        task,
+        num_iterations=INF,
+        always_save=True,
+        terminate=not GRASP_EXPERIMENT,
+        client=None,
+        **kwargs
+    ):
+        print("=" * 30)
+        start_time = time.time()
+        for iteration in irange(num_iterations):  # TODO: max time?
+            self.robot.reset()
+            belief = self.estimate_state(task)
+            if not self.args.debug:  # Intentional
+                wait_if_gui(client=client)
+
+            sequence = self.plan(belief, task)
+
+            self.robot.reset()
+            belief.reset()
+            p.removeAllUserDebugItems()
+
+            print("Execute?")
             wait_if_gui(client=client)
-
-        sequence = policy.plan(belief, task)
-
-        policy.reset_robot()
-        belief.reset()
-        p.removeAllUserDebugItems()
-
-        print("Execute?")
-        wait_if_gui(client=client)
-        status, aborted = policy.execute_command(sequence)
-        if always_save or policy.executed:  # Only save if the robot does something
-            policy.save_data()
-        if terminate:
-            if status is FAILURE_STATUS:
-                break
-            if status is SUCCESS_STATUS:
-                print(
-                    "Iteration {}: Success ({:.3f} sec)!".format(
-                        iteration, elapsed_time(start_time)
+            status, aborted = self.execute_command(sequence)
+            if always_save or self.executed:  # Only save if the robot does something
+                self.save_data()
+            if terminate:
+                if status is FAILURE_STATUS:
+                    break
+                if status is SUCCESS_STATUS:
+                    print(
+                        "Iteration {}: Success ({:.3f} sec)!".format(
+                            iteration, elapsed_time(start_time)
+                        )
                     )
-                )
-                return True
+                    return True
 
-        policy.controller.wait(duration=2.0)
-    print(
-        "Iteration {}: Failure ({:.3f} sec)!".format(
-            iteration, elapsed_time(start_time)
+            self.robot.controller.wait(duration=2.0)
+        print(
+            "Iteration {}: Failure ({:.3f} sec)!".format(
+                iteration, elapsed_time(start_time)
+            )
         )
-    )
-    wait_if_gui(client=client)  # TODO: reduce PyBullet and GPU spam output
-    return False
+        wait_if_gui(client=client)  # TODO: reduce PyBullet and GPU spam output
+        return False
 
 
-def run_exploration_policy(
-    policy,
-    task,
-    num_iterations=INF,
-    always_save=True,
-    room = None,
-    preview=True,
-    real_world=None,
-    client=None,
-    base_planner = None,
-    **kwargs
-):
-    env = Environment()
-    # From init of simple navigation
-    env.start = (0, 0, 0)
-    env.goal = (0, 0, np.pi*2.0-np.pi/2.0)  # TODO: Create separate class for configuration space
-    env.objects = []
-    env.viewed_voxels = []
+    def run_exploration(
+        self,
+        task,
+        num_iterations=INF,
+        always_save=True,
+        room = None,
+        real_world=None,
+        client=None,
+        base_planner = None,
+        **kwargs
+    ):
+        env = Environment()
+        # From init of simple navigation
+        env.start = (0, 0, 0)
+        env.goal = (0, 0, np.pi*2.0-np.pi/2.0)  # TODO: Create separate class for configuration space
+        env.objects = []
+        env.viewed_voxels = []
 
-    # Properties represented as a list of width, length, height, mass
-    env.objects_prop = dict()
+        # Properties represented as a list of width, length, height, mass
+        env.objects_prop = dict()
 
-    i = np.random.randint(-1, 4, size=2)
-    env.start = (round(env.start[0] + i[0]*GRID_RESOLUTION, 2),
-                round(env.start[1] + i[1]*GRID_RESOLUTION, 2),
-                round(env.start[2] + np.random.randint(16)*np.pi/8, 3))
+        i = np.random.randint(-1, 4, size=2)
+        env.start = (round(env.start[0] + i[0]*GRID_RESOLUTION, 2),
+                    round(env.start[1] + i[1]*GRID_RESOLUTION, 2),
+                    round(env.start[2] + np.random.randint(16)*np.pi/8, 3))
 
-    print(env.start)
+        i = np.random.randint(-1, 5)
+        env.goal = (env.goal[0],
+                    round(env.goal[1] + i*GRID_RESOLUTION, 2),
+                    env.goal[2])
+        
+        env.goal = (2.2, 1, env.goal[2])
+        env.initialized = True
 
-    i = np.random.randint(-1, 5)
-    env.goal = (env.goal[0],
-                round(env.goal[1] + i*GRID_RESOLUTION, 2),
-                env.goal[2])
-    
-    env.goal = (2.2, 1, env.goal[2])
-    env.initialized = True
+        with LockRenderer():
+            env.set_defaults(self.robot.body, client=client)
+            env.objects += real_world.room.movable_obstacles
+            env.camera_pose = get_link_pose(self.robot.body,
+                                            link_from_name(self.robot.body, "kinect2_rgb_optical_frame"))
 
-    with LockRenderer():
-        env.set_defaults(policy.robot.body, client=client)
-        env.objects += real_world.room.movable_obstacles
-        env.camera_pose = get_link_pose(policy.robot.body,
-                                         link_from_name(policy.robot.body, "kinect2_rgb_optical_frame"))
+            env.joints = [joint_from_name(self.robot.body, "x", client=client),
+                        joint_from_name(self.robot.body, "y", client=client),
+                        joint_from_name(self.robot.body, "theta", client=client)]
 
-        env.joints = [joint_from_name(policy.robot.body, "x", client=client),
-                       joint_from_name(policy.robot.body, "y", client=client),
-                       joint_from_name(policy.robot.body, "theta", client=client)]
+            env.robot = self.robot.body
+            env.room = room
+            env.static_objects = []
+            env.setup_grids()
+            env.centered_aabb = env.get_centered_aabb()
+            env.centered_oobb = env.get_centered_oobb()
 
-        env.robot = policy.robot.body
-        env.room = room
-        env.static_objects = []
-        env.setup_grids()
-        env.centered_aabb = env.get_centered_aabb()
-        env.centered_oobb = env.get_centered_oobb()
+            if not env.initialized:
+                env.randomize_env()
+            env.display_goal(env.goal)
 
-        if not env.initialized:
-            env.randomize_env()
-        env.display_goal(env.goal)
+            env.joints = [joint_from_name(env.robot, "x"),
+                        joint_from_name(env.robot, "y"),
+                        joint_from_name(env.robot, "theta")]
+            set_joint_positions(env.robot, env.joints, env.start)
 
-        env.joints = [joint_from_name(env.robot, "x"),
-                    joint_from_name(env.robot, "y"),
-                    joint_from_name(env.robot, "theta")]
-        set_joint_positions(env.robot, env.joints, env.start)
-
-    planner = base_planner(env)
-    plan = planner.get_plan(loadfile=None)
-    
-    p.removeAllUserDebugItems()
-
-    print("=" * 30)
-    start_time = time.time()
-    for iteration in irange(num_iterations):  # TODO: max time?
-        policy.reset_robot()
-        belief = policy.estimate_state(task)
-        if policy.args.debug:  # Intentional
-            wait_if_gui(client=client)
-
-        sequence = policy.plan(belief, task)
-
-        policy.reset_robot()
-        belief.reset()
+        planner = base_planner(env)
+        plan = planner.get_plan(loadfile=None)
+        
         p.removeAllUserDebugItems()
 
-        if policy.args.debug:  # Intentional
-            wait_if_gui(client=client)
-        
-        status, aborted = policy.execute_command(sequence)
-        if always_save or policy.executed:  # Only save if the robot does something
-            policy.save_data()
+        print("=" * 30)
+        start_time = time.time()
+        for iteration in irange(num_iterations):  # TODO: max time?
+            self.robot.reset()
+            belief = self.estimate_state(task)
+            if self.args.debug:  # Intentional
+                wait_if_gui(client=client)
 
-        policy.controller.wait(duration=2.0)
-    print(
-        "Iteration {}: Failure ({:.3f} sec)!".format(
-            iteration, elapsed_time(start_time)
+            sequence = self.plan(belief, task)
+
+            self.robot.reset()
+            belief.reset()
+            p.removeAllUserDebugItems()
+
+            if self.args.debug:  # Intentional
+                wait_if_gui(client=client)
+            
+            status, aborted = self.execute_command(sequence)
+            if always_save or self.executed:  # Only save if the robot does something
+                self.save_data()
+
+            self.robot.controller.wait(duration=2.0)
+        print(
+            "Iteration {}: Failure ({:.3f} sec)!".format(
+                iteration, elapsed_time(start_time)
+            )
         )
-    )
-    wait_if_gui(client=client)  # TODO: reduce PyBullet and GPU spam output
-    return False
+        wait_if_gui(client=client)  # TODO: reduce PyBullet and GPU spam output
+        return False
 
 
-##################################################
+    ##################################################

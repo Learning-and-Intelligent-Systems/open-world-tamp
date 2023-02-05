@@ -23,7 +23,12 @@ from pybullet_tools.utils import (
     pairwise_collisions,
     get_pose,
     enable_gravity,
-    disable_gravity
+    disable_gravity,
+    set_camera_pose,
+    draw_pose,
+    add_data_path,
+    HideOutput,
+    set_dynamics
 )
 import random
 
@@ -34,9 +39,35 @@ from open_world.simulation.environment import (
     create_ycb,
     place_object,
     place_surface,
+    create_table_object,
+    create_floor_object
 )
-from open_world.simulation.tasks import SKILLS
-from robots.pr2.pr2_utils import create_default_env
+
+def create_default_env(**kwargs):
+
+    set_camera_pose(
+        camera_point=[0.75, -0.75, 1.25], target_point=[-0.75, 0.75, 0.0], **kwargs
+    )
+    draw_pose(Pose(), length=1, **kwargs)
+
+    add_data_path()
+    with HideOutput(enable=True):
+        create_floor_object(**kwargs)
+        table = create_table_object(**kwargs)
+        obstacles = [table]
+
+        for obst in obstacles:
+            set_dynamics(
+                obst,
+                lateralFriction=1.0,  # linear (lateral) friction
+                spinningFriction=1.0,  # torsional friction around the contact normal
+                rollingFriction=0.01,  # torsional friction orthogonal to contact normal
+                restitution=0.0,  # restitution: 0 => inelastic collision, 1 => elastic collision
+                **kwargs
+            )
+
+    return table, obstacles
+
 
 
 def create_world(robot, movable=[], fixed=[], surfaces=[], **kwargs):
@@ -55,8 +86,7 @@ def create_world(robot, movable=[], fixed=[], surfaces=[], **kwargs):
 
 
 def problem0(args, robot, **kwargs):
-    arms = args.arms  # ARM_NAMES
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(**kwargs)
     region = place_surface(
         create_pillar(width=0.3, length=0.3, color=GREEN, **kwargs),
         table,

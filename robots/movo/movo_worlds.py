@@ -1,4 +1,3 @@
-from pybullet_tools.pr2_utils import ARM_NAMES
 from pybullet_tools.utils import (
     GREEN,
     PI,
@@ -25,7 +24,7 @@ from pybullet_tools.utils import (
 
 import random
 
-from open_world.simulation.entities import DEFAULT_SHAPE, Object, RealWorld, Shape
+from open_world.simulation.entities import Object, RealWorld
 from open_world.simulation.environment import (
     Pose2D,
     create_floor_object,
@@ -90,8 +89,7 @@ def create_default_env(**kwargs):
 
 
 def problem0(args, robot, **kwargs):
-    arms = args.arms  # ARM_NAMES
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(**kwargs)
     region = place_surface(
         create_pillar(width=0.3, length=0.3, color=GREEN, **kwargs),
         table,
@@ -110,7 +108,6 @@ def problem0(args, robot, **kwargs):
     return real_world
 
 def red_block_mobile(args, robot, vg=None, **kwargs):
-    arms = args.arms  # ARM_NAMES
     floor_size = 6
     floor = create_pillar(width=floor_size, length=floor_size, color=TAN, **kwargs)
     # cracker_box | tomato_soup_can | potted_meat_can | bowl
@@ -143,7 +140,7 @@ def red_block_mobile(args, robot, vg=None, **kwargs):
 def vanamo_m0m_chair(args, robot, **kwargs):
     return vanamo_m0m(args, robot, has_blocking_chair=True, **kwargs)
 
-def vanamo_m0m(args, robot, has_blocking_chair=False, **kwargs):
+def vanamo_m0m(robot, has_blocking_chair=False, **kwargs):
     width = 4
     length = 6
     wall_height = 2
@@ -230,7 +227,6 @@ def namo(args, robot, random_widths=False, **kwargs):
         # return np.random.choice([0, 1], p=[0.7, 0.3])
         return int(box_width < mean_width)
 
-    arms = args.arms  # ARM_NAMES
     floor_size = 6
     floor = create_pillar(width=floor_size, length=floor_size, color=TAN, **kwargs)
     # cracker_box | tomato_soup_can | potted_meat_can | bowl
@@ -331,7 +327,6 @@ def namo(args, robot, random_widths=False, **kwargs):
 
 def namo_old(args, robot, **kwargs):
 
-    arms = args.arms  # ARM_NAMES
     floor_size = 6
     floor = create_pillar(width=floor_size, length=floor_size, color=TAN, **kwargs)
     # cracker_box | tomato_soup_can | potted_meat_can | bowl
@@ -415,7 +410,6 @@ def namo_old(args, robot, **kwargs):
     return real_world
 
 def empty(args, robot, **kwargs):
-    arms = args.arms  # ARM_NAMES
     floor = create_pillar(width=6, length=6, color=TAN, **kwargs)
     real_world = create_world(robot, movable=[], fixed=[], surfaces=[floor], **kwargs)
     return real_world

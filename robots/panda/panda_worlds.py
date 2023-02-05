@@ -69,8 +69,7 @@ def create_default_env(client=None, **kwargs):
 
 
 def problem0(args, robot, client=None):
-    arms = args.arms  # ARM_NAMES
-    floor, obstacles = create_default_env(arms=arms, client=client)
+    floor, obstacles = create_default_env(client=client)
     region = create_pillar(width=0.3, length=0.3, color=GREEN, client=client)
     set_pose(region, Pose(point=Point(x=0.5, y=0, z=-0.02)), client=client)
 
@@ -86,8 +85,7 @@ def problem0(args, robot, client=None):
 
 
 def problem0_block(args, robot, client=None):
-    arms = args.arms  # ARM_NAMES
-    floor, obstacles = create_default_env(arms=arms, client=client)
+    floor, obstacles = create_default_env(client=client)
     region = create_pillar(width=0.3, length=0.3, color=GREEN, client=client)
     set_pose(region, Pose(point=Point(x=0.5, y=0, z=-0.02)), client=client)
 
@@ -114,8 +112,7 @@ def problem0_block(args, robot, client=None):
 
 
 def problem_cabinet(args, robot, client=None):
-    arms = args.arms  # ARM_NAMES
-    floor, obstacles = create_default_env(arms=arms, client=client)
+    floor, obstacles = create_default_env(client=client)
     cabinet = load_model(
         "../models/partnet_mobility/46236/mobility.urdf", scale=0.5, client=client
     )
@@ -128,8 +125,7 @@ def problem_cabinet(args, robot, client=None):
 
 
 def block_stack(args, robot, client=None):
-    arms = args.arms  # ARM_NAMES
-    floor, obstacles = create_default_env(arms=arms, client=client)
+    floor, obstacles = create_default_env(client=client)
     region = create_pillar(width=0.3, length=0.3, color=GREEN, client=client)
     set_pose(region, Pose(point=Point(x=0.5, y=0, z=-0.02)), client=client)
 
