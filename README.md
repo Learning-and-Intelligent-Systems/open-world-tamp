@@ -92,3 +92,17 @@ Combine mobile-base exploration with fixed-based manipulation by calling the pla
   <img src="https://github.com/Learning-and-Intelligent-Systems/open-world-tamp/blob/master/figs/mb.gif" alt="animated"  width="1024px"  />
 </p>
 
+
+## Development
+
+### Tests/Coverage
+Run the automated tests with the following command
+```
+pytest tests/
+```
+
+Run a coverage test with the following command. You can see the coverage report by opening htmlcov/index.html in a browser.
+```
+pytest --cov-config=.coveragerc --cov=. --cov-report html tests/
+```
+

@@ -556,10 +556,10 @@ class Robot(Object):
         ik_info={},
         joint_weights={},
         joint_resolutions={},
-        args=None,
+        client=None,
         **kwargs
     ):
-        super(Robot, self).__init__(body, **kwargs)
+        super(Robot, self).__init__(body, client=client, **kwargs)
 
         self.body = body
         self.joint_groups = dict(joint_groups)
@@ -571,13 +571,14 @@ class Robot(Object):
         self.joint_weights = dict(joint_weights)
         self.joint_resolutions = dict(joint_resolutions)
         self.components = {}  # grippers
+        self.client=client
 
 
-    def update_conf(self, client=None, **kwargs):
+    def update_conf(self):
         conf = dict(self.controller.joint_positions)
         for name, position in conf.items():
-            joint = joint_from_name(self, name, client=client)  # TODO: do in batch
-            set_joint_position(self, joint, position, client=client)
+            joint = joint_from_name(self, name, client=self.client)  # TODO: do in batch
+            set_joint_position(self, joint, position, client=self.client)
         return conf
 
     def get_relative_pose(self, link1, link2=BASE_LINK):

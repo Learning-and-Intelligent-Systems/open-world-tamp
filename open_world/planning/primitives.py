@@ -551,14 +551,13 @@ class Trajectory(Command):
         self.contact_links = tuple(contact_links)
         self.time_after_contact = time_after_contact
         self.contexts = tuple(contexts)
-        # self.kwargs = dict(kwargs) # TODO: doesn't save unpacked values
 
 
     @property
     def context_bodies(self):
         return {self.robot} | {
-            context.robot for context in self.contexts
-        }  # TODO: ancestors
+            context.body for context in self.contexts if hasattr(context, "body")
+        }
 
     def conf(self, positions):
         return Conf(self.robot, self.joints, positions=positions, client=self.client)

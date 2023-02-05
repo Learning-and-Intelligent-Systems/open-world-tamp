@@ -4,6 +4,8 @@ from __future__ import print_function
 import sys
 import argparse
 import warnings
+import pybullet_utils.bullet_client as bc
+import pybullet as p
 
 sys.path.extend(["tamp","pybullet_planning"])
 warnings.filterwarnings("ignore")
@@ -64,7 +66,7 @@ def create_parser():
         "-o",
         "--observable",
         action="store_true",
-        help="Uses the groundtruth PyBullet objects as the estimated objects.",
+        help="Uses the groundtruth PyBullet objects as the estimated objects",
     )
 
     parser.add_argument(
@@ -75,7 +77,14 @@ def create_parser():
     )
 
     parser.add_argument(
-        "-v", "--viewer", action="store_true", help="Enables the PyBullet viewer."
+        "-v", "--viewer", action="store_true", help="Enables the PyBullet viewer"
+    )
+
+    parser.add_argument(
+        "-i", "--max-iters",
+        type=int, 
+        default=1, 
+        help="Max number of iterations to run the policy for before termination"
     )
 
     parser.add_argument(
@@ -87,8 +96,16 @@ def create_parser():
     )
 
     parser.add_argument(
+        "-t",
+        "--teleport",
+        action="store_true",
+        help="Teleport between subplan steps",
+        default=True,
+    )
+
+    parser.add_argument(
         "-rc",
-        "--real_camera",
+        "--real-camera",
         action="store_true",
         help="Use a realsense camera for perception",
         default=False,
@@ -96,7 +113,7 @@ def create_parser():
 
     parser.add_argument(
         "-re",
-        "--real_execute",
+        "--real-execute",
         action="store_true",
         help="Execute the positions commands on a real robot",
         default=False,
@@ -105,27 +122,27 @@ def create_parser():
     # shape completion
     parser.add_argument(
         "-sc",
-        "--shape_completion",
+        "--shape-completion",
         action="store_true",
-        help="Uses a DNN for shape completion.",
+        help="Uses a DNN for shape completion",
     )
 
     parser.add_argument(
         "-scm",
-        "--shape_completion_model",
+        "--shape-completion-model",
         type=str,
         default="msn",
         choices=SHAPE_MODELS,
-        help="Selects the DNN shape completion model.",
+        help="Selects the DNN shape completion model",
     )
 
     parser.add_argument(
         "-convex",
         action="store_false",
-        help="Uses convex hulls instead of concave hulls to estimate objects.",
+        help="Uses convex hulls instead of concave hulls to estimate objects",
     )
 
-    parser.add_argument("-disable_project", action="store_true")
+    parser.add_argument("-disable-project", action="store_true")
 
     # segmentation
     parser.add_argument(
@@ -136,11 +153,14 @@ def create_parser():
     )
 
     parser.add_argument(
-        "-rgbd", "--maskrcnn_rgbd", action="store_true", help="Uses RGBD for maskrcnn."
+        "-rgbd", 
+        "--maskrcnn-rgbd", 
+        action="store_true", 
+        help="Uses RGBD for maskrcnn"
     )
     parser.add_argument(
         "-segm",
-        "--segmentation_model",
+        "--segmentation-model",
         type=str,
         default="ucn",
         choices=SEG_MODELS,
@@ -149,7 +169,7 @@ def create_parser():
     
     parser.add_argument(
         "-det",
-        "--fasterrcnn_detection",
+        "--fasterrcnn-detection",
         action="store_true",
         help="Uses FasterRCNN to label any cup or bowl instances that were segmented by UOIS.",
     )
@@ -157,7 +177,7 @@ def create_parser():
     # grasping
     parser.add_argument(
         "-g",
-        "--grasp_mode",
+        "--grasp-mode",
         type=str,
         default="mesh",
         choices=GRASP_MODES,
@@ -183,9 +203,14 @@ def create_parser():
 
 
 def setup_robot_pybullet(args):
-    connect(use_gui=args.viewer)
-    robot_body = load_pybullet(robot_paths[args.robot], fixed_base=True, client=None)
-    return robot_body, None
+
+    if args.viewer and args.client == 0:
+        client = bc.BulletClient(connection_mode=p.GUI)
+    else:
+        client = bc.BulletClient(connection_mode=p.DIRECT)
+
+    robot_body = load_pybullet(robot_paths[args.robot], fixed_base=True, client=client)
+    return robot_body, client
 
 def get_task(args):
     problem_from_name = {fn.__name__: fn for fn in GOALS}
@@ -203,36 +228,44 @@ def get_task(args):
         return task
 
 
-def main():
-
-    # Parse the args
-    parser = create_parser()
-    args = parser.parse_args()
-
+def main(args):
     # Create the robot
     robot_body, client = setup_robot_pybullet(args)
 
     robot = robot_entities[args.robot](robot_body, 
-                                       client=client, 
                                        real_execute = args.real_execute, 
-                                       real_camera = args.real_camera)
+                                       real_camera = args.real_camera,
+                                       client=client)
 
     # Set up the world run the task
     real_world = robot_simulated_worlds[args.robot](
         args.world, robot, args, client=client
     )
-    policy = Policy(args, robot, known=real_world.known, client=client)
-    done = False
-    while(not done): 
-        wait_if_gui("Press enter")
-        task = get_task(args)
-        if(args.exploration):
-            policy.run_exploration(task, real_world=real_world, client=client, \
-                room = real_world.room, base_planner=base_planners[args.base_planner])
-        else:
-            policy.run(task, real_world=real_world, client=client)
 
-        done = not args.voice_interactive and not args.text_interactive
+    # Set up the policy, which in turn sets up the simulated or real-robot controller
+    policy = Policy(args, robot, 
+                    known=real_world.known,
+                    teleport=args.teleport, 
+                    client=client)
+    
+    # Get the task. TODO(curtisa): Remove args
+    task = get_task(args)
+
+    if(args.exploration):
+        policy.run_exploration(task, 
+                               real_world=real_world, 
+                               room = real_world.room, 
+                               base_planner=base_planners[args.base_planner],
+                               num_iterations=args.max_iters,
+                               client=client)
+    else:
+        policy.run(task, 
+                   real_world=real_world, 
+                   num_iterations=args.max_iters,
+                   client=client)
 
 if __name__ == "__main__":
-    main()
+    # Parse the args
+    parser = create_parser()
+    args = parser.parse_args()
+    main(args)

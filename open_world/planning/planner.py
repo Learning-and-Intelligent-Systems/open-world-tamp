@@ -259,11 +259,7 @@ def create_streams(belief, obstacles=[], mobile_base = False, grasp_mode="mesh",
         'plan-motion': from_fn(get_plan_motion_fn(robot, environment=obstacles, **kwargs)),
         'plan-drop': from_fn(get_plan_drop_fn(robot, environment=obstacles, **kwargs)),
         'plan-inspect': from_fn(get_plan_inspect_fn(robot, environment=obstacles, **kwargs)),
-
-
-
-
-        'PoseCost': get_pose_cost_fn(robot),
+        'PoseCost': get_pose_cost_fn(robot, **kwargs),
     }
 
     # if(mobile_base):
@@ -725,7 +721,7 @@ def post_process(plan):
 
 
 #######################################################
-def iterate_sequence(state, sequence, time_step=2e-2, teleport=False, **kwargs):  # None | INF
+def iterate_sequence(state, sequence, time_step=5e-3, teleport=False, **kwargs):  # None | INF
     assert sequence is not None
     for i, _ in enumerate(sequence.iterate(state, teleport=teleport, **kwargs)):
         state.propagate()

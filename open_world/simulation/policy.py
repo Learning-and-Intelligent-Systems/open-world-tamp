@@ -113,17 +113,17 @@ def fuse_predicted_labels(
 
 
 class Policy(object):
-    def __init__(self, args, robot, known=[], client=None, **kwargs):
+    def __init__(self, args, robot, known=[], teleport=False, client=None, **kwargs):
 
         self.args = args
         self.robot = robot
         self.known = tuple(known)
         self.executed = False
+        self.teleport = teleport
         self.client = client
 
         self.data = []
         self.runtimes = {}
-        self.observations = []
         self.estimates = []
         self.renders = []
         self.plans = []
@@ -337,7 +337,7 @@ class Policy(object):
             status = ONGOING_STATUS
             if not self.args.real_execute:
                 state.assign()
-                iterate_sequence(state, command)
+                iterate_sequence(state, command, teleport=self.teleport)
                 aborted = False
             else:
                 aborted = not command.execute(self.robot.controller)
@@ -380,7 +380,6 @@ class Policy(object):
         data = {
             "args": self.args,
             "runtimes": self.runtimes,
-            "observations": self.observations,
             "estimates": self.estimates,
             "renders": self.renders,
             "plans": self.plans,

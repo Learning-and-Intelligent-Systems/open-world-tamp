@@ -1,17 +1,27 @@
-import functools
-import threading
 import zlib
-
+import numpy as np
 import pickle5
+import zmq
 import rospy
+import pyrealsense2 as rs
+from rs_util import get_serial_number, get_intrinsics
 from franka_interface import ArmInterface, GripperInterface
-from sensor_msgs.msg import Image
 
 rospy.init_node("panda_data_collection_node")
 
 ##### Realsense ######
 
-HAND_CAMERA_SN = "032622073024"
+print('Listing available realsense devices...')
+serial_numbers = []
+datas = []
+for i, device in enumerate(rs.context().devices):
+    serial_number = device.get_info(rs.camera_info.serial_number)
+    serial_numbers.append(serial_number)
+
+
+context = zmq.Context()
+socket = context.socket(zmq.REP)
+socket.bind("tcp://*:5555")
 
 
 class CaptureRS:
@@ -68,7 +78,7 @@ gripper_interface = GripperInterface()
 
 
 def capture_realsense(message):
-    bpe = CaptureRS(serial_number=HAND_CAMERA_SN, intrinsics=None)
+    bpe = CaptureRS(serial_number=serial_numbers[0])
     (rgb, depth), intrinsics = bpe.capture(), bpe.intrinsics
     message = {"rgb": rgb, "depth": depth, "intrinsics": intrinsics}
     socket.send(zlib.compress(pickle5.dumps(message)))
@@ -87,19 +97,19 @@ def get_joint_states(message):
 
 
 def open_gripper(message):
-    self.gripper_interface.open()
+    gripper_interface.open()
     message = {"success": True}
     socket.send(zlib.compress(pickle5.dumps(message)))
 
 
 def close_gripper(message):
-    self.gripper_interface.close()
+    gripper_interface.close()
     message = {"success": True}
     socket.send(zlib.compress(pickle5.dumps(message)))
 
 
 def execute_position_path(message):
-    self.arm_interface.execute_position_path(message["pdicts"])
+    arm_interface.execute_position_path(message["pdicts"])
     message = {"success": True}
     socket.send(zlib.compress(pickle5.dumps(message)))
 
