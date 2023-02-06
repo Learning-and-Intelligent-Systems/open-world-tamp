@@ -20,7 +20,6 @@ from open_world.simulation.tasks import GOALS, task_from_goal
 
 from open_world.exploration.base_planners.a_star_search import AStarSearch
 from open_world.exploration.base_planners.snowplow import Snowplow
-from open_world.exploration.base_planners.namo import Namo
 from open_world.exploration.base_planners.rrt import RRT
 from open_world.exploration.base_planners.lamb import Lamb
 
@@ -49,7 +48,6 @@ robot_simulated_worlds = {
 
 base_planners = {"snowplow": Snowplow,
                  "astar": AStarSearch,
-                 "namo": Namo,
                  "rrt": RRT,
                  "lamb": Lamb}
 
@@ -190,14 +188,14 @@ def create_parser():
 
     # exploration    
     parser.add_argument("-exp", "--exploration", action="store_true", help="Use exploration prior to running m0m")
-    parser.add_argument("-bp", "--base_planner", default="lamb", help="Specifies the planner to use for base navigation")
+    parser.add_argument("-bp", "--base-planner", default="lamb", help="Specifies the planner to use for base navigation")
 
     # robot
     parser.add_argument("-r", "--robot", default="pr2", help="Specifies the robot.")
 
     # interactive goals
-    parser.add_argument("-ti", "--text_interactive",  action="store_true", help="Use text input to specify the goal")
-    parser.add_argument("-vi", "--voice_interactive",  action="store_true", help="Use audio input to specify the goal")
+    parser.add_argument("-ti", "--text-interactive",  action="store_true", help="Use text input to specify the goal")
+    parser.add_argument("-vi", "--voice-interactive",  action="store_true", help="Use audio input to specify the goal")
 
     return parser
 

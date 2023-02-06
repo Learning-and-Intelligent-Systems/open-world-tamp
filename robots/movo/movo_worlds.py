@@ -138,9 +138,9 @@ def red_block_mobile(args, robot, vg=None, **kwargs):
 
 
 def vanamo_m0m_chair(args, robot, **kwargs):
-    return vanamo_m0m(robot, has_blocking_chair=True, **kwargs)
+    return vanamo_m0m(args, robot, has_blocking_chair=True, **kwargs)
 
-def vanamo_m0m(robot, has_blocking_chair=False, **kwargs):
+def vanamo_m0m(args, robot, has_blocking_chair=False, **kwargs):
     width = 4
     length = 6
     wall_height = 2

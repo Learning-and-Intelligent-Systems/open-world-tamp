@@ -9,9 +9,10 @@ from itertools import groupby
 
 class AStarSearch(Planner):
 
-    def __init__(self, env):
+    def __init__(self, env, client=None):
         self.env = env
 
+        self.client = client
         # Initializes a graph that contains the available movements
         self.G = Graph()
         self.G.initialize_full_graph(self.env, [GRID_RESOLUTION, GRID_RESOLUTION, np.pi / 8])
@@ -23,9 +24,9 @@ class AStarSearch(Planner):
         self.env.setup_default_vision(self.G)
 
         # Specific joints to move the robot in simulation
-        self.joints = [joint_from_name(self.env.robot, "x"),
-                       joint_from_name(self.env.robot, "y"),
-                       joint_from_name(self.env.robot, "theta")]
+        self.joints = [joint_from_name(self.env.robot, "x", client=self.client),
+                       joint_from_name(self.env.robot, "y", client=self.client),
+                       joint_from_name(self.env.robot, "theta", client=self.client)]
 
         # Structure used to save voxels that cannot be accessed by the robot, hence occupied
         self.occupied_voxels = dict()

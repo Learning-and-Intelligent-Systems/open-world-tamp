@@ -10,9 +10,10 @@ import random
 
 
 class RRT(Planner):
-    def __init__(self, env):
+    def __init__(self, env, client=None):
         super(RRT, self).__init__()
-
+        
+        self.client=client
         self.env = env
 
         self.step_size = [0.05, np.pi/18]
