@@ -21,3 +21,5 @@ openai
 pyyaml==5.4.1
 opencv-python
 SpeechRecognition
+pytest
+pytest-cov

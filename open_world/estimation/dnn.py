@@ -872,7 +872,6 @@ class UCN(CategoryAgnosticSeg):
 
     def seg_fn(self, x):
         from test_dataset import test_sample
-
         return test_sample(x, self.network, self.network_crop)
 
     def seg_fn_dropout(self, x, p):
@@ -918,13 +917,13 @@ class UCN(CategoryAgnosticSeg):
             .permute(0, 3, 1, 2)
             .contiguous()
             .float()
-            .repeat(num_segs, 1, 1, 1),
+            .repeat(num_segs, 1, 1, 1).to(DEVICE),
             "depth": torch.from_numpy(point_cloud)
             .unsqueeze(0)
             .permute(0, 3, 1, 2)
             .contiguous()
             .float()
-            .repeat(num_segs, 1, 1, 1),
+            .repeat(num_segs, 1, 1, 1).to(DEVICE),
         }
 
         if dropout:
@@ -992,12 +991,12 @@ class UCN(CategoryAgnosticSeg):
             .unsqueeze(0)
             .permute(0, 3, 1, 2)
             .contiguous()
-            .float(),
+            .float().to(DEVICE),
             "depth": torch.from_numpy(point_cloud)
             .unsqueeze(0)
             .permute(0, 3, 1, 2)
             .contiguous()
-            .float(),
+            .float().to(DEVICE),
         }
 
         if dropout:

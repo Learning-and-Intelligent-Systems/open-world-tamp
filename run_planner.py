@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 from itertools import product
 
-from pybullet_tools.utils import (load_pybullet, connect, wait_for_user, wait_if_gui)
+from pybullet_tools.utils import (load_pybullet, wait_for_user)
 
 from open_world.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
 from open_world.simulation.policy import Policy
