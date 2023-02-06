@@ -5,11 +5,11 @@ import zmq
 
 context = zmq.Context()
 socket = context.socket(zmq.REQ)
-socket.connect("tcp://192.168.0.246:5555")
+socket.connect("tcp://127.0.0.1:5555")
 
 
 def capture_realsense():
-    socket.send(zlib.compress(pickle.dumps({"message_name": "get_joint_states"})))
+    socket.send(zlib.compress(pickle.dumps({"message_name": "capture_realsense"})))
     message = pickle.loads(zlib.decompress(socket.recv()))
     return message["rgb"], message["depth"], message["intrinsics"]
 

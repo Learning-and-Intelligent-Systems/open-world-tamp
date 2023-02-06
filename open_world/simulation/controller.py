@@ -7,14 +7,21 @@ from pybullet_tools.utils import (
     get_joints,
     joints_from_names,
     set_joint_positions,
+    joint_from_name,
+    set_joint_position
 )
 
 
-class SimulatedController(object):
+class Controller(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+
+class SimulatedController(Controller):
     def __init__(self, robot, client=None, **kwargs):
         self.client = client
         self.robot = robot
-
+        
     def side_from_arm(self, arm):
         return arm.replace("_arm", "")
 

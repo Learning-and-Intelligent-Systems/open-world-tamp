@@ -2,7 +2,6 @@
 
 
 from pddlstream.utils import str_from_object
-from pybullet_tools.pr2_utils import ARM_NAMES
 from pybullet_tools.utils import get_pairs
 from open_world.planning.planner import (
     PARAM,
@@ -35,7 +34,6 @@ class Task(object):
         init=[],
         goal_parts=[],
         assume={},
-        arms=ARM_NAMES,
         skills=SKILLS,
         return_init=True,
         empty_arms=False,
@@ -46,7 +44,6 @@ class Task(object):
         self.init = tuple(init)
         self.goal_parts = tuple(goal_parts)
         self.assume = dict(assume)
-        self.arms = tuple(arms)
         self.skills = tuple(skills)
         self.return_init = return_init
         self.empty_arms = empty_arms
@@ -59,7 +56,6 @@ class Task(object):
 def task_from_goal(args, goal):
     task = Task(
         goal_parts=[goal],
-        arms=args.arms,
         skills=DEFAULT_SKILLS,
     )
     return task
@@ -75,7 +71,6 @@ def holding(args):  # For testing grasping
                 ),
             ),
         ],
-        arms=args.arms,
         skills=DEFAULT_SKILLS,
     )
     return task
@@ -103,7 +98,6 @@ def all_bowl(args):
         assume={
             "category": [BOWL],
         },
-        arms=args.arms,
         skills=DEFAULT_SKILLS,
     )
 
@@ -126,7 +120,6 @@ for color in COLORS:
                     And(("Graspable", PARAM1), ("Color", PARAM2, color), On(PARAM2)),
                 ),
             ],
-            arms=args.arms,
             skills=DEFAULT_SKILLS,
         )
     )
@@ -147,7 +140,6 @@ for color in COLORS:
                 ),
             ],
             assume={"category": [category]},
-            arms=args.arms,
             skills=DEFAULT_SKILLS,
         )
     )  #'color': ['red],
@@ -168,7 +160,6 @@ for color in COLORS:
                 ),
             ],
             assume={"category": [category]},
-            arms=args.arms,
             skills=DEFAULT_SKILLS,
         )
     )
@@ -183,7 +174,6 @@ for color in COLORS:
                     And(("Graspable", PARAM1), ("Color", PARAM2, color), On(PARAM2)),
                 ),
             ],
-            arms=args.arms,
             skills=DEFAULT_SKILLS,
         )
     )
@@ -206,7 +196,6 @@ for color in COLORS:
                     ),
                 ),
             ],
-            arms=args.arms,
             skills=DEFAULT_SKILLS,
         )
     )
@@ -228,7 +217,6 @@ for num in NUMS:
             goal_parts=[
                 Exists(parameters, And(*conditions)),
             ],
-            arms=args.arms,
             skills=DEFAULT_SKILLS,
         )
     )

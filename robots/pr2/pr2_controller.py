@@ -16,7 +16,7 @@ import time
 from collections import namedtuple
 
 import numpy as np
-from open_world.simulation.controller import SimulatedController
+from open_world.simulation.controller import Controller
 
 MAX_EFFORT = 100.0  # 50 | 75 | 100
 INFINITE_EFFORT = -1
@@ -165,13 +165,7 @@ def is_client_active(client):
 
 ##################################################
 
-
-class SimulatedPR2Controller(SimulatedController):
-    def __init__(self, robot, verbose=True, **kwargs):
-        super(SimulatedPR2Controller, self).__init__(robot, **kwargs)
-
-
-class PR2Controller(object):
+class PR2Controller(Controller):
     # simple_clients = {
     #     'torso': Client('torso_controller/position_joint_action', SingleJointPositionAction),
     #     'head': Client('head_traj_controller/joint_trajectory_action', JointTrajectoryAction),
@@ -196,7 +190,7 @@ class PR2Controller(object):
     ============================================================================
     """
 
-    def __init__(self, arms=ARMS, verbose=True, **kwargs):
+    def __init__(self, robot, client, arms=ARMS, verbose=True, **kwargs):
         super(PR2Controller, self).__init__( **kwargs)
         self.arms = tuple(arms)
         self.rate = rospy.Rate(10)

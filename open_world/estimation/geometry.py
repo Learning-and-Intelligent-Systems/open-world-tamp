@@ -26,21 +26,83 @@ from pybullet_tools.utils import (
     read_obj,
     set_pose,
     tform_points,
+    BASE_LINK,
+    GREEN,
+    LockRenderer,
+    Mesh,
+    convex_hull,
+    draw_mesh,
+    elapsed_time,
+    get_mesh_normal,
+    get_model_info,
+    mesh_count,
+    remove_handles,
+    wait_if_gui,
 )
-
+import time
 from open_world.estimation.bounding import convex_hull_2d, estimate_oobb, min_circle
 from open_world.estimation.completion import filter_visible, refine_shape
 from open_world.estimation.concave import concave_mesh, create_concave_mesh
 from open_world.estimation.observation import aggregate_color, tform_labeled_points
 from open_world.estimation.surfaces import Plane
 from open_world.planning.grasping import mesh_from_obj
-from open_world.retired.scrap import hull_ransac
 from open_world.simulation.entities import BOWL
 from open_world.simulation.utils import Z_AXIS
+from open_world.estimation.surfaces import Plane, point_plane_distance
+from open_world.estimation.observation import draw_points
 
 AUGMENT_BOWLS = True
 VISUALIZE_COLLISION = True
 
+
+def hull_ransac(points, min_points=10, threshold=5e-3, draw=False):
+    # TODO: plane estimation instead of RANSAC here (in case bad orientations)
+    start_time = time.time()
+    hull = Mesh(*map(np.array, convex_hull(points)))
+    centroid = np.average(hull.vertices, axis=0)
+    if draw:
+        with LockRenderer():
+            draw_mesh(hull)
+    # equations = []
+    planes = []
+    while len(points) >= min_points:
+        best_plane, best_indices = None, []
+        for i, face in enumerate(hull.faces):
+            v1, v2, v3 = hull.vertices[face]
+            # normal = get_normal(v1, v2, v3)
+            normal = get_mesh_normal(hull.vertices[face], centroid)
+            plane = Plane(normal, v1)
+            # equation = np.array(equation_from_plane(plane))
+            # if equation[3] > 0: # TODO: cluster by plane equation
+            #     equation *= 1
+            # TODO: shouldn't need abs
+            indices = [
+                index
+                for index, point in enumerate(points)
+                if abs(point_plane_distance(plane, point)) <= threshold
+            ]  # TODO: cache
+            if len(indices) > len(best_indices):
+                best_plane, best_indices = plane, indices
+            # TODO: weigh by area
+            # TODO: density of the space covered
+        if len(best_indices) < min_points:
+            break
+        print(
+            "{} | {} | {} | {:.3f}".format(
+                len(planes), best_plane, len(best_indices), elapsed_time(start_time)
+            )
+        )
+        if draw:
+            handles = draw_points(
+                [points[index] for index in best_indices], color=GREEN
+            )
+            wait_if_gui()
+            remove_handles(handles)
+        planes.append(best_plane)
+        points = [
+            point for index, point in enumerate(points) if index not in best_indices
+        ]
+    return planes
 
 def cloud_from_depth(camera_matrix, depth, max_depth=10.0, top_left_origin=False):
     # width, height = map(int, dimensions_from_camera_matrix(camera_matrix))

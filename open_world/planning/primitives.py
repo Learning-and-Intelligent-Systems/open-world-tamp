@@ -277,9 +277,6 @@ class Command(object):
         # raise NotImplementedError()
         return True
 
-    def to_lisdf(self):
-        raise NotImplementedError
-
 
 class BaseSwitch(Command):
     def __init__(self, body, parent=None, client=None, **kwargs):
@@ -317,11 +314,7 @@ class Switch(Command):
         elif self.parent is not None:
             robot, tool_link = self.parent
             gripper_group = None
-            for group, (
-                arm_group,
-                gripper_group,
-                tool_name,
-            ) in robot.manipulators.items():
+            for _, (_, gripper_group, tool_name) in robot.manipulators.items():
                 if link_from_name(robot, tool_name, client=robot.client) == tool_link:
                     break
             else:
@@ -332,12 +325,6 @@ class Switch(Command):
             movable_bodies = [
                 body for body in get_bodies(client=robot.client) if (body != robot)
             ]
-
-            # collision_bodies = [body for body in movable_bodies if any_link_pair_collision(
-            #    robot, finger_links, body, max_distance=1e-2)]
-
-            gripper_width = robot.get_gripper_width(gripper_joints)
-            max_width = robot.get_max_gripper_width(robot.get_group_joints(gripper_group))
 
             max_distance = 5e-2
             collision_bodies = [
@@ -414,9 +401,6 @@ class Switch(Command):
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, self.body)
 
-    def to_lisdf(self):
-        return []
-
 
 class Wait(Command):
     def __init__(self, duration):
@@ -433,123 +417,10 @@ class Wait(Command):
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, self.duration)
 
-
-# class Photograph(Command):
-#     def __init__(self, camera, oobb=None):
-#         # TODO: make a generic scan the scene command
-#         self.camera = camera
-#         self.oobb = oobb # TODO: if None, no filtering
-#     def iterate(self, state, **kwargs):
-#         return empty_sequence()
-#     def controller(self, *args, **kwargs):
-#         camera_image = self.camera.get_image(segment=False)
-#         save_camera_images(camera_image)
-#         wait_if_gui()
-#         return empty_sequence()
-#         #return stall_for_duration(duration=self.duration)
-#     def __repr__(self):
-#         return '{}({}'.format(self.__class__.__name__, self.camera)
-
-
-class Inspect(Command):
-    def __init__(self, camera, tool_link, inspect_oobbs=[], inspect_trajs=[], known=[]):
-        self.camera = camera
-        self.tool_link = tool_link
-        assert len(inspect_oobbs) == len(inspect_trajs)
-        self.inspect_oobbs = tuple(inspect_oobbs)
-        self.inspect_trajs = tuple(inspect_trajs)
-        # self.known = tuple(sorted_union([NO_BODY, self.robot], known))
-        self.known = (NO_BODY, self.robot) + tuple(known)
-
-    @property
-    def robot(self):
-        return self.camera.robot
-
-    def iterate(self, state, **kwargs):
-        return empty_sequence()
-
-    def extract_labeled_points(self, inspect_oobb, draw=False, save=False):
-        assert inspect_oobb is not None  # TODO: if None, use the full point cloud
-        image_aabb = get_visible_aabb(
-            self.camera.camera_matrix, get_aabb_vertices(inspect_oobb.aabb)
-        )
-        assert image_aabb is not None
-        # enable_preview()
-        image = self.camera.get_image()
-
-        labeled_points = []
-        for labeled_point in iterate_point_cloud(image, aabb=image_aabb, step_size=3):
-            body, link = labeled_point.label
-            if (body not in self.known) and oobb_contains_point(
-                labeled_point.point, inspect_oobb
-            ):
-                labeled_points.append(labeled_point)
-        gripper_pose = get_link_pose(self.robot, self.tool_link)
-        labeled_points_gripper = tform_labeled_points(
-            invert(gripper_pose), labeled_points
-        )
-
-        if draw:
-            start_time = time.time()
-            handles = draw_oobb(inspect_oobb)
-            with LockRenderer():
-                for labeled_point in labeled_points_gripper:
-                    handles.extend(
-                        draw_labeled_point(
-                            labeled_point, parent=self.robot, parent_link=self.tool_link
-                        )
-                    )
-                # for labeled_point in labeled_points:
-                #    handles.extend(draw_labeled_point(labeled_point))
-            print(len(labeled_points_gripper), elapsed_time(start_time))
-            wait_if_gui()
-            remove_handles(handles)
-
-        if save:
-            # TODO: handle case when the drawing is off the image
-            for vertices in get_aabb_edges(inspect_oobb.aabb):
-                # for vertices in get_wrapped_pairs(support_from_aabb(inspect_oobb.aabb, near=True)):
-                pixels = [
-                    pixel_from_ray(self.camera.camera_matrix, ray) for ray in vertices
-                ]
-                image.rgbPixels[...] = draw_lines_on_image(
-                    image.rgbPixels, pixels, color="black"
-                )
-            image.rgbPixels[...] = draw_box_on_image(image.rgbPixels, image_aabb)
-            save_camera_images(image)
-        return labeled_points_gripper
-
-    def controller(self, *args, **kwargs):
-        labeled_points_gripper = []
-        for inspect_oobb, inspect_traj in safe_zip(
-            self.inspect_oobbs, self.inspect_trajs
-        ):
-            # for output in Wait(duration=0.25).controller(*args, **kwargs):
-            #    yield output
-            labeled_points_gripper.extend(self.extract_labeled_points(inspect_oobb))
-            for output in inspect_traj.controller(
-                *args, **kwargs
-            ):  # Wait(duration=0.5)
-                yield output
-        body = inspect_mesh(labeled_points_gripper, draw=True)
-        set_pose(
-            body, multiply(get_link_pose(self.robot, self.tool_link), get_pose(body))
-        )
-        # TODO: create a grasp for the body
-        # TODO: incorporate information about the held object
-        wait_if_gui()
-
-    def __repr__(self):
-        return "{}({}".format(self.__class__.__name__, self.camera)
-
-
-#######################################################
-
-
 class Trajectory(Command):
     def __init__(
         self,
-        body,
+        robot,
         joints,
         path,
         velocity_scale=1.0,
@@ -559,7 +430,7 @@ class Trajectory(Command):
         client=None,
         **kwargs
     ):
-        self.body = body
+        self.robot = robot
         self.client = client
         self.joints = joints
         self.path = tuple(path)  # waypoints_from_path
@@ -567,22 +438,16 @@ class Trajectory(Command):
         self.contact_links = tuple(contact_links)
         self.time_after_contact = time_after_contact
         self.contexts = tuple(contexts)
-        # self.kwargs = dict(kwargs) # TODO: doesn't save unpacked values
 
-    # def initialize(self, velocity_scale=1., contact_links=[], time_after_contact=INF, contexts=[]):
-    #    pass
-    @property
-    def robot(self):
-        return self.body
 
     @property
     def context_bodies(self):
-        return {self.body} | {
-            context.body for context in self.contexts
-        }  # TODO: ancestors
+        return {self.robot} | {
+            context.body for context in self.contexts if hasattr(context, "body")
+        }
 
     def conf(self, positions):
-        return Conf(self.body, self.joints, positions=positions, client=self.client)
+        return Conf(self.robot, self.joints, positions=positions, client=self.client)
 
     def first(self):
         return self.conf(self.path[0])
@@ -592,7 +457,7 @@ class Trajectory(Command):
 
     def reverse(self):
         return self.__class__(
-            self.body,
+            self.robot,
             self.joints,
             self.path[::-1],
             velocity_scale=self.velocity_scale,
@@ -613,10 +478,10 @@ class Trajectory(Command):
 
     def adjust_path(self):
         current_positions = get_joint_positions(
-            self.body, self.joints, client=self.client
+            self.robot, self.joints, client=self.client
         )  # Important for adjust_path
         return adjust_path(
-            self.body,
+            self.robot,
             self.joints,
             [current_positions] + list(self.path),
             client=self.client,
@@ -624,7 +489,7 @@ class Trajectory(Command):
 
     def compute_waypoints(self):
         return waypoints_from_path(
-            adjust_path(self.body, self.joints, self.path, client=self.client)
+            adjust_path(self.robot, self.joints, self.path, client=self.client)
         )
 
     def compute_curve(self, draw=False, verbose=False, **kwargs):
@@ -632,7 +497,7 @@ class Trajectory(Command):
         # path = self.compute_waypoints()
         # TODO: error when fewer than 2 points
         positions_curve = interpolate_path(
-            self.body, self.joints, path, client=self.client
+            self.robot, self.joints, path, client=self.client
         )
         if verbose:
             print(
@@ -658,16 +523,16 @@ class Trajectory(Command):
     def traverse(self):
         # TODO: traverse from an initial conf?
         for positions in self.path:
-            set_joint_positions(self.body, self.joints, positions)
+            set_joint_positions(self.robot, self.joints, positions)
             yield positions
 
     def iterate(self, state, teleport=False, **kwargs):
         if(teleport):
-            set_joint_positions(self.body, self.joints, self.path[-1], client=self.client)
+            set_joint_positions(self.robot, self.joints, self.path[-1], client=self.client)
             return self.path[-1]
         else:
             return step_curve(
-                self.body,
+                self.robot,
                 self.joints,
                 self.compute_curve(client=self.client, **kwargs),
                 client=self.client,
@@ -683,7 +548,7 @@ class Trajectory(Command):
             lead_step = None
             velocity_scale = 5e-1  # None | 5e-1
         controller = follow_path(
-            self.body,
+            self.robot,
             self.joints,
             waypoints,
             lead_step=lead_step,
@@ -693,7 +558,7 @@ class Trajectory(Command):
         # **self.kwargs)
         # return controller
         return control_until_contact(
-            controller, self.body, self.contact_links, self.time_after_contact
+            controller, self.robot, self.contact_links, self.time_after_contact
         )
 
     def execute(self, controller, *args, **kwargs):
@@ -701,31 +566,21 @@ class Trajectory(Command):
 
     def __repr__(self):
         return "t{}".format(id(self) % 1000)
-        # return '{}x{}'.format(len(self.joints), self.path)
-
-
-def update_conf(controller, robot, client=None, **kwargs):
-    conf = dict(controller.joint_positions)
-    for name, position in conf.items():
-        joint = joint_from_name(robot, name, client=client)  # TODO: do in batch
-        set_joint_position(robot, joint, position, client=client)
-    return conf
-
 
 class GroupTrajectory(Trajectory):
-    def __init__(self, body, group, path, *args, **kwargs):
-        joints = body.get_group_joints(group)
-        super(GroupTrajectory, self).__init__(body, joints, path, *args, **kwargs)
+    def __init__(self, robot, group, path, *args, **kwargs):
+        joints = robot.get_group_joints(group)
+        super(GroupTrajectory, self).__init__(robot, joints, path, *args, **kwargs)
         self.group = group
 
     def switch_client(self, robot):
         return GroupTrajectory(robot, self.group, self.path, client=robot.client)
 
     def conf(self, positions):
-        return GroupConf(self.body, self.group, positions=positions, client=self.client)
+        return GroupConf(self.robot, self.group, positions=positions, client=self.client)
 
     def execute(self, controller, *args, **kwargs):
-        update_conf(controller, self.body)
+        self.robot.update_conf()
         velocity_fraction = 0.2
         velocity_fraction *= self.velocity_scale
         positions_curve = self.compute_curve(
@@ -742,15 +597,15 @@ class GroupTrajectory(Trajectory):
             self.group, positions, times, blocking=True, **kwargs
         )
         controller.wait(duration=1.0)
-        update_conf(controller, self.body)
+        self.robot.update_conf()
         # return True
-        if self.group in self.body.gripper_groups:  # Never abort after gripper movement
+        if self.group in self.robot.gripper_groups:  # Never abort after gripper movement
             return True
         return not controller.any_arm_fully_closed()
 
     def reverse(self):
         return self.__class__(
-            self.body,
+            self.robot,
             self.group,
             self.path[::-1],
             velocity_scale=self.velocity_scale,
@@ -762,23 +617,6 @@ class GroupTrajectory(Trajectory):
 
     def __repr__(self):
         return "{}t{}".format(self.group[0], id(self) % 1000)
-
-    def to_lisdf(self):
-        from lisdf.planner_output.command import JointSpacePath, Command, GripperPosition, JointSpacePath, ActuateGripper
-        if(self.group in self.robot.gripper_groups):
-            closed_conf, open_conf = self.robot.get_group_limits(self.group)
-            if( tuple(list(self.path)[-1]) == tuple(closed_conf) ):
-                command = ActuateGripper(configurations={"gripper_1": GripperPosition.close}, label=str(self))
-            else:
-                command = ActuateGripper(configurations={"gripper_1": GripperPosition.open}, label=str(self))
-        else:
-            joint_names = get_joint_names(self.robot, self.robot.get_group_joints(self.group), client=self.client)
-            waypoints = {joint_name: [self.path[i][ji] for i in range(len(self.path))] for ji, joint_name in enumerate(joint_names)}
-            command = JointSpacePath(waypoints=waypoints, 
-                                     duration=len(waypoints),
-                                     label=str(self))
-
-        return [command]
         
 
 #######################################################
@@ -829,7 +667,4 @@ class Sequence(Command):  # Commands, CommandSequence
 
     def __repr__(self):
         return "{}({})".format(self.name, len(self.commands))
-
-    def to_lisdf(self):
-        return sum([command.to_lisdf() for command in self.commands], [])
 

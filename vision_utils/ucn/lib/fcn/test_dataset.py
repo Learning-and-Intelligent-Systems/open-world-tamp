@@ -51,7 +51,7 @@ def clustering_features(features, num_seeds=100):
     kappa = 20
     selected_pixels = []
     for j in range(features.shape[0]):
-        X = features[j].view(features.shape[1], -1)
+        X = features[j].view(features.shape[1], -1).cpu()
         X = torch.transpose(X, 0, 1)
         cluster_labels, selected_indices = mean_shift_smart_init(X, kappa=kappa, num_seeds=num_seeds, max_iters=10, metric=metric)
         out_label[j] = cluster_labels.view(height, width)

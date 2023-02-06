@@ -1,18 +1,9 @@
 #!/usr/bin/env python3
 
 from __future__ import print_function
-
-import sys
 import warnings
 
 import numpy as np
-
-sys.path.extend(
-    [
-        "pddlstream",
-        "pybullet-planning",
-    ]
-)
 
 import os
 
@@ -31,19 +22,11 @@ from pybullet_tools.pr2_utils import (
 )
 from pybullet_tools.utils import (
     PI,
-    HideOutput,
-    Pose,
-    add_data_path,
-    connect,
     custom_limits_from_base_limits,
-    draw_pose,
     link_from_name,
-    set_camera_pose,
-    set_dynamics,
 )
 
 from open_world.simulation.entities import Robot
-from open_world.simulation.environment import create_table_object
 from open_world.simulation.lis import PR2_INFOS
 
 import pybullet_tools
@@ -51,9 +34,6 @@ pybullet_tools.utils.TEMP_DIR = "temp_meshes/"  # TODO: resolve conflict with pd
 
 from pybullet_tools.utils import (
     PI,
-    Pose,
-    connect,
-    draw_pose,
     get_max_limits,
     link_from_name,
 )
@@ -65,40 +45,26 @@ from open_world.simulation.lis import (
     CAMERA_OPTICAL_FRAME,
     PR2_INFOS,
 )
-from open_world.simulation.utils import get_rigid_ancestor
 
 DEFAULT_LEFT_ARM = CLEAR_LEFT_ARM
-
-import time
 
 from pybullet_tools.utils import (
     link_from_name,
     user_input,
 )
 
-from open_world.estimation.geometry import cloud_from_depth, estimate_surface_mesh
-
 # from run_estimator import create_parser
-from open_world.estimation.tables import estimate_surfaces
 from open_world.simulation.environment import set_gripper_friction
-from open_world.simulation.policy import Policy
 
 # TODO: all ROS should be the last import otherwise segfaults
-from robots.pr2.pr2_controller import PR2Controller, SimulatedPR2Controller
+from robots.pr2.pr2_controller import PR2Controller
+from open_world.simulation.controller import SimulatedController
 
 PR2_PATH = os.path.abspath("models/ltamp/pr2_description/pr2.urdf")
 
 warnings.filterwarnings("ignore")  # , category=DeprecationWarning)
 
-
-from pybullet_tools.utils import Pose, add_data_path, connect
-
-if __name__ == "__main__":
-    connect(
-        use_gui=True, width=None, height=None, shadows=False
-    )  # TODO: Failed to retrieve a framebuffer config
-
-
+from pybullet_tools.utils import Pose, add_data_path
 from open_world.simulation.environment import create_floor_object
 from open_world.simulation.lis import CAMERA_OPTICAL_FRAME
 
@@ -139,47 +105,13 @@ def get_input(message, options):
         response = user_input(full_message)
     return response
 
-def review_plan(task, ros_world, plan, time_step=0.04):
-    raise NotImplementedError()
-
-class PR2Policy(Policy):
-    def __init__(self, args, robot, client=None, **kwargs):
-        self.args = args
-        self.robot = robot
-        self.client = client
-        super(PR2Policy, self).__init__(args, robot, client=client, **kwargs)
-
-    def make_controller(self):
-        if not self.args.real:
-            return SimulatedPR2Controller(self.robot, client=self.client)
-        else:
-            return PR2Controller(self.robot, client=self.client)
-
-    def estimate_surfaces(self, camera_image, task):
-        surfaces = estimate_surfaces(self.belief, camera_image, client=self.client)
-        self.update_rendered_image()
-        return surfaces
-
-    def reset_robot(self, **kwargs):
-        conf = self.robot.get_default_conf(**kwargs)
-        clients = []
-        for group in conf:
-            if group in [self.robot.base_group]:  # + robot.gripper_groups:
-                continue
-            positions = conf[group]
-            if self.args.real:
-                client = self.controller.command_group(
-                    group, positions, timeout=5.0, blocking=False
-                )
-                clients.append(client)
-            else:
-                self.robot.set_group_positions(group, positions)
-        return self.update_robot()
-
-
 class PR2Robot(Robot):
-    def __init__(self, robot_body, client=None, args=None, **kwargs):
-        self.arms = [arm + "_arm" for arm in args.arms]
+    def __init__(self, robot_body, client=None, real_camera=False, real_execute=False, arms=[LEFT_ARM], **kwargs):
+        self.arms = [arm + "_arm" for arm in arms]
+
+        self.real_execute = real_execute
+        self.real_camera = real_camera
+
         base_side = 5.0
         base_limits = -base_side * np.ones(2) / 2, +base_side * np.ones(2) / 2
         custom_limits = custom_limits_from_base_limits(
@@ -190,11 +122,13 @@ class PR2Robot(Robot):
         self.body = robot_body
         self.max_depth = float("inf")
         self.client = client
+        self.min_z = 0.0
+
 
         self.set_default_conf()
         set_gripper_friction(self, client=self.client)
 
-        if not args.real:
+        if not real_camera:
             cameras = [
                 Camera(
                     self,
@@ -218,26 +152,28 @@ class PR2Robot(Robot):
             for arm in self.arms
         }
 
-        ik_info = PR2_INFOS  # TODO: use here within manipulator
+        if not real_execute:
+            self.controller = SimulatedController(self, client=self.client)
+        else:
+            self.controller = PR2Controller(self, client=self.client)
 
         super(PR2Robot, self).__init__(
             robot_body,
             joint_groups=PR2_GROUPS,
             custom_limits=custom_limits,
             cameras=cameras,
-            ik_info=ik_info,
+            ik_info=PR2_INFOS,
             manipulators=manipulators,
             disabled_collisions=PR2_DISABLED_COLLISIONS,
             client=client,
             **kwargs
         )
 
-    def base_sample_gen(self, pose):
-        return directed_pose_generator(
-            self.robot, pose.get_pose(), reachable_range=(0.8, 0.8)
-        )
+    # def base_sample_gen(self, pose):
+    #     return directed_pose_generator(
+    #         self.robot, pose.get_pose(), reachable_range=(0.8, 0.8)
+    #     )
 
-        
     def get_default_conf(self, torso=0.25, tilt=PI / 3):
         conf = {
             "left_arm": DEFAULT_LEFT_ARM,
@@ -257,8 +193,6 @@ class PR2Robot(Robot):
         return conf
 
     def set_default_conf(self):
-        # dump_body(pr2, links=False)
-        # torso_joints = robot.get_group_joints('torso')
         group_positions = self.get_default_conf()
         group_positions.update(
             {
@@ -273,32 +207,18 @@ class PR2Robot(Robot):
         open_gripper(self.robot, RIGHT_ARM, client=self.client)
         return group_positions
 
-
-def create_default_env(**kwargs):
-    # TODO: p.loadSoftBody
-    set_camera_pose(
-        camera_point=[0.75, -0.75, 1.25], target_point=[-0.75, 0.75, 0.0], **kwargs
-    )
-    draw_pose(Pose(), length=1, **kwargs)
-
-    add_data_path()
-    with HideOutput(enable=True):
-        create_floor_object(**kwargs)
-        table = create_table_object(**kwargs)
-        obstacles = [
-            # floor, # collides with the robot when MAX_DISTANCE >= 5e-3
-            table,
-        ]
-
-        for obst in obstacles:
-            # print(get_dynamics_info(obst))
-            set_dynamics(
-                obst,
-                lateralFriction=1.0,  # linear (lateral) friction
-                spinningFriction=1.0,  # torsional friction around the contact normal
-                rollingFriction=0.01,  # torsional friction orthogonal to contact normal
-                restitution=0.0,  # restitution: 0 => inelastic collision, 1 => elastic collision
-                **kwargs
-            )
-
-    return table, obstacles
+    def reset(self, **kwargs):
+        conf = self.get_default_conf(**kwargs)
+        clients = []
+        for group in conf:
+            if group in [self.base_group]:  # + robot.gripper_groups:
+                continue
+            positions = conf[group]
+            if self.real_execute:
+                client = self.controller.command_group(
+                    group, positions, timeout=5.0, blocking=False
+                )
+                clients.append(client)
+            else:
+                self.set_group_positions(group, positions)
+        return self.update_conf()

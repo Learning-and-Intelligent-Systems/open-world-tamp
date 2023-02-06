@@ -14,9 +14,11 @@ from itertools import groupby
 
 class Snowplow(Planner):
 
-    def __init__(self, env):
-        self.env = env
+    def __init__(self, env, client=None):
 
+        self.env = env
+        self.client = client
+        
         # Initializes a graph that contains the available movements
         self.G = Graph()
         self.G.initialize_full_graph(self.env, [GRID_RESOLUTION, GRID_RESOLUTION, np.pi / 8])

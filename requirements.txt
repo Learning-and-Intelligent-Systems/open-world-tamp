@@ -21,5 +21,6 @@ scikit-learn
 openai
 pyyaml==5.4.1
 opencv-python
-open3d
 SpeechRecognition
+pytest
+pytest-cov

@@ -9,7 +9,7 @@ from robots.movo.movo_sender import (
     command_trajectory,
     get_joint_states,
 )
-from open_world.simulation.controller import SimulatedController
+from open_world.simulation.controller import Controller
 from open_world.estimation.dnn import str_from_int_seg_general
 from open_world.estimation.geometry import cloud_from_depth
 from open_world.estimation.observation import image_from_labeled, save_camera_images
@@ -18,16 +18,11 @@ from pybullet_tools.utils import (
     set_joint_positions,
 )
 
-class SimulatedMovoController(SimulatedController):
+
+class MovoController(Controller):
     def __init__(self, robot, verbose=True, **kwargs):
-        super(SimulatedMovoController, self).__init__(robot, **kwargs)
-
-
-class MovoController(object):
-    def __init__(self, args, robot, verbose=True, **kwargs):
         self.robot = robot
-        self.args=args
-        super(MovoController, self).__init__()
+        super(MovoController, self).__init__(self.robot)
 
     def simulate_trajectory(self, positions, joint_names):
         print(joint_names, positions)
