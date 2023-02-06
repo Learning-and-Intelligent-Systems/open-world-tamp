@@ -75,7 +75,7 @@ from pybullet_tools.utils import (
 )
 
 from grasp.utils import gpd_predict_grasps, graspnet_predict_grasps
-from open_world.estimation.belief import GRASP_EXPERIMENT, EstimatedObject
+from open_world.estimation.belief import GRASP_EXPERIMENT
 from open_world.estimation.geometry import trimesh_from_body
 from open_world.estimation.surfaces import z_plane
 from open_world.planning.grasping import generate_mesh_grasps, get_grasp, sorted_grasps
@@ -84,7 +84,6 @@ from open_world.planning.primitives import (
     Grasp,
     GroupConf,
     GroupTrajectory,
-    Inspect,
     RelativePose,
     Sequence,
     Switch,
