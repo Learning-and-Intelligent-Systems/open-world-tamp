@@ -2,7 +2,7 @@ import traceback
 from itertools import combinations
 
 import numpy as np
-from pybullet_tools.utils import flatten, get_connected_components, pose_from_tform
+from pybullet_tools.utils import get_connected_components, pose_from_tform
 
 from open_world.estimation.surfaces import create_surface, z_plane
 

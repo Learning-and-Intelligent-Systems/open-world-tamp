@@ -6,11 +6,8 @@ from pybullet_tools.retime import interpolate_path, sample_curve
 from pybullet_tools.utils import (
     BASE_LINK,
     INF,
-    SEPARATOR,
     Attachment,
-    LockRenderer,
     Ray,
-    Saver,
     State,
     WorldSaver,
     STATIC_MASS,
@@ -18,52 +15,31 @@ from pybullet_tools.utils import (
     add_fixed_constraint,
     add_segments,
     adjust_path,
-    draw_box_on_image,
-    draw_lines_on_image,
-    draw_oobb,
     draw_pose,
-    elapsed_time,
     empty_sequence,
     flatten,
-    get_aabb_edges,
-    get_aabb_vertices,
     get_bodies,
     get_closest_points,
     get_fixed_constraints,
     get_joint_positions,
-    get_link_pose,
     get_pose,
-    get_visible_aabb,
     invert,
     is_fixed_base,
-    joint_from_name,
     link_from_name,
     multiply,
-    oobb_contains_point,
-    pixel_from_ray,
     pose_from_pose2d,
     remove_constraint,
     remove_handles,
-    safe_zip,
-    set_joint_position,
     set_joint_positions,
     set_pose,
     unit_pose,
     wait_if_gui,
-    waypoints_from_path,
-    get_joint_names
+    waypoints_from_path
 )
 
-from open_world.estimation.completion import inspect_mesh
-from open_world.estimation.observation import (
-    draw_labeled_point,
-    iterate_point_cloud,
-    save_camera_images,
-    tform_labeled_points,
-)
 from open_world.planning.grasping import control_until_contact, get_pregrasp
 from open_world.simulation.control import follow_path, stall_for_duration, step_curve
-from open_world.simulation.entities import NO_BODY, WORLD_BODY, ParentBody
+from open_world.simulation.entities import WORLD_BODY, ParentBody
 
 DRAW_Z = 1e-2
 USE_CONSTRAINTS = True

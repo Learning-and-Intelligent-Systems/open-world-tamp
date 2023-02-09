@@ -6,9 +6,7 @@ from pybullet_tools.utils import (
     get_joint_positions,
     get_joints,
     joints_from_names,
-    set_joint_positions,
-    joint_from_name,
-    set_joint_position
+    set_joint_positions
 )
 
 

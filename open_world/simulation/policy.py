@@ -22,7 +22,6 @@ from pybullet_planning.pybullet_tools.utils import (
     LockRenderer,
     set_joint_positions,
     get_pose,
-    image_from_segmented,
     invert,
     irange,
     multiply,

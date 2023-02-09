@@ -1,4 +1,3 @@
-import os
 import subprocess
 
 GPD_PATH = "/home/parallels/open-world-tamp/grasp/gpd/build/generate_grasps"
