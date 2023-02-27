@@ -1,56 +1,17 @@
 from __future__ import print_function
 
-import argparse
-import glob
-
-# import pdb
-# pdb.set_trace()
-import os
-import pickle
-import shutil
-import sys
-import time
-
-import grasp_estimator
+from grasp.graspnet import grasp_estimator
 import numpy as np
 import open3d as o3d
-from dotenv import load_dotenv
-from minio import Minio
 from utils import utils
-
-from data import DataLoader
 
 # from grasp.graspnet.utils.visualization_utils import *
 from grasp.graspnet.utils import utils
-
-load_dotenv()
-minioClient = Minio(
-    "ceph.csail.mit.edu",
-    access_key=os.environ["S3ACCESS"],
-    secret_key=os.environ["S3SECRET"],
-    secure=True,
-)
 
 
 class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
-
-
-def write_to_minio(obj, name):
-    tmp_folder = "./tmp_minio/"
-    if not os.path.isdir(tmp_folder):
-        os.mkdir(tmp_folder)
-    tmp_filename = str(name) + ".pkl"
-    tmp_path = tmp_folder + tmp_filename
-    # Write data to a pickle file
-    with open(str(tmp_path), "wb") as handle:
-        pickle.dump(obj, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-    # Write file to bucket
-    minioClient.fput_object("aidan_bucket", str(tmp_filename), str(tmp_path))
-    shutil.rmtree(tmp_folder)
-
 
 def backproject(
     depth_cv, intrinsic_matrix, return_finite_depth=True, return_selection=False
@@ -151,5 +112,3 @@ def visualize_grasps(pc, pc_colors, save_name):
     return estimator
 
 
-if __name__ == "__main__":
-    main(sys.argv[1:])

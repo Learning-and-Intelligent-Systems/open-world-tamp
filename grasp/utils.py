@@ -17,31 +17,6 @@ from open_world.simulation.lis import USING_ROS
 
 GRASP_MODES = ["graspnet", "gpd"]
 
-
-def query_grasp_server(points, grasp_mode="gpd", num_iterations=1):  # TODO: num_grasps
-    import rospy
-    from open_world_server.srv import Grasps
-
-    from open_world.real_world.ros_utils import convert_ros_pose, create_cloud_msg
-
-    assert grasp_mode in GRASP_MODES
-    service_name = "/server/grasps"
-    print("Waiting for service:", service_name)
-    rospy.wait_for_service(service_name)
-    grasps_service = rospy.ServiceProxy(service_name, Grasps)
-
-    cloud_msg = create_cloud_msg(points)
-    grasps = []
-    scores = []
-    for _ in range(num_iterations):
-        grasps_response = grasps_service(cloud_msg, grasp_mode)
-        grasps.extend(map(convert_ros_pose, grasps_response.grasps.poses))
-        scores.extend(grasps_response.scores)
-    grasps_service.close()
-
-    return grasps, scores
-
-
 #######################################################
 
 GPD_GRIPPER_ADJUSTMENT = Pose(
@@ -71,10 +46,7 @@ def gpd_predict_grasps(points_world, camera_pose, use_tool=True):
     # reference_pose = camera_pose
 
     points_reference = tform_points(invert(reference_pose), points_world)
-    if USING_ROS:
-        grasps, scores = query_grasp_server(points_reference, grasp_mode="gpd")
-    else:
-        grasps, scores = local_gpd(points_reference)
+    grasps, scores = local_gpd(points_reference)
     grasps, scores = zip(
         *sorted(zip(grasps, scores), key=lambda pair: pair[-1], reverse=True)
     )
