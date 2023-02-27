@@ -7,7 +7,6 @@ from heapq import heapify, heappop, heappush
 from itertools import islice
 
 import numpy as np
-from tamp.examples.continuous_tamp.optimizer.optimizer import sample_sphere_surface
 from pybullet_tools.utils import (
     AABB,
     INF,
@@ -61,6 +60,17 @@ from open_world.estimation.surfaces import (get_plane_quat)
 from open_world.simulation.control import interpolate_controller
 from open_world.simulation.lis import USING_ROS
 from open_world.simulation.utils import X_AXIS, Z_AXIS
+
+
+def sample_sphere_surface(d, uniform=True):
+    # TODO: hyperspherical coordinates
+    # https://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates
+    while True:
+        v = np.random.randn(d)
+        r = np.sqrt(v.dot(v))
+        if not uniform or (r <= 1.):
+            return v / r
+
 
 PREGRASP_DISTANCE = 0.07  # 0.05 | 0.07
 

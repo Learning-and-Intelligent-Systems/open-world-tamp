@@ -60,6 +60,14 @@ def task_from_goal(args, goal):
     )
     return task
 
+
+def none(args):
+    task = Task(
+        goal_parts=[],
+        skills=DEFAULT_SKILLS,
+    )
+    return task
+
 def holding(args):  # For testing grasping
     task = Task(
         goal_parts=[
@@ -103,6 +111,7 @@ def all_bowl(args):
 
 
 GOALS = [
+    none,
     holding,
     all_bowl,
 ]

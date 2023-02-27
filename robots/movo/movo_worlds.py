@@ -413,7 +413,50 @@ def empty(args, robot, **kwargs):
     return real_world
 
 
-WORLDS = [problem0, empty, red_block_mobile, namo, vanamo_m0m, vanamo_m0m_chair]
+def empty_room(args, robot, **kwargs):
+    width = 4
+    length = 4
+    wall_height = 2
+    center = [1, 0]
+
+    floor1 = create_pillar(width=width, length=length, color=TAN, **kwargs)
+    set_pose(floor1, Pose(Point(x=center[0], y=center[1])), **kwargs)
+
+    wall_thickness = 0.1
+    wall_1 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
+    set_pose(wall_1,
+                Pose(point=Point(x=center[0], y=center[1] + length / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
+
+    wall_2 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
+    set_pose(wall_2,
+                Pose(point=Point(x=center[0], y=center[1] - (length / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
+
+    wall_3 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
+    set_pose(wall_3,
+                Pose(point=Point(y=center[1], x=center[0] + width / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
+
+    wall_4 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
+    set_pose(wall_4,
+                Pose(point=Point(y=center[1], x=center[0] - (width / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
+
+  
+
+    walls = [wall_1, wall_2, wall_3, wall_4]
+
+    floors = [floor1]
+    aabb = AABB(lower=(center[0] - width / 2.0, center[1] - length / 2.0, 0.05),
+                upper=(center[0] + width / 2.0, center[1] + length / 2.0, GRID_HEIGHT))
+
+    room = Room(walls, floors, aabb, [])
+
+    real_world = create_world(
+            robot, movable=[], fixed=[], surfaces=[], room=room, **kwargs
+        )
+
+    return real_world
+
+
+WORLDS = [problem0, empty, red_block_mobile, namo, vanamo_m0m, vanamo_m0m_chair, empty_room]
 
 
 def movo_world_from_problem(problem, robot, args, **kwargs):
