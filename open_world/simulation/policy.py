@@ -448,12 +448,13 @@ class Policy(object):
         real_world=None,
         client=None,
         base_planner = None,
+        base_goal = None,
         **kwargs
     ):
-        env = Environment(client=self.client)
+        env = Environment(self.robot, client=self.client)
         # From init of simple navigation
         env.start = (0, 0, 0)
-        env.goal = (0, 0, np.pi*2.0-np.pi/2.0)  # TODO: Create separate class for configuration space
+        env.goal = tuple(base_goal)  # TODO: Create separate class for configuration space
         env.objects = []
         env.viewed_voxels = []
 

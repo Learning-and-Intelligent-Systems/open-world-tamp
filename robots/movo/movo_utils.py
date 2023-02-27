@@ -255,6 +255,9 @@ MOVO_INFOS = {
 
 # Arms down
 default_joints = {
+    "x": 0,
+    "y":0,
+    "theta":0,
     "pan_joint": -0.07204942405223846,
     "tilt_joint": -0.599216890335083,
     "left_shoulder_pan_joint": 1.0,
@@ -329,9 +332,9 @@ class MovoRobot(Robot):
         self.command_joint_groups = COMMAND_MOVO_GROUPS
 
         if not self.real_execute:
-            self.controller = SimulatedController(self.robot, client=self.client)
+            self.controller = SimulatedController(self, client=self.client)
         else:
-            self.controller =  MovoController(self.args, self.robot, client=self.client)
+            self.controller =  MovoController(self, client=self.client)
 
         super(MovoRobot, self).__init__(
             robot_body,

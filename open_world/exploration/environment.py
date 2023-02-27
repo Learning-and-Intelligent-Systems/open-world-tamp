@@ -70,8 +70,9 @@ def suppress_stdout():
 
 class Environment(ABC):
 
-    def __init__(self, vis=True, debug=False, save_dir = False, client=None):
+    def __init__(self, robot_controller, vis=True, debug=False, save_dir = False, client=None):
         self.vis = vis
+        self.robot_controller = robot_controller
         self.push_only = []
         self.debug = debug
         self.save_dir = save_dir
@@ -911,7 +912,10 @@ class Environment(ABC):
             attachment (list): A list of an attached object's oobb, its attachment grasp, and the
                                 object's code in the environment.
         """
+        
         set_joint_positions(self.robot, joints, q, client=self.client)
+        self.robot_controller.controller.command_group_dict("base", {"x":q[0], "y":q[1], "theta":q[2], "linear_joint":0.3}, q)
+
         if attachment is not None:
             robot_pose = Pose(
                 point=Point(x=q[0], y=q[1]),

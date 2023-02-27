@@ -18,7 +18,6 @@ from pybullet_tools.utils import (
     set_joint_positions,
 )
 
-
 class MovoController(Controller):
     def __init__(self, robot, verbose=True, **kwargs):
         self.robot = robot
@@ -65,14 +64,13 @@ class MovoController(Controller):
     @property
     def joint_positions(self):
         positions = {}
-        joint_states = get_joint_states()
         for group_name, joint_names in self.robot.command_joint_groups.items():
-            if group_name != "base":
-                current_angles = {
-                    joint_name: joint_states["joint_dict"][joint_name]
-                    for joint_name in joint_names
-                }
-                positions.update(current_angles)
+            joint_states = get_joint_states(group_name)
+            current_angles = {
+                joint_name: joint_states["joint_dict"][joint_name]
+                for joint_name in joint_names
+            }
+            positions.update(current_angles)
         return positions
 
     def any_arm_fully_closed(self):

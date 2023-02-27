@@ -33,6 +33,8 @@ from robots.panda.panda_worlds import panda_world_from_problem
 from robots.pr2.pr2_utils import PR2_PATH, PR2Robot
 from robots.pr2.pr2_worlds import pr2_world_from_problem
 
+import numpy as np
+
 ROBOTS = ["pr2", "panda", "movo"]
 SEG_MODELS = ["maskrcnn", "uois", "ucn", "all"]
 SHAPE_MODELS = ["msn", "atlas"]
@@ -154,7 +156,7 @@ def create_parser():
         "-rgbd", 
         "--maskrcnn-rgbd", 
         action="store_true", 
-        help="Uses RGBD for maskrcnn"
+        help="Uses RliGBD for maskrcnn"
     )
     parser.add_argument(
         "-segm",
@@ -189,7 +191,8 @@ def create_parser():
     # exploration    
     parser.add_argument("-exp", "--exploration", action="store_true", help="Use exploration prior to running m0m")
     parser.add_argument("-bp", "--base-planner", default="lamb", help="Specifies the planner to use for base navigation")
-
+    parser.add_argument("-bg", "--base-goal", default=[0, 0, 0], help="Specifies the goal to use for base navigation")
+    
     # robot
     parser.add_argument("-r", "--robot", default="pr2", help="Specifies the robot.")
 
@@ -255,6 +258,7 @@ def main(args):
                                room = real_world.room, 
                                base_planner=base_planners[args.base_planner],
                                num_iterations=args.max_iters,
+                               base_goal=args.base_goal,
                                client=client)
     else:
         policy.run(task, 

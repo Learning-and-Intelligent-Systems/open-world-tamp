@@ -8,7 +8,7 @@ import zmq
 
 context = zmq.Context()
 socket = context.socket(zmq.REQ)
-socket.connect("tcp://192.168.0.246:5555")
+socket.connect("tcp://localhost:5555")
 
 
 def get_pointcloud():
@@ -46,8 +46,8 @@ def get_depth_image():
     return message
 
 
-def get_joint_states():
-    socket.send(zlib.compress(pickle.dumps({"message_name": "get_joint_states"})))
+def get_joint_states(group_name):
+    socket.send(zlib.compress(pickle.dumps({"message_name": "get_joint_states", "group_name": group_name})))
     message = pickle.loads(zlib.decompress(socket.recv()))
     return message
 
