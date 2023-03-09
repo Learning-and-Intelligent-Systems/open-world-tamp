@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 from itertools import product
 
-from pybullet_tools.utils import (load_pybullet, wait_for_user)
+from pybullet_tools.utils import (load_pybullet, wait_for_user, wait_if_gui)
 
 from open_world.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
 from open_world.simulation.policy import Policy
@@ -32,18 +32,21 @@ from robots.panda.panda_utils import PANDA_PATH, PandaRobot
 from robots.panda.panda_worlds import panda_world_from_problem
 from robots.pr2.pr2_utils import PR2_PATH, PR2Robot
 from robots.pr2.pr2_worlds import pr2_world_from_problem
+from robots.spot.spot_utils import SPOT_PATH, SpotRobot
+from robots.spot.spot_worlds import spot_world_from_problem
 
-ROBOTS = ["pr2", "panda", "movo"]
+ROBOTS = ["pr2", "panda", "movo", "spot"]
 SEG_MODELS = ["maskrcnn", "uois", "ucn", "all"]
 SHAPE_MODELS = ["msn", "atlas"]
 
-robot_paths = {"pr2": PR2_PATH, "panda": PANDA_PATH, "movo": MOVO_PATH}
-robot_entities = {"pr2": PR2Robot, "panda": PandaRobot, "movo": MovoRobot}
+robot_paths = {"pr2": PR2_PATH, "panda": PANDA_PATH, "movo": MOVO_PATH, "spot": SPOT_PATH}
+robot_entities = {"pr2": PR2Robot, "panda": PandaRobot, "movo": MovoRobot, "spot": SpotRobot}
 
 robot_simulated_worlds = {
     "pr2": pr2_world_from_problem,
     "panda": panda_world_from_problem,
     "movo": movo_world_from_problem,
+    "spot": spot_world_from_problem
 }
 
 base_planners = {"snowplow": Snowplow,
@@ -239,6 +242,8 @@ def main(args):
     real_world = robot_simulated_worlds[args.robot](
         args.world, robot, args, client=client
     )
+
+    wait_if_gui(client=client)
 
     # Set up the policy, which in turn sets up the simulated or real-robot controller
     policy = Policy(args, robot, 

@@ -1,5 +1,5 @@
 import os
-
+import copy
 import numpy as np
 from pybullet_tools.ikfast.utils import IKFastInfo
 from pybullet_tools.utils import (
@@ -222,7 +222,7 @@ MOVO_INFOS = {
 
 
 # Arms up
-# default_joints = {
+# DEFAULT_JOINTS = {
 #     "pan_joint": -0.07204942405223846,
 #     "tilt_joint": -0.599216890335083,
 #     "left_shoulder_pan_joint": -1.3113831313324589,
@@ -254,7 +254,7 @@ MOVO_INFOS = {
 # }
 
 # Arms down
-default_joints = {
+DEFAULT_JOINTS = {
     "pan_joint": -0.07204942405223846,
     "tilt_joint": -0.599216890335083,
     "left_shoulder_pan_joint": 1.0,
@@ -344,9 +344,7 @@ class MovoRobot(Robot):
             **kwargs
         )
 
-        self.min_z = 0.0
         self.intrinsics = np.asarray(KINECT_INTRINSICS).reshape(3, 3)
-        self.max_depth = 3.0
 
 
 
@@ -385,14 +383,11 @@ class MovoRobot(Robot):
 
     def get_default_conf(self):
 
-        default_default_joints = {}
-        default_default_joints.update(default_joints)
+        default_default_joints = copy.deepcopy(DEFAULT_JOINTS)
         get_jval = (
             lambda j: default_default_joints[j]
             if j in default_default_joints.keys()
-            else get_joint_position(
-                self, joint_from_name(self, j, client=self.client), client=self.client
-            )
+            else get_joint_position(self, joint_from_name(self, j, client=self.client), client=self.client)
         )
         return {k: [get_jval(j) for j in v] for k, v in MOVO_GROUPS.items()}
 
@@ -494,6 +489,7 @@ class MovoRobot(Robot):
         conf = self.get_default_conf(**kwargs)
         for group, positions in conf.items():
             if self.real_execute:
+                # We need to go to default joints so we don't collide with things
                 new = [pos for pos, name in zip(positions, MOVO_GROUPS[group])]
                 if "arm" in group:
                     motion_gen = get_plan_motion_fn(self)
@@ -514,6 +510,7 @@ class MovoRobot(Robot):
                         {name: pos for pos, name in zip(positions, MOVO_GROUPS[group])},
                     )
             else:
+                # If in sim, we can just set the joint positions
                 self.set_group_positions(group, positions)
 
 
