@@ -243,8 +243,6 @@ def main(args):
         args.world, robot, args, client=client
     )
 
-    wait_if_gui(client=client)
-
     # Set up the policy, which in turn sets up the simulated or real-robot controller
     policy = Policy(args, robot, 
                     known=real_world.known,
