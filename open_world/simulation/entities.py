@@ -573,6 +573,10 @@ class Robot(Object):
         self.components = {}  # grippers
         self.client=client
 
+        self.min_z = 0.0
+        self.max_depth = 3.0
+
+
 
     def update_conf(self):
         conf = dict(self.controller.joint_positions)

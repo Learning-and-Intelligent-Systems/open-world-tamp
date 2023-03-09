@@ -15,3 +15,4 @@ def test_run_planner_problem0_movo():
     parser = create_parser()
     args = parser.parse_args(["--robot", "movo", "--goal", "none", "--world", "problem0", "--teleport"])
     main(args)
+    
