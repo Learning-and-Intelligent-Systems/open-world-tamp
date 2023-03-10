@@ -38,6 +38,7 @@ from robots.spot.spot_worlds import spot_world_from_problem
 ROBOTS = ["pr2", "panda", "movo", "spot"]
 SEG_MODELS = ["maskrcnn", "uois", "ucn", "all"]
 SHAPE_MODELS = ["msn", "atlas"]
+MENTAL_SIM = ["pybullet", "drake"]
 
 robot_paths = {"pr2": PR2_PATH, "panda": PANDA_PATH, "movo": MOVO_PATH, "spot": SPOT_PATH}
 robot_entities = {"pr2": PR2Robot, "panda": PandaRobot, "movo": MovoRobot, "spot": SpotRobot}
@@ -172,6 +173,15 @@ def create_parser():
         help="Uses FasterRCNN to label any cup or bowl instances that were segmented by UOIS.",
     )
 
+    parser.add_argument(
+        "-ws",
+        "--world-model-sim",
+        type=str,
+        default="pybullet",
+        choices=MENTAL_SIM,
+        help="Selects the simulator that the planner use for IK/Motion planning",
+    )
+
     # grasping
     parser.add_argument(
         "-g",
@@ -243,13 +253,16 @@ def main(args):
     # Set up the policy, which in turn sets up the simulated or real-robot controller
     policy = Policy(args, robot, 
                     known=real_world.known,
-                    teleport=args.teleport, 
+                    teleport=args.teleport,
+                    mental_sim=args.mental_sim, 
                     client=client)
     
     # Get the task. TODO(curtisa): Remove args
     task = get_task(args)
 
     if(args.exploration):
+        # Exploration requires a pybullet sim for now
+        assert args.world_model_sim == "pybullet"
         policy.run_exploration(task, 
                                real_world=real_world, 
                                room = real_world.room, 
