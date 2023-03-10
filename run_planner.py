@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 from itertools import product
 
-from pybullet_tools.utils import (load_pybullet, wait_for_user)
+from pybullet_tools.utils import (load_pybullet, wait_for_user, wait_if_gui)
 
 from open_world.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
 from open_world.simulation.policy import Policy
@@ -191,7 +191,7 @@ def create_parser():
     # exploration    
     parser.add_argument("-exp", "--exploration", action="store_true", help="Use exploration prior to running m0m")
     parser.add_argument("-bp", "--base-planner", default="lamb", help="Specifies the planner to use for base navigation")
-    parser.add_argument("-bg", "--base-goal", default=[0, 0, 0], help="Specifies the goal to use for base navigation")
+    parser.add_argument("-bg", "--base-goal", default=[0, 1, np.pi], help="Specifies the goal to use for base navigation")
     
     # robot
     parser.add_argument("-r", "--robot", default="pr2", help="Specifies the robot.")
@@ -209,6 +209,9 @@ def setup_robot_pybullet(args):
         client = bc.BulletClient(connection_mode=p.GUI)
     else:
         client = bc.BulletClient(connection_mode=p.DIRECT)
+
+    client.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+    client.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 0)
 
     robot_body = load_pybullet(robot_paths[args.robot], fixed_base=True, client=client)
     return robot_body, client
@@ -232,7 +235,6 @@ def get_task(args):
 def main(args):
     # Create the robot
     robot_body, client = setup_robot_pybullet(args)
-
     robot = robot_entities[args.robot](robot_body, 
                                        real_execute = args.real_execute, 
                                        real_camera = args.real_camera,
@@ -242,6 +244,8 @@ def main(args):
     real_world = robot_simulated_worlds[args.robot](
         args.world, robot, args, client=client
     )
+    
+    wait_if_gui(client=client )
 
     # Set up the policy, which in turn sets up the simulated or real-robot controller
     policy = Policy(args, robot, 

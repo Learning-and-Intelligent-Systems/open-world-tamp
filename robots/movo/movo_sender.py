@@ -10,6 +10,11 @@ context = zmq.Context()
 socket = context.socket(zmq.REQ)
 socket.connect("tcp://localhost:5555")
 
+# import zmq
+# import zmq.ssh
+# context = zmq.Context()
+# socket = context.socket(zmq.REQ)
+# zmq.ssh.tunnel_connection(socket, "tcp://127.0.0.1:7004", "sahit@73.38.71.248")
 
 def get_pointcloud():
     socket.send(zlib.compress(pickle.dumps({"message_name": "get_pointcloud"})))
@@ -120,21 +125,5 @@ def command_gripper(group, timeout, position):
         )
     )
     message = pickle.loads(zlib.decompress(socket.recv()))
-    return message
-
-def command_base(timeout, position):
-    socket.send(
-        zlib.compress(
-            pickle.dumps(
-                {
-                    "message_name": "command_base",
-                    "timeout": timeout,
-                    "position": position
-                }
-            )
-        )
-    )
-    message = pickle.loads(zlib.decompress(socket.recv()))
-    print("Command base get position")
     return message
 

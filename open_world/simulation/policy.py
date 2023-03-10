@@ -460,16 +460,6 @@ class Policy(object):
 
         # Properties represented as a list of width, length, height, mass
         env.objects_prop = dict()
-
-        i = np.random.randint(-1, 4, size=2)
-        env.start = (round(env.start[0] + i[0]*GRID_RESOLUTION, 2),
-                    round(env.start[1] + i[1]*GRID_RESOLUTION, 2),
-                    round(env.start[2] + np.random.randint(16)*np.pi/8, 3))
-
-        i = np.random.randint(-1, 5)
-        env.goal = (env.goal[0],
-                    round(env.goal[1] + i*GRID_RESOLUTION, 2),
-                    env.goal[2])
         
         env.goal = (2.2, 1, env.goal[2])
         env.initialized = True

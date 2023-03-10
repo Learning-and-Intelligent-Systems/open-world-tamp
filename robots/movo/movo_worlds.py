@@ -422,22 +422,24 @@ def empty_room(args, robot, **kwargs):
     floor1 = create_pillar(width=width, length=length, color=TAN, **kwargs)
     set_pose(floor1, Pose(Point(x=center[0], y=center[1])), **kwargs)
 
+    print("room")
     wall_thickness = 0.1
     wall_1 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
     set_pose(wall_1,
                 Pose(point=Point(x=center[0], y=center[1] + length / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
-
+    print( Pose(point=Point(x=center[0], y=center[1] + length / 2 + wall_thickness / 2, z=wall_height / 2)))
     wall_2 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
     set_pose(wall_2,
                 Pose(point=Point(x=center[0], y=center[1] - (length / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
-
+    print(Pose(point=Point(x=center[0], y=center[1] - (length / 2 + wall_thickness / 2), z=wall_height / 2)))
     wall_3 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
     set_pose(wall_3,
                 Pose(point=Point(y=center[1], x=center[0] + width / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
-
+    print( Pose(point=Point(y=center[1], x=center[0] + width / 2 + wall_thickness / 2, z=wall_height / 2)))
     wall_4 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
     set_pose(wall_4,
                 Pose(point=Point(y=center[1], x=center[0] - (width / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
+    print(Pose(point=Point(y=center[1], x=center[0] - (width / 2 + wall_thickness / 2), z=wall_height / 2)))
 
   
 
