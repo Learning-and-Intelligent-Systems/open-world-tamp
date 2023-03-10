@@ -261,24 +261,6 @@ class Policy(object):
         )
         return objects
 
-    def predstate_command(self, command):
-        state = WorldState(client=self.client)
-        saver = WorldSaver(bodies=[body.body for body in self.belief.estimated_objects])
-        before_poses = {
-            obj: get_pose(obj.body) for obj in self.belief.estimated_objects
-        }
-        belief_sim = iterate_sequence(state, command, time_step=0)
-        after_poses = {obj: get_pose(obj.body) for obj in self.belief.estimated_objects}
-        tform_from_rel_pose = lambda p1, p2: multiply(p1, invert(p2))
-        tform_poses = {
-            obj: tform_from_rel_pose(after_poses[obj], before_poses[obj])
-            for obj in self.belief.estimated_objects
-        }
-        camera_image_pred = self.belief.robot.cameras[0].get_image()
-        saver.restore()
-        self.pred_state = camera_image_pred
-        self.pred_tform = tform_poses
-
     ##################################################
 
     def plan(self, belief, task, serialize=False, save=True):
