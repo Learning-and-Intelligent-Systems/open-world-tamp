@@ -101,7 +101,6 @@ def create_parser():
         "--teleport",
         action="store_true",
         help="Teleport between subplan steps",
-        default=True,
     )
 
     parser.add_argument(
@@ -109,7 +108,6 @@ def create_parser():
         "--real-camera",
         action="store_true",
         help="Use a realsense camera for perception",
-        default=False,
     )
 
     parser.add_argument(
@@ -117,7 +115,6 @@ def create_parser():
         "--real-execute",
         action="store_true",
         help="Execute the positions commands on a real robot",
-        default=False,
     )
 
     # shape completion
