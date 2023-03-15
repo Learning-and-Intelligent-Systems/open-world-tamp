@@ -635,12 +635,8 @@ def create_pddlstream(
 
 
 def restrict_stackable(problem, surfaces):
-    try:
-        goal_facts = analyze_goal(problem)
-    except:
-        import sys
-
-        sys.exit("The goal is not possible in this state")
+    goal_facts = analyze_goal(problem)
+    
     if goal_facts is None:
         return None
     table = surfaces[0]
