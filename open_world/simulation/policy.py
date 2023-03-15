@@ -112,7 +112,7 @@ def fuse_predicted_labels(
 
 
 class Policy(object):
-    def __init__(self, args, robot, known=[], teleport=False, client=None, **kwargs):
+    def __init__(self, args, robot, sim=None, known=[], teleport=False, client=None, **kwargs):
 
         self.args = args
         self.robot = robot
@@ -120,6 +120,7 @@ class Policy(object):
         self.executed = False
         self.teleport = teleport
         self.client = client
+        self.sim=sim
 
         self.data = []
         self.runtimes = {}
