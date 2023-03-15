@@ -314,8 +314,7 @@ def create_pddlstream(
     objects=[],
     mobile_base=False,
     stack=False,
-    restrict_init=True,
-    **kwargs
+    restrict_init=True
 ):
     robot = belief.robot
     # obstacles = belief.obstacles # belief.surfaces
@@ -388,7 +387,7 @@ def create_pddlstream(
 
     init.extend(("Controllable", group) for group in controllable)
     init_confs = {
-        group: GroupConf(robot, group, important=True, **kwargs)
+        group: GroupConf(robot, group, important=True)
         for group in robot.groups
     }
     for group, conf in init_confs.items():
@@ -410,7 +409,7 @@ def create_pddlstream(
         #     init.append(('Arm', group))
 
     init_poses = {
-        obj: RelativePose(obj, important=True, **kwargs) for obj in all_objects
+        obj: RelativePose(obj, important=True) for obj in all_objects
     }
     for obj, pose in init_poses.items():
         init.extend(
@@ -499,8 +498,7 @@ def create_pddlstream(
                 obj,
                 surface.get_shape_aabb(),
                 above_epsilon=INF,
-                below_epsilon=INF,
-                **kwargs
+                below_epsilon=INF
             ):
                 # is_placed_on_aabb | is_center_on_aabb
                 # TODO: test stream

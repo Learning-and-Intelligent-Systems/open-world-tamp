@@ -49,18 +49,12 @@ from open_world.simulation.utils import (
 COLORS = {
     "yellow": YELLOW,
 }
-# COLORS.update(CHROMATIC_COLORS)
 
 # TODO: infer from the goal statement or explicitly specify in the problem
 SURFACE_COLORS = {
-    # TABLE: [0.855, 0.733, 0.612], # 0.596
-    "red": [0.737, 0.082, 0.227],  # 0.044
-    "yellow": [0.953, 0.89, 0.169],  # 0.043
-    "green": [
-        0.592,
-        0.804,
-        0.353,
-    ],  # [0.631, 0.902, 0.463], # Green seems hard to detect?
+    "red": [0.737, 0.082, 0.227],
+    "yellow": [0.953, 0.89, 0.169],
+    "green": [0.592, 0.804, 0.353],
     "blue": [0.31, 0.431, 0.804],
 }
 COLORS.update(SURFACE_COLORS)
@@ -86,20 +80,19 @@ def relabel_table(
     threshold=3e-2,
     check_all=True,
     ignore_obj=False,
-    min_z=0.3,
-    **kwargs
+    min_z=0.3
 ):
     # ignore_obj: set to True to relabel all pixels close to table, ignore obj masks.
     # TODO: image-based operations like taking the 2D AABB or OOBB
     start_time = time.time()
     check_pixels = (
-        set(iterate_image(camera_image, step_size=4, **kwargs)) if check_all else set()
+        set(iterate_image(camera_image, step_size=4)) if check_all else set()
     )
     table_label = Label(TABLE, TABLE)
     unknown_label = Label(UNKNOWN, UNKNOWN)
     seg = camera_image[2]
     num_relabeled = 0
-    for pixel in iterate_image(camera_image, step_size=1, **kwargs):
+    for pixel in iterate_image(camera_image, step_size=1):
         category, instance = seg[pixel]
         if category == TABLE:  # Single table instance
             seg[pixel] = table_label
@@ -129,8 +122,7 @@ def estimate_region(
     threshold=5e-2,
     min_side=8e-2,
     thickness=1e-2,
-    category=None,
-    **kwargs
+    category=None
 ):  # Squares are 0.2 x 0.2
 
     points = list(set([lp.point for lp in labeled_points]))
@@ -160,8 +152,8 @@ def estimate_region(
     inliers = select_indices(points, indices)
 
     surface = create_surface(
-        plane, inliers, max_distance=threshold, min_area=min_side ** 2, **kwargs
-    )
+        plane, inliers, max_distance=threshold, min_area=min_side ** 2
+)
 
     if surface is None:
         return None
@@ -193,21 +185,7 @@ def estimate_region(
         category = "{}_region".format(color_name)
 
     mesh = mesh_from_points(mesh_points)  # vertices | mesh_points
-    # draw_mesh(tform_mesh(pose, mesh), color=color)
-    body = create_mesh(mesh, under=False, color=apply_alpha(color), **kwargs)
-    set_pose(body, pose, **kwargs)
-    print(body, convex_area(surface.vertices), color.round(3).tolist())
-
-    # from pybullet_tools.utils import rectangular_mesh, create_rectangular_surface
-    # https://github.mit.edu/Learning-and-Intelligent-Systems/ltamp_pr2/blob/044d5b22f6976f7d1c7ba53cc445ce01a557646e/plan_tools/simulated_problems.py#L48
-    # https://github.mit.edu/Learning-and-Intelligent-Systems/ltamp_pr2/blob/044d5b22f6976f7d1c7ba53cc445ce01a557646e/perception_tools/ros_perception.py#L149
-    # https://github.mit.edu/Learning-and-Intelligent-Systems/ltamp_pr2/blob/044d5b22f6976f7d1c7ba53cc445ce01a557646e/perception_tools/ros_perception.py#L225
-    # TODO: did I have other LTAMP methods for creating surfaces and 2.5D polygons?
-
-    # TODO: table color in name, only one table per color
-    return Table(
-        surface, body, category=category, color=color, points=mesh_points, **kwargs
-    )  # , labeled_points[indices][cluster_indices]
+    return Table(surface, mesh, category=category, color=color, points=mesh_points)
 
 
 def cluster_inliers(inliers, max_clusters=2):  # TODO another kind of clustering?
@@ -296,14 +274,12 @@ def estimate_regions(
     min_points=100,
     plane_threshold=5e-2,
     color_threshold=0.3,
-    min_z=0.3,
-    save_relabled=False,
-    **kwargs
+    save_relabled=False
 ):
 
-    _, pos_table_points = extract_table(camera_image, **kwargs)
+    _, pos_table_points = extract_table(camera_image)
     extracted_pos_table = list(set([lp.point for lp in pos_table_points]))
-    table_plane, inliers = ransac_estimate_plane(
+    table_plane, _ = ransac_estimate_plane(
         extracted_pos_table, threshold=plane_threshold, max_error=math.radians(1)
     )
     # table = estimate_region(table_points, **kwargs)
@@ -324,7 +300,7 @@ def estimate_regions(
     ]  # TODO: use inliers
 
     table = estimate_region(
-        pos_table_points, threshold=plane_threshold, category="table", **kwargs
+        pos_table_points, threshold=plane_threshold, category="table"
     )
     table_plane = plane_from_pose(table.surface.pose)
     table_color = table.color
@@ -364,32 +340,25 @@ def estimate_regions(
                 ),
                 list(map(len, clusters)),
             )
-            # region_plane = None
             region_plane = table_plane
-            # region_plane = Plane(table_plane.normal, table_plane.origin + 1e-3*table_plane.normal)
             region = estimate_region(
-                cluster_points, plane=region_plane, threshold=plane_threshold, **kwargs
+                cluster_points, plane=region_plane, threshold=plane_threshold
             )
             if region is not None:
                 regions.append(region)
-                # wait_if_gui()
     return [table] + regions
 
 
-def estimate_surfaces(belief, camera_image, **kwargs):
-    surfaces = estimate_regions(camera_image, **kwargs)
-    assert surfaces  # TODO: while true
+def estimate_surfaces(belief, camera_image):
+
+    surfaces = estimate_regions(camera_image)
+    assert surfaces
     belief.known_surfaces = surfaces
 
     regions = surfaces[1:]
     for surface in regions:
-        color = get_color(surface, **kwargs)
+        color = surface.color
         color_name = find_closest_color(color, color_from_name=SURFACE_COLORS)
-        # print(surface, np.array(color), color_name)
-        surface.properties.extend(
-            [
-                ("Region",),
-                ("Color", color_name),
-            ]
-        )
+        surface.properties.extend([("Region",), ("Color", color_name)])
+
     return surfaces

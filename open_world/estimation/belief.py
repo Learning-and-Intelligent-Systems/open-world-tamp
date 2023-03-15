@@ -97,16 +97,7 @@ class EstimatedObject(Object):
         self.voxels = frozenset(voxels)
         self.unknown = frozenset(unknown)
         self.is_fragile = is_fragile
-
-        # TODO: store OOBB
-        if (color is None) and self.labeled_points:
-            # hue = mean_hue(self.colors, min_sat=0.5, min_value=0.5)
-            # if hue is None:
-            color = aggregate_color(self.labeled_points)
-            # else:
-            #    color = apply_alpha(np.array(colorsys.hsv_to_rgb(h=hue, s=1., v=1.)))
-            set_all_color(self.body, apply_alpha(color, alpha=1.0), client=self.client)
-        self.color = color  # TODO: could extract from the body/texture instead
+        self.color = color
 
     def update(self, newcloud, tform, camera_image, min_points, surface, **kwargs):
         tformed_points = tform_labeled_points(
@@ -174,14 +165,11 @@ class SurfaceBelief(Object):
         surface,
         height=0.25,
         resolutions=0.05 * np.ones(3),
-        known_objects=[],
-        client=None,
-        **kwargs
+        known_objects=[]
     ):
         # TODO: be careful about the cube created
         assert len(resolutions) == 3
         self.surface = surface
-        self.client = client
         self.surface_pose = get_pose(surface)
         self.height = height
         self.resolutions = resolutions
@@ -313,32 +301,26 @@ class SurfaceBelief(Object):
                 if len(labeled_points) < min_points:
                     continue
                 color = aggregate_color(labeled_points)
-                body = estimate_surface_mesh(
+                body_mesh = estimate_surface_mesh(
                     labeled_points,
                     self.surface_origin,
                     camera_image=self.observations[-1],
-                    client=self.client,
                     **kwargs
                 )
-                if body is None:
+                if body_mesh is None:
                     continue
 
                 adjacent = set(
                     flatten(grid.get_neighbors(voxel) for voxel in cluster)
                 ) - set(cluster)
+
                 unknown = {
                     voxel for voxel in adjacent if self.visibility_grid.contains(voxel)
-                }  # TODO: use the mesh
-                # print(name, len(cluster), len(labeled_points), len(adjacent), len(unknown))
+                }  
 
-                # grid.draw_voxel_boxes(cluster, color=RED)
-                # #grid.draw_voxel_boxes(adjacent)
-                # grid.draw_voxel_boxes(unknown)
-                # wait_if_gui()
-                
                 self.estimated_objects.append(
                     EstimatedObject(
-                        body,
+                        body_mesh,
                         name=name,
                         category=category,
                         color=color,
@@ -347,9 +329,7 @@ class SurfaceBelief(Object):
                         unknown=unknown,
                     )
                 )
-                # grid.draw_voxel_boxes(cluster)
-                # wait_if_gui()
-        # TODO: convex hull of occupied vertices
+                
         return self.estimated_objects
 
     def fuse_occupancy(self):  # Belief consistency / revision
@@ -411,12 +391,10 @@ class Belief(object):
         known_surfaces=[],
         materials={},
         displacement=10,
-        client=None,
         **kwargs
     ):
         self.robot = robot
         self.materials = materials
-        self.client = client
         self.surface_beliefs = tuple(surface_beliefs)  # dict
         self.known_objects = tuple(known_objects)
         self.known_surfaces = tuple(known_surfaces)  # TODO: unify with surface_beliefs
@@ -513,6 +491,7 @@ class Belief(object):
         clusters = sorted(
             clusters, key=lambda c: min(lp.point[0] for lp in c)
         )  # TODO: relative to the robot
+        
         for cluster in clusters:
             if len(cluster) < min_points:
                 continue
@@ -520,15 +499,14 @@ class Belief(object):
             min_z = min(lp.point[2] for lp in cluster)
             max_z = max(lp.point[2] for lp in cluster)
             surface_pose = Pose(Point(z=min_z))  # if surface is None else surface.pose
-            body = estimate_surface_mesh(
+            body_mesh = estimate_surface_mesh(
                 downsample_cluster(cluster),
                 surface_pose,
                 camera_image=camera_image,
                 min_points=min_points,
-                client=self.client,
                 **kwargs
             )
-            if body is None:
+            if body_mesh is None:
                 continue
 
             # surfaces_movable decides whether or not to treat surfaces as movable objects
@@ -537,11 +515,10 @@ class Belief(object):
                 is_fragile = height > FRAGILE_HEIGHT
                 self.estimated_objects.append(
                     EstimatedObject(
-                        body,
+                        body_mesh,
                         category=category,
                         labeled_points=cluster,
                         is_fragile=is_fragile,
-                        client=self.client,
                     )
                 )
         if save_relabeled_img:

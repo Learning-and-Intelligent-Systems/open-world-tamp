@@ -132,9 +132,7 @@ class Object(object):
         color=None,
         properties=[],
         points=[],
-        client=None,
-        draw=True,
-        **kwargs
+        client=None
     ):
 
         self.client = client
@@ -145,23 +143,14 @@ class Object(object):
         self.category = category
         if name is None:
             name = "{}#{}".format(self.category, self.body)
-        # TODO: could include color & size in name
         self.name = name
-        self.link_names = dict(
-            link_names
-        )  # TODO: only because programmatic creation does not give names
+        self.link_names = dict(link_names) 
         self.shape_names = dict(shape_names)
         self.reference_pose = tuple(reference_pose)  # TODO: store placement surfaces
-        # if color is None:
-        #     color = get_color(body)
         self.color = color
-        self.properties = list(
-            properties
-        )  # (Predicate, self, *args) # TODO: could just use self
+        self.properties = list(properties)
         self.handles = []
-        if draw:
-            self.draw()
-        # TODO: support faces
+        
 
     def __int__(self):
         return (
@@ -462,7 +451,7 @@ class Camera(object):  # TODO: extend Object?
         max_depth=MAX_KINECT_DISTANCE,
         client=None,
         **kwargs
-    ):  # , parent=None): # TODO: remove robot dependency
+    ):
         self.robot = robot
         self.client = client
         self.link = link  # TODO: no longer need this
@@ -470,10 +459,7 @@ class Camera(object):  # TODO: extend Object?
         self.camera_matrix = camera_matrix
         self.max_depth = max_depth
         self.kwargs = dict(kwargs)
-        # self.parent = parent
-        # self.relative_pose = relative_pose
         self.handles = []
-        self.draw()
 
     def get_pose(self):
         return get_link_pose(self.robot, self.optical_frame, client=self.client)

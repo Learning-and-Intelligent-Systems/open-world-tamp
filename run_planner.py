@@ -38,7 +38,7 @@ from robots.spot.spot_worlds import spot_world_from_problem
 ROBOTS = ["pr2", "panda", "movo", "spot"]
 SEG_MODELS = ["maskrcnn", "uois", "ucn", "all"]
 SHAPE_MODELS = ["msn", "atlas"]
-MENTAL_SIM = ["pybullet", "drake"]
+SIMS = ["pybullet", "drake"]
 
 robot_paths = {"pr2": PR2_PATH, "panda": PANDA_PATH, "movo": MOVO_PATH, "spot": SPOT_PATH}
 robot_entities = {"pr2": PR2Robot, "panda": PandaRobot, "movo": MovoRobot, "spot": SpotRobot}
@@ -175,10 +175,10 @@ def create_parser():
 
     parser.add_argument(
         "-ws",
-        "--world-model-sim",
+        "--sim",
         type=str,
         default="pybullet",
-        choices=MENTAL_SIM,
+        choices=SIMS,
         help="Selects the simulator that the planner use for IK/Motion planning",
     )
 
@@ -254,7 +254,7 @@ def main(args):
     policy = Policy(args, robot, 
                     known=real_world.known,
                     teleport=args.teleport,
-                    mental_sim=args.mental_sim, 
+                    sim=args.sim, 
                     client=client)
     
     # Get the task. TODO(curtisa): Remove args

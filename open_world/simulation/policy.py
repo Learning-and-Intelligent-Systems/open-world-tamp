@@ -112,7 +112,8 @@ def fuse_predicted_labels(
 
 
 class Policy(object):
-    def __init__(self, args, robot, known=[], teleport=False, client=None, **kwargs):
+    def __init__(self, args, robot, sim=None, known=[], 
+                 teleport=False, client=None, **kwargs):
 
         self.args = args
         self.robot = robot
@@ -120,10 +121,10 @@ class Policy(object):
         self.executed = False
         self.teleport = teleport
         self.client = client
+        self.sim = sim
 
         self.data = []
         self.runtimes = {}
-        self.estimates = []
         self.renders = []
         self.plans = []
         self.executions = []
@@ -147,21 +148,7 @@ class Policy(object):
         if args.shape_completion:
             self.sc_network = init_sc(branch=args.shape_completion_model)
 
-        self.belief = Belief(
-            self.robot,
-            surface_beliefs=[
-                # SurfaceBelief(table, resolutions=0.04 * np.ones(3), known_objects=real_world.known),
-            ],
-            client=self.client,
-        )
-
-    ##################################################
-    def open_grippers(self, blocking=False, timeout=5.0):
-        clients = [
-            self.robot.controller.open_gripper(arm, blocking=blocking)
-            for arm in self.robot.arms
-        ]
-        return self.robot.controller.wait_for_clients(clients, timeout=timeout)
+        self.belief = Belief(self.robot)
 
     def reset_belief(self):
         self.belief.reset()
@@ -169,8 +156,6 @@ class Policy(object):
             surface.remove()
         self.belief.known_objects = self.belief.known_surfaces = []
         return self.belief
-
-    ##################################################
 
     def get_image(self):
 
@@ -214,38 +199,15 @@ class Policy(object):
 
         return camera_image
 
-    def update_rendered_image(self, **kwargs):
-        return self.robot.cameras[0].get_image(**kwargs)
-
-    def estimate_state(self, task, max_attempts=5):
+    def estimate_state(self, task):
         self.reset_belief()
-
         real_image = self.get_image()
-
         surfaces = self.estimate_surfaces(real_image, task)
-        table = surfaces[0]
-        objects = self.estimate_objects(real_image, table)
-
-        self.estimates.append(
-            {
-                # TODO: store the mesh *.obj files
-                "date": datetime.datetime.now(),
-                "surfaces": surfaces,
-                "objects": objects,
-            }
-        )
-
-        return self.belief
-
+        self.belief.objects = self.estimate_objects(real_image, surfaces[0])
+        return self.belief 
+    
     def estimate_surfaces(self, camera_image, task):
-        surfaces = estimate_surfaces(
-            self.belief,
-            camera_image,
-            min_z=self.robot.min_z,
-            max_depth=self.robot.max_depth,
-            client=self.client,
-        )
-        return surfaces
+        return estimate_surfaces(self.belief, camera_image)
 
     def estimate_objects(self, camera_image, table):
         objects = self.belief.estimate_objects(
@@ -259,7 +221,8 @@ class Policy(object):
             surfaces_movable=True,
             max_depth=self.robot.max_depth,
         )
-        return objects
+        self.belief.estimated_objects = objects
+        return self.belief
 
     ##################################################
 
@@ -267,20 +230,20 @@ class Policy(object):
         start_time = time.time()
         print(SEPARATOR)
 
-        # state = WorldState()
         objects = belief.estimated_objects
+        
         solution = plan_pddlstream(
             belief,
             task,
-            objects=objects,
-            grasp_mode=self.args.grasp_mode,
-            serialize=serialize,
-            debug=self.args.debug,
-            client=self.client,
+            sim = self.sim,
+            objects = objects,
+            grasp_mode = self.args.grasp_mode,
+            serialize = serialize,
+            debug = self.args.debug,
+            client = self.client,
         )
         plan, cost, _ = solution
         sequence = post_process(plan)
-        # belief.reset()
 
         if not save:
             return sequence
@@ -295,8 +258,7 @@ class Policy(object):
                 "plan": plan,
                 "length": INF if failure else len(sequence),
                 "cost": cost,
-                "sequence": sequence,
-                # 'goal': None,
+                "sequence": sequence
             }
         )
         self.runtimes.setdefault("planning", []).append(elapsed_time(start_time))
@@ -361,7 +323,6 @@ class Policy(object):
         data = {
             "args": self.args,
             "runtimes": self.runtimes,
-            "estimates": self.estimates,
             "renders": self.renders,
             "plans": self.plans,
             "executions": self.executions,

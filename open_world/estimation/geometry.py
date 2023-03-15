@@ -333,33 +333,21 @@ def estimate_mesh(
 
         if len(obj_mesh.vertices) >= 3:
             obj_mesh = trim_mesh(obj_mesh)
-    # TODO: check min_volume
 
-    # TODO: remove outliers from shape completion
-    # import open3d
-    # open3d.voxel_down_sample
-    # open3d.uniform_down_sample
-    # open3d.remove_statistical_outlier
-    # open3d.remove_radius_outlier
-    # open3d.sample_points_poisson_disk
+    # if concave:
+    #     obj_estimate = create_concave_mesh(
+    #         obj_mesh,
+    #         under=False,
+    #         color=None if VISUALIZE_COLLISION else color,
+    #         **kwargs
+    #     )
+    # else:
+    #     obj_estimate = create_mesh(
+    #         obj_mesh, under=True, color=None if VISUALIZE_COLLISION else color, **kwargs
+    #     )
+    # set_pose(obj_estimate, origin_pose, **kwargs)
 
-    # draw_mesh(obj_mesh, color=color)
-    if concave:
-        obj_estimate = create_concave_mesh(
-            obj_mesh,
-            under=False,
-            color=None if VISUALIZE_COLLISION else color,
-            **kwargs
-        )
-    else:
-        obj_estimate = create_mesh(
-            obj_mesh, under=True, color=None if VISUALIZE_COLLISION else color, **kwargs
-        )
-    set_pose(obj_estimate, origin_pose, **kwargs)
-    # set_all_color(obj_estimate, color)
-
-    # TODO: return an EstimatedObjects that stores points, visibility, etc
-    return obj_estimate
+    return obj_mesh
 
 
 def estimate_surface_mesh(
@@ -375,10 +363,8 @@ def estimate_surface_mesh(
         camera_image = CameraImage(rgb, depth, labeled, camera_pose, *camera_image[4:])
 
     labeled_cluster = tform_labeled_points(invert(surface_pose), labeled_points)
-    body = estimate_mesh(
+    body_mesh = estimate_mesh(
         labeled_cluster, camera_image=camera_image, **kwargs
     )  # assumes the surface is an xy plane
-    if body is None:
-        return body
-    set_pose(body, multiply(surface_pose, get_pose(body, **kwargs)), **kwargs)
-    return body
+    return body_mesh
+    
