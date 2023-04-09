@@ -1,7 +1,7 @@
 
 import zlib
 import zmq
-import pickle5
+import pickle
 
 
 context = zmq.Context()
@@ -46,17 +46,17 @@ def get_joint_states(message):
     message = {
         "joint_dict": default_joints
     }
-    socket.send(zlib.compress(pickle5.dumps(message)))
+    socket.send(zlib.compress(pickle.dumps(message)))
 
 
 def command_base(message):
     print(f"Commanding base with message: {message}")
-    socket.send(zlib.compress(pickle5.dumps({"success": True})))
+    socket.send(zlib.compress(pickle.dumps({"success": True})))
     
 while True:
     #  Wait for next request from client
     print("Waiting for request...")
-    message = pickle5.loads(zlib.decompress(socket.recv()))
+    message = pickle.loads(zlib.decompress(socket.recv()))
 
     print("Received request: {}".format(message))
 

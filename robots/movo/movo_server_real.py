@@ -6,18 +6,17 @@ import zlib
 
 import actionlib
 import numpy as np
-import pickle5
+import pickle
 import rospy
 import sensor_msgs.point_cloud2 as pc2
 import zmq
 from control_msgs.msg import (
     FollowJointTrajectoryAction,
-    FollowJointTrajectoryGoal,
-    JointTrajectoryControllerState,
+    FollowJointTrajectoryGoal
 )
-from movo_msgs.msg import GripperCmd, GripperStat
+from movo_msgs.msg import GripperCmd
 from rtabmap_ros.msg import MapData
-from sensor_msgs.msg import Image, JointState, PointCloud2, PointField
+from sensor_msgs.msg import Image, JointState, PointCloud2
 from trajectory_msgs.msg import JointTrajectoryPoint
 
 rospy.init_node("M0M")
@@ -63,7 +62,7 @@ socket.bind("tcp://*:5555")
 def color_image_callback(event, rgb):
     if not event.is_set():
         message = {"height": rgb.height, "width": rgb.width, "data": rgb.data}
-        socket.send(zlib.compress(pickle5.dumps({"color_image": message})))
+        socket.send(zlib.compress(pickle.dumps({"color_image": message})))
         event.set()
     return True
 
@@ -79,7 +78,7 @@ def get_color_image(message):
 def depth_image_callback(event, depth):
     if not event.is_set():
         message = {"height": depth.height, "width": depth.width, "data": depth.data}
-        socket.send(zlib.compress(pickle5.dumps({"depth_image": message})))
+        socket.send(zlib.compress(pickle.dumps({"depth_image": message})))
         event.set()
     return True
 
@@ -110,7 +109,7 @@ def pointcloud_callback(event, pc):
 
         message = {"int_data": int_data}
         # message = {"xyz":xyz, "rgb": rgb}
-        socket.send(zlib.compress(pickle5.dumps(message)))
+        socket.send(zlib.compress(pickle.dumps(message)))
         event.set()
 
 
@@ -124,7 +123,7 @@ def get_pointcloud(message):
 def slam_graph_callback(event, map_data):
     if not event.is_set():
         message = {"map_data": map_data}
-        socket.send(zlib.compress(pickle5.dumps(message)))
+        socket.send(zlib.compress(pickle.dumps(message)))
         event.set()
 
 
@@ -149,7 +148,7 @@ def get_joint_states(message):
             name: position for name, position in zip(joint_val.name, joint_val.position)
         }
     }
-    socket.send(zlib.compress(pickle5.dumps(message)))
+    socket.send(zlib.compress(pickle.dumps(message)))
 
 
 def get_command_goal(message):
@@ -173,7 +172,7 @@ def get_command_goal(message):
     return goal
 
 
-def get_command_trajectoary(message):
+def get_command_trajectory(message):
     goal = FollowJointTrajectoryGoal()
     goal.goal_time_tolerance = rospy.Time(0.1)
     goal.trajectory.joint_names = message["joint_names"]
@@ -190,15 +189,15 @@ def get_command_trajectoary(message):
 
 
 def command_trajectory_left_arm(message):
-    left_arm_client.send_goal(get_command_trajectoary(message))
+    left_arm_client.send_goal(get_command_trajectory(message))
     left_arm_client.wait_for_result(timeout=rospy.Duration(message["timeout"]))
-    socket.send(zlib.compress(pickle5.dumps({"success": True})))
+    socket.send(zlib.compress(pickle.dumps({"success": True})))
 
 
 def command_trajectory_right_arm(message):
-    right_arm_client.send_goal(get_command_trajectoary(message))
+    right_arm_client.send_goal(get_command_trajectory(message))
     right_arm_client.wait_for_result(timeout=rospy.Duration(message["timeout"]))
-    socket.send(zlib.compress(pickle5.dumps({"success": True})))
+    socket.send(zlib.compress(pickle.dumps({"success": True})))
 
 
 def command_left_gripper(message):
@@ -208,7 +207,7 @@ def command_left_gripper(message):
     gripper_command.speed = 0.02
     gripper_command.force = 100
     left_gripper_client.publish(gripper_command)
-    socket.send(zlib.compress(pickle5.dumps({"success": True})))
+    socket.send(zlib.compress(pickle.dumps({"success": True})))
 
 
 def command_right_gripper(message):
@@ -218,46 +217,46 @@ def command_right_gripper(message):
     gripper_command.speed = 0.02
     gripper_command.force = 100
     right_gripper_client.publish(gripper_command)
-    socket.send(zlib.compress(pickle5.dumps({"success": True})))
+    socket.send(zlib.compress(pickle.dumps({"success": True})))
 
 
 def command_trajectory_head(message):
     head_client.send_goal(get_command_trajectoary(message))
     head_client.wait_for_result(timeout=rospy.Duration(message["timeout"]))
-    socket.send(zlib.compress(pickle5.dumps({"success": True})))
+    socket.send(zlib.compress(pickle.dumps({"success": True})))
 
 
 def command_left_arm(message):
     left_arm_client.send_goal(get_command_goal(message))
     left_arm_client.wait_for_result(timeout=rospy.Duration(message["timeout"]))
-    socket.send(zlib.compress(pickle5.dumps({"success": True})))
+    socket.send(zlib.compress(pickle.dumps({"success": True})))
 
 
 def command_right_arm(message):
     right_arm_client.send_goal(get_command_goal(message))
     right_arm_client.wait_for_result(timeout=rospy.Duration(message["timeout"]))
-    socket.send(zlib.compress(pickle5.dumps({"success": True})))
+    socket.send(zlib.compress(pickle.dumps({"success": True})))
 
 
 def command_torso(message):
     torso_client.send_goal(get_command_goal(message))
     torso_client.wait_for_result(timeout=rospy.Duration(message["timeout"]))
-    socket.send(zlib.compress(pickle5.dumps({"success": True})))
+    socket.send(zlib.compress(pickle.dumps({"success": True})))
 
 
 def command_head(message):
     head_client.send_goal(get_command_goal(message))
     head_client.wait_for_result(timeout=rospy.Duration(message["timeout"]))
-    socket.send(zlib.compress(pickle5.dumps({"success": True})))
+    socket.send(zlib.compress(pickle.dumps({"success": True})))
 
 def command_base(message):
     print(f"Commanding base with message: {message}")
-    socket.send(zlib.compress(pickle5.dumps({"success": True})))
+    socket.send(zlib.compress(pickle.dumps({"success": True})))
     
 while True:
     #  Wait for next request from client
     print("Waiting for request...")
-    message = pickle5.loads(zlib.decompress(socket.recv()))
+    message = pickle.loads(zlib.decompress(socket.recv()))
 
     print("Received request: {}".format(message))
 

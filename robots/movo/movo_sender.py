@@ -6,15 +6,15 @@ import zlib
 import numpy as np
 import zmq
 
-context = zmq.Context()
-socket = context.socket(zmq.REQ)
-socket.connect("tcp://localhost:5555")
-
-# import zmq
-# import zmq.ssh
 # context = zmq.Context()
 # socket = context.socket(zmq.REQ)
-# zmq.ssh.tunnel_connection(socket, "tcp://127.0.0.1:7004", "sahit@73.38.71.248")
+# socket.connect("tcp://localhost:5555")
+
+import zmq
+import zmq.ssh
+context = zmq.Context()
+socket = context.socket(zmq.REQ)
+zmq.ssh.tunnel_connection(socket, "tcp://127.0.0.1:7004", "sahit@73.38.71.248")
 
 def get_pointcloud():
     socket.send(zlib.compress(pickle.dumps({"message_name": "get_pointcloud"})))
@@ -58,20 +58,23 @@ def get_joint_states(group_name):
 
 
 def command(group, timeout, joint_names, current_joint_positions, goal_joint_positions):
-    socket.send(
-        zlib.compress(
-            pickle.dumps(
-                {
-                    "message_name": "command_{}".format(group),
-                    "timeout": timeout,
-                    "joint_names": joint_names,
-                    "current_joint_positions": current_joint_positions,
-                    "goal_joint_positions": goal_joint_positions,
-                }
+    if not (group == "head"):
+        socket.send(
+            zlib.compress(
+                pickle.dumps(
+                    {
+                        "message_name": "command_{}".format(group),
+                        "timeout": timeout,
+                        "joint_names": joint_names,
+                        "current_joint_positions": current_joint_positions,
+                        "goal_joint_positions": goal_joint_positions,
+                    }
+                )
             )
         )
-    )
-    message = pickle.loads(zlib.decompress(socket.recv()))
+        message = pickle.loads(zlib.decompress(socket.recv()))
+    else:
+        message = {"success": True}
     return message
 
 
@@ -88,7 +91,9 @@ def command_trajectory(group, timeout, joint_names, trajectory_joint_positions):
             )
         )
     )
+    print("Request sent")
     message = pickle.loads(zlib.decompress(socket.recv()))
+    print("Response received")
     return message
 
 
@@ -126,4 +131,3 @@ def command_gripper(group, timeout, position):
     )
     message = pickle.loads(zlib.decompress(socket.recv()))
     return message
-

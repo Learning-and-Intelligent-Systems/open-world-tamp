@@ -516,6 +516,8 @@ class MovoRobot(Robot):
                         group,
                         {name: pos for pos, name in zip(positions, MOVO_GROUPS[group])},
                     )
+                self.set_group_positions(group, positions)
+
             else:
                 self.set_group_positions(group, positions)
 
