@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<robot name="pillar">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size=".3 .3 0.001" />
+      </geometry>
+      <material name="green">
+        <color rgba="0 1 0 1" />
+      </material>
+    </visual>
+    <!-- no collision geometry -->
+  </link>
+</robot>
