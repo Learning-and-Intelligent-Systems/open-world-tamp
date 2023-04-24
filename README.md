@@ -1,6 +1,6 @@
 # open-world-tamp
 
-In this repo, we implement a general-purpose exploration + task and motion planning agent from perceptual input and natural language goals. 
+In this repo, we implement a general-purpose exploration + task and motion planning agent from perceptual input (RGBD Images) and natural language goals. 
 This repo builds off the following two papers:
 
 Long-Horizon Manipulation of Unknown Objects via Task and Motion Planning with Estimated Affordances
