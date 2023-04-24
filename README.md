@@ -1,4 +1,15 @@
 # open-world-tamp
+
+In this repo, we implement a general-purpose exploration + task and motion planning agent from pixels. This repo builds off the following two papers
+
+Long-Horizon Manipulation of Unknown Objects via Task and Motion Planning with Estimated Affordances
+- https://arxiv.org/abs/2108.04145
+
+Visibility-Aware Navigation Among Movable Obstacles
+- https://arxiv.org/abs/2212.02671
+
+Please contact **curtisa@mit.edu** before attempting to use it for your own research.
+
 <p align="center">
   <img src="https://github.com/Learning-and-Intelligent-Systems/open-world-tamp/blob/master/figs/rw.gif" alt="animated" width="1024px" />
 </p>
