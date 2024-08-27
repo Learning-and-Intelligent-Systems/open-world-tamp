@@ -109,7 +109,6 @@ class ESPModule(nn.Module):
         self.add = add
 
     def forward(self, input):
-
         # Reduce
         output1 = self.conv1(input)
 
@@ -205,7 +204,6 @@ class Upsample_Concat_Conv2d_GN_ReLU_Multi_Branch(nn.Module):
 
 
 class UNet_Encoder(nn.Module):
-
     def __init__(self, input_channels, feature_dim):
         super(UNet_Encoder, self).__init__()
         self.ic = input_channels
@@ -223,7 +221,6 @@ class UNet_Encoder(nn.Module):
         self.last_layer = Conv2d_GN_ReLU(self.fd * 8, self.fd * 16, self.fd)
 
     def forward(self, images):
-
         x1 = self.layer1(images)
         mp_x1 = maxpool2x2(x1)
         x2 = self.layer2(mp_x1)
@@ -238,7 +235,6 @@ class UNet_Encoder(nn.Module):
 
 
 class UNet_Decoder(nn.Module):
-
     def __init__(self, num_encoders, feature_dim):
         super(UNet_Decoder, self).__init__()
         self.ne = num_encoders
@@ -302,7 +298,6 @@ class UNet_Decoder(nn.Module):
 
 
 class UNetESP_Encoder(nn.Module):
-
     def __init__(self, input_channels, feature_dim):
         super(UNetESP_Encoder, self).__init__()
         self.ic = input_channels
@@ -322,7 +317,6 @@ class UNetESP_Encoder(nn.Module):
         self.last_layer = Conv2d_GN_ReLU(self.fd * 8, self.fd * 16, self.fd)
 
     def forward(self, images):
-
         x1 = self.layer1(images)
         mp_x1 = maxpool2x2(x1)
         x2 = self.layer2(mp_x1)

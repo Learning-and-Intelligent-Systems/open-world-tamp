@@ -17,7 +17,6 @@ class Struct:
 def backproject(
     depth_cv, intrinsic_matrix, return_finite_depth=True, return_selection=False
 ):
-
     depth = depth_cv.astype(np.float32, copy=True)
 
     # get intrinsic matrix
@@ -92,7 +91,6 @@ estimator = grasp_estimator.GraspEstimator(
 
 
 def generate_grasps(pc, pc_colors):
-
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(pc)
 

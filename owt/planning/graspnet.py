@@ -9,17 +9,8 @@ from open_world.planning.grasping import get_grasp
 from open_world.planning.primitives import Grasp
 from open_world.simulation.lis import GRASPNET_DIR, USING_ROS, get_ycb_obj_path
 from pybullet_tools.pr2_utils import TOOL_POSE
-from pybullet_tools.utils import (MAX_RGB, PI, WHITE, Euler, Point, Pose,
-                                  apply_alpha, control_joints_hold,
-                                  create_mesh, create_obj, draw_pose,
-                                  get_link_pose, get_links, get_max_limits,
-                                  get_movable_joints, get_pose_distance,
-                                  has_gui, invert, load_pybullet,
-                                  mesh_from_points, multiply,
-                                  pairwise_collision, pose_from_tform,
-                                  read_pickle, remove_body, remove_handles,
-                                  safe_zip, set_joint_positions, set_pose,
-                                  tform_from_pose, wait_if_gui)
+
+import owt.pb_utils as pbu
 
 GRASPNET_POSE = multiply(
     TOOL_POSE,  # Pose(euler=Euler(pitch=PI/2)),

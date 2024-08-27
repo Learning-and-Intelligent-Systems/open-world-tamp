@@ -45,7 +45,9 @@ class SphereTemplate(Template):
         )
         rand_grid = FloatTensor(shape).to(device).float()
         rand_grid.data.normal_(0, 1)
-        rand_grid = rand_grid / torch.sqrt(torch.sum(rand_grid**2, dim=1, keepdim=True))
+        rand_grid = rand_grid / torch.sqrt(
+            torch.sum(rand_grid**2, dim=1, keepdim=True)
+        )
         return Variable(rand_grid)
 
     def get_regular_points(self, npoints=None, device="gpu0"):

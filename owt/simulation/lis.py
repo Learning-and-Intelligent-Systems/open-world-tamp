@@ -5,44 +5,6 @@ from pybullet_tools.ikfast.pr2.ik import (BASE_FRAME, IK_FRAME, TORSO_JOINT,
 from pybullet_tools.ikfast.utils import IKFastInfo
 from pybullet_tools.utils import get_camera_matrix, list_paths
 
-#######################################################
-
-# Assets
-# https://github.com/tmigimatsu/logic-opt/tree/master/resources
-# https://github.com/yijiangh/pybullet_planning_tutorials/tree/master/examples/data
-# https://github.com/benelot/pybullet-gym/tree/master/pybulletgym/envs/assets
-# https://github.com/robotology-playground/pybullet-robot-envs/tree/master/pybullet_robot_envs/robot_data
-# https://github.com/danfeiX/ss-pybullet/tree/master
-# https://github.com/rachelholladay/pb_robot
-# https://github.com/stepjam/RLBench/tree/master/rlbenchs
-# https://github.com/rlworkgroup/metaworld/tree/master/metaworld/envs
-# https://github.com/personalrobotics/pr_assets
-# https://github.com/ARISE-Initiative/robosuite/tree/master/robosuite/models
-# https://github.com/openai/mujoco-py/tree/master/xmls
-# https://github.com/StanfordVL/NTP-vat-release/tree/master/assets
-# https://github.com/MarcToussaint/rai-robotModels
-# https://github.com/erwincoumans/pybullet_robots
-# https://github.com/RobotLocomotion/drake/tree/master/examples
-# https://github.com/neuroailab/CuriousSamplePlanner
-# https://github.com/google-research/google-research/tree/master/dql_grasping
-# https://github.com/SurrealAI/surreal
-# https://github.com/google-research/relay-policy-learning
-# https://github.mit.edu/caelan/lis-data/
-
-# import pybullet_data
-# import pybullet_envs
-# import pybullet_utils
-# import pybullet_robots
-
-# https://github.com/bulletphysics/bullet3/tree/master/data
-# kiva_shelf | tray
-
-# TODO: kitchen, manipulation station
-# https://sites.google.com/view/compnetx/home
-# https://relay-policy-learning.github.io/
-
-#######################################################
-
 try:
     import rosgraph
 
@@ -65,22 +27,8 @@ print("Device:", DEVICE)
 ROOT_DIRECTORY = os.path.abspath(
     os.path.join(__file__, os.pardir, os.pardir, os.pardir)
 )
-
-# TODO: create an LIS PR2 repo
-# LTAMP_PATH = '/Users/caelan/Programs/ltamp_pr2'
-# PR2_PATH = os.path.join(LTAMP_PATH, 'models/pr2_description/pr2.urdf')
-# PR2_PATH = get_model_path(PR2_URDF) # No base
-# PR2_PATH = get_model_path(DRAKE_PR2_URDF)
-# PR2_PATH = get_model_path('models/pr2_description/retired/pr2_hpn.urdf') # No base
-# PR2_PATH = get_model_path('models/pr2_description/retired/pr2_kinect.urdf') # No base
-# PR2_PATH = get_model_path('models/pr2_description/pr2_modified.urdf')
-# PR2_PATH = get_model_path('models/pr2_description/pr2_panda_gripper.urdf') # wsg_50_gripper
-
 LIS_PR2 = True
 
-# print('PR2:', os.path.abspath(PR2_PATH))
-
-# PR2_INFOS = DEFAULT_PR2_INFOS
 PR2_INFOS = {
     arm: IKFastInfo(
         module_name="pr2.ik{}".format(arm.capitalize()),

@@ -2,13 +2,9 @@ import colorsys
 import random
 
 import numpy as np
-from pybullet_tools.utils import (BASE_LINK, CHROMATIC_COLORS, GREEN, INF,
-                                  YELLOW, disconnect, get_collision_data,
-                                  get_distance, get_link_ancestors,
-                                  get_wrapped_pairs, interval_distance,
-                                  is_movable, parent_joint_from_link,
-                                  remove_alpha, wait_if_gui)
 from scipy.interpolate import interp1d
+
+import owt.pb_utils as pbu
 
 X_AXIS = np.array([1, 0, 0])  # TODO: make immutable
 Z_AXIS = np.array([0, 0, 1])

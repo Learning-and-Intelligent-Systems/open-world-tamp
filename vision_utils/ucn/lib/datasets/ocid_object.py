@@ -24,7 +24,6 @@ from utils.blob import add_noise, chromatic_transform
 
 class OCIDObject(data.Dataset, datasets.imdb):
     def __init__(self, image_set, ocid_object_path=None):
-
         self._name = "ocid_object_" + image_set
         self._image_set = image_set
         self._ocid_object_path = (
@@ -70,7 +69,6 @@ class OCIDObject(data.Dataset, datasets.imdb):
         return foreground_labels
 
     def __getitem__(self, idx):
-
         # BGR image
         filename = str(self.image_paths[idx])
         im = cv2.imread(filename)

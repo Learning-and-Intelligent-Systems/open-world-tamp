@@ -45,7 +45,6 @@ class SpotRobot(Robot):
     def __init__(
         self, robot_body, client=None, real_execute=False, real_camera=False, **kwargs
     ):
-
         self.real_execute = real_execute
         self.real_camera = real_camera
         self.body = robot_body

@@ -71,7 +71,6 @@ class MeanShift(ABC):
         cluster_labels = torch.ones((n,), dtype=torch.long, device=Z.device) * -1
         for i in range(n):
             if cluster_labels[i] == -1:
-
                 # Find all points close to it and label it the same
                 distances = self.distance(Z, Z[i : i + 1])  # Shape: [n x 1]
                 component_seeds = distances[:, 0] <= self.epsilon
@@ -102,7 +101,6 @@ class MeanShift(ABC):
         m = Z.shape[0]
 
         for _iter in range(self.max_iters):
-
             # Create a new object for Z
             new_Z = Z.clone()
 
@@ -147,7 +145,6 @@ class MeanShift(ABC):
 
         # Select rest of seeds
         for i in range(num_chosen_seeds, min(self.num_seeds, n)):
-
             # Find the point that has the furthest distance from the nearest seed
             distance_to_nearest_seed = torch.min(distances[:, :i], dim=1)[
                 0
@@ -184,7 +181,6 @@ class MeanShift(ABC):
 
 
 class GaussianMeanShift(MeanShift):
-
     def __init__(
         self,
         num_seeds=100,

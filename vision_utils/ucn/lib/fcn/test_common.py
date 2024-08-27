@@ -48,7 +48,6 @@ def _vis_features(features, labels, rgb, intial_labels, selected_pixels=None):
     im_blob = rgb.cpu().numpy()
     for i in range(num):
         if i < m * n / 4:
-
             # show image
             im = im_blob[i, :3, :, :].copy()
             im = im.transpose((1, 2, 0)) * 255.0
@@ -111,7 +110,6 @@ def _vis_minibatch_segmentation_final(
     selected_pixels=None,
     bbox=None,
 ):
-
     if depth is None:
         im_blob = image.cpu().numpy()
     else:
@@ -132,7 +130,6 @@ def _vis_minibatch_segmentation_final(
     m = 2
     n = 3
     for i in range(num):
-
         # image
         im = im_blob[i, :3, :, :].copy()
         im = im.transpose((1, 2, 0)) * 255.0
@@ -236,7 +233,6 @@ def _vis_minibatch_segmentation(
     selected_pixels=None,
     bbox=None,
 ):
-
     if depth is None:
         im_blob = image.cpu().numpy()
         m = 2
@@ -258,7 +254,6 @@ def _vis_minibatch_segmentation(
         out_label_refined_blob = out_label_refined.cpu().numpy()
 
     for i in range(num):
-
         # image
         im = im_blob[i, :3, :, :].copy()
         im = im.transpose((1, 2, 0)) * 255.0

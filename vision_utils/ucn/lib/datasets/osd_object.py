@@ -23,7 +23,6 @@ from utils.blob import add_noise, chromatic_transform
 
 class OSDObject(data.Dataset, datasets.imdb):
     def __init__(self, image_set, osd_object_path=None):
-
         self._name = "osd_object_" + image_set
         self._image_set = image_set
         self._osd_object_path = (
@@ -62,7 +61,6 @@ class OSDObject(data.Dataset, datasets.imdb):
         return foreground_labels
 
     def __getitem__(self, idx):
-
         # BGR image
         filename = self.image_files[idx]
         im = cv2.imread(filename)

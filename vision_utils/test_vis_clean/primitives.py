@@ -43,7 +43,6 @@ def get_image(
     client=CLIENT,
     lightspc=1.0,
 ):  # modified by xiaolin Dec.23, 2019. original version is get_image_robotview
-
     diff = np.asarray(list(target_pos)) - np.asarray(list(camera_pos))
     diff_len = (diff**2).sum() ** 0.5
 

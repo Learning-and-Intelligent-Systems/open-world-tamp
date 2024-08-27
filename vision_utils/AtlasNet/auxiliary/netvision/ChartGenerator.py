@@ -12,7 +12,6 @@ class Chart:
         x_labels=None,
         chart_it=0,
     ):
-
         self.chart_type = chart_type
         self.data = data
         self.font_color = font_color
@@ -25,7 +24,6 @@ class Chart:
         self.colors = ["#c0392b", "#2980b9", "#27ae60"]
 
     def __str__(self):
-
         if self.chart_type == "scatter":
             y_vals = []
             for k, v in self.data.items():

@@ -20,7 +20,6 @@ from pybullet_tools.utils import (BLUE, COLOR_FROM_NAME, GREEN, PI, RED,
 
 
 def create_default_env(**kwargs):
-
     set_camera_pose(
         camera_point=[0.75, -0.75, 1.25], target_point=[-0.75, 0.75, 0.0], **kwargs
     )
@@ -597,7 +596,6 @@ def pour(args, robot, **kwargs):
 
 
 def large_obstructing(args, robot, **kwargs):
-
     arms = args.arms
     table, obstacles = create_default_env(arms=arms, **kwargs)
     region = place_surface(create_pillar(), table, y=0.0)

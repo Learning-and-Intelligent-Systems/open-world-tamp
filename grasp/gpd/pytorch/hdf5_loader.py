@@ -9,7 +9,6 @@ torch.multiprocessing.set_start_method("spawn")
 
 
 class H5Dataset(torchdata.Dataset):
-
     def __init__(self, file_path):
         super(H5Dataset, self).__init__()
         h5_file = h5py.File(file_path)

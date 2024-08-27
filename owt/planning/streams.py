@@ -12,7 +12,7 @@ from open_world.planning.grasping import (generate_mesh_grasps, get_grasp,
                                           sorted_grasps)
 from open_world.planning.primitives import (BaseSwitch, Grasp, GroupConf,
                                             GroupTrajectory, RelativePose,
-                                            Sequence, Switch, Trajectory)
+                                            Sequence, Switch)
 from open_world.planning.pushing import TOOL_POSE
 from open_world.planning.samplers import (COLLISION_DISTANCE,
                                           DISABLE_ALL_COLLISIONS,
@@ -29,32 +29,8 @@ from open_world.planning.stacking import slice_mesh
 from open_world.simulation.entities import WORLD_BODY, ParentBody
 from pddlstream.language.constants import get_args, get_prefix
 from pddlstream.utils import lowercase
-from pybullet_tools.pr2_utils import (TOOL_POSE, close_until_collision,
-                                      get_side_grasps, get_top_grasps,
-                                      get_view_oobb)
-from pybullet_tools.utils import (INF, OOBB, PI, BodySaver, Euler, Point, Pose,
-                                  PoseSaver, Tuple, aabb_from_extent_center,
-                                  any_link_pair_collision, buffer_aabb,
-                                  compute_jacobian, convex_area,
-                                  convex_combination, draw_collision_info,
-                                  elapsed_time, get_aabb, get_aabb_center,
-                                  get_aabb_extent, get_center_extent,
-                                  get_closest_points, get_extend_fn,
-                                  get_joint_names, get_joint_positions,
-                                  get_length, get_link_pose,
-                                  get_movable_joints, get_moving_links,
-                                  get_point, get_pose, get_unit_vector,
-                                  get_wrapped_pairs, inf_generator, invert,
-                                  is_circular, movable_from_joints, multiply,
-                                  pairwise_collision, pairwise_collisions,
-                                  plan_2d_joint_motion, plan_joint_motion,
-                                  point_from_pose, pose_from_tform,
-                                  quat_from_pose, randomize, recenter_oobb,
-                                  remove_handles, sample_placement_on_aabb,
-                                  scale_aabb, set_joint_positions, set_pose,
-                                  stable_z_on_aabb, tform_point, wait_if_gui,
-                                  wrap_angle)
 
+import owt.pb_utils as pbu
 from grasp.utils import gpd_predict_grasps, graspnet_predict_grasps
 
 SWITCH_BEFORE = "grasp"
@@ -192,7 +168,6 @@ def get_grasp_gen_fn(
     max_attempts=INF,
     **kwargs
 ):
-
     grasp_mode = grasp_mode.split("_")[0]
     if grasp_mode in LEARNED_MODES:
         gripper_collisions = False
@@ -357,7 +332,6 @@ def get_test_cfree_pose_pose(obj_obj_collisions=True, **kwargs):
 
 
 def get_cfree_pregrasp_pose_test(robot, **kwargs):
-
     def test(arm, obj1, pose1, grasp1, obj2, pose2):
         side = robot.side_from_arm(arm)
         if obj1 == obj2:  # or (pose2 is None):
@@ -632,9 +606,7 @@ def get_pose_cost_fn(robot, cost_per_m=1.0, **kwargs):
 
 
 def get_cardinal_sample(robot, direction, **kwargs):
-
     def fn(obj1, pose, obj2):
-
         pose1 = pose.get_pose()
 
         if direction == "leftof":
@@ -842,7 +814,6 @@ def get_plan_mobile_pick_fn(robot, max_attempts=5, **kwargs):
     pick_fn = get_plan_pick_fn(robot, **kwargs)
 
     def fn(arm, obj, pose, grasp):
-
         while True:
             robot_saver.restore()
 

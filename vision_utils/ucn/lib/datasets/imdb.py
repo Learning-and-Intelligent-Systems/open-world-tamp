@@ -46,7 +46,6 @@ class imdb(object):
 
     # backproject pixels into 3D points in camera's coordinate system
     def backproject(self, depth_cv, intrinsic_matrix, factor):
-
         depth = depth_cv.astype(np.float32, copy=True) / factor
 
         index = np.where(~np.isfinite(depth))
@@ -73,7 +72,6 @@ class imdb(object):
         return np.array(X).transpose().reshape((height, width, 3))
 
     def _build_uniform_poses(self):
-
         self.eulers = []
         interval = cfg.TRAIN.UNIFORM_POSE_INTERVAL
         for yaw in range(-180, 180, interval):
@@ -90,7 +88,6 @@ class imdb(object):
             self.pose_lists.append(np.random.permutation(np.arange(num_poses)))
 
     def _build_background_images(self):
-
         backgrounds_color = []
         backgrounds_depth = []
         if cfg.TRAIN.SYN_BACKGROUND_SPECIFIC:

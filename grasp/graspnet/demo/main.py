@@ -88,7 +88,6 @@ def get_color_for_pc(pc, K, color_image):
 def backproject(
     depth_cv, intrinsic_matrix, return_finite_depth=True, return_selection=False
 ):
-
     depth = depth_cv.astype(np.float32, copy=True)
 
     # get intrinsic matrix

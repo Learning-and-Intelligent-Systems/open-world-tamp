@@ -5,12 +5,8 @@ from open_world.planning.primitives import GroupConf, GroupTrajectory, Sequence
 from open_world.planning.pushing import cartesian_path_collision
 from open_world.planning.samplers import plan_workspace_motion
 from pybullet_tools.pr2_utils import side_from_arm
-from pybullet_tools.utils import (Euler, Point, Pose, aabb_from_points,
-                                  approximate_as_cylinder,
-                                  approximate_as_prism, get_aabb_extent,
-                                  invert, multiply, quat_angle_between,
-                                  quat_from_euler, set_pose, unit_point,
-                                  unit_pose, unit_quat, vertices_from_rigid)
+
+import owt.pb_utils as pbu
 
 LIQUID_QUAT = quat_from_euler(Euler(pitch=np.pi))
 RELATIVE_POUR = True
@@ -170,9 +166,9 @@ def pour_path_from_parameter(
     # cup_urdf_from_center = get_urdf_from_center(cup_body, reference_quat=get_liquid_quat(feature['cup_name']))
     ref_from_urdf = (unit_point(), LIQUID_QUAT)
     cup_center_in_ref, _ = approximate_as_prism(cup_body, body_pose=ref_from_urdf)
-    cup_center_in_ref[:2] = (
-        0  # Assumes the xy pour center is specified by the URDF (e.g. for spoons)
-    )
+    cup_center_in_ref[
+        :2
+    ] = 0  # Assumes the xy pour center is specified by the URDF (e.g. for spoons)
     cup_urdf_from_center = multiply(
         invert(ref_from_urdf), Pose(point=cup_center_in_ref)
     )

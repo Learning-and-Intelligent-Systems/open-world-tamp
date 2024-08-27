@@ -166,7 +166,6 @@ def create_surface(
     draw=False,
     **kwargs
 ):
-
     normal, origin = plane
 
     if len(points) < 3:
@@ -263,7 +262,6 @@ def surface_point_filter(surface, labeled_points, min_z=1e-3):
 
 
 def estimate_plane_eqns(points, num=3):
-
     time.time()
     centroid = np.average(points, axis=0)
 

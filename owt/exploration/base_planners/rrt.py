@@ -67,7 +67,6 @@ class RRT(Planner):
         return final_path
 
     def get_plan(self, **kwargs):
-
         camera_pose, image_data = self.env.get_robot_vision()
         self.env.update_visibility(camera_pose, image_data)
         self.env.update_occupancy(image_data)
@@ -118,7 +117,6 @@ class RRT(Planner):
         attached_object=None,
         moving_backwards=False,
     ):
-
         start, goal = start_node, goal_node
         if moving_backwards:
             goal, start = start, goal

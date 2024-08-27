@@ -32,7 +32,6 @@ angle_backward = np.arcsin((MOVO_WIDTH / 2) / back_distance)
 
 
 def convert_point_to_pixel(point):
-
     u, v = point[0], point[2]
     u = int(((u - min_bounds[0]) / dimensions_world[0]) * (dimensions_pixel[0] - 1))
     v = int(((v - min_bounds[1]) / dimensions_world[1]) * (dimensions_pixel[1] - 1))
@@ -41,7 +40,6 @@ def convert_point_to_pixel(point):
 
 
 def pcd_to_grid(pcd, show_camera=False):
-
     # Just leave space that the robot can collide with
     bb = o3d.geometry.AxisAlignedBoundingBox(
         min_bound=(min_bounds[0], -1.02, min_bounds[1]),
@@ -162,7 +160,6 @@ def robot_bb_grid(position, theta):
 
 
 def expand_grid(grid_map, pcd, camera_pose):
-
     camera_position = convert_point_to_pixel(
         [camera_pose[0], -camera_pose[1], -camera_pose[2]]
     )
@@ -228,7 +225,6 @@ def ray_cast(x0, y0, x1, y1):
 
 
 def grid_constructor():
-
     grid_map = np.array(np.zeros(dimensions_pixel))
 
     pose_graph = o3d.pipelines.registration.PoseGraph()
@@ -241,7 +237,6 @@ def grid_constructor():
     pcd = None
     i = 0
     for line in f1:
-
         line_img = f2.readline().split()
 
         parsed = line.split()

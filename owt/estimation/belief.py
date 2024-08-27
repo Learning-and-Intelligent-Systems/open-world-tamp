@@ -14,7 +14,7 @@ from owt.estimation.observation import (LabeledPoint, aggregate_color,
 from owt.estimation.surfaces import plane_from_pose, surface_point_filter
 from owt.simulation.entities import (ENVIRONMENT, TABLE, UNKNOWN, Object,
                                      displace_body)
-from owt.voxels import VoxelGrid
+from owt.voxel_utils import VoxelGrid
 
 GRASP_EXPERIMENT = True
 

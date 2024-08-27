@@ -2,20 +2,8 @@ import math
 import time
 
 import numpy as np
-from pybullet_tools.retime import sample_curve
-from pybullet_tools.utils import (GRAVITY, INF, add_pose_constraint,
-                                  control_joints, draw_pose, elapsed_time,
-                                  enable_gravity, get_distance,
-                                  get_duration_fn, get_joint_positions,
-                                  get_joint_velocities, get_movable_joints,
-                                  get_pose, get_time_step, has_gui,
-                                  inf_generator, interpolate,
-                                  interpolate_poses, joint_controller,
-                                  point_from_pose, quat_angle_between,
-                                  quat_from_pose, remove_constraint,
-                                  remove_handles, set_joint_positions,
-                                  step_simulation, wait_if_gui,
-                                  waypoint_joint_controller)
+
+import owt.pb_utils as pbu
 
 
 def step_curve(body, joints, curve, time_step=2e-2, print_freq=None, **kwargs):
@@ -46,21 +34,6 @@ def step_curve(body, joints, curve, time_step=2e-2, print_freq=None, **kwargs):
                 num_steps, time_elapsed, elapsed_time(start_time)
             )
         )
-    # return time_elapsed
-
-
-def project_curve(current_positions, curve, time_step=1e-3):
-    # TODO: see cognitive-architectures
-    raise NotImplementedError("Project from the positions to the nearest point")
-    _, d = np.shape(curve.y)
-    assert len(current_positions) == d
-    timed_samples = list(sample_curve(curve, time_step=time_step))
-    # duration_fn = get_duration_fn(body, joints, velocities=max_velocities) # TODO: duration
-    control_time, positions = min(
-        timed_samples, key=lambda item: get_distance(current_positions, item[1])
-    )
-    # interpolate_path(self.robot, self.joints, path)
-    print(control_time, positions)
 
 
 #######################################################
@@ -256,14 +229,6 @@ def follow_path(
         is_goal = num == len(path) - 1
         tolerance = goal_tol if is_goal else waypoint_tol
 
-        # TODO: velocity control is ineffective
-        # velocities = np.zeros(len(joints))
-        # velocities = velocities_curve(control_time)
-        # for joint, position, velocity in zip(joints, positions, velocities):
-        #     control_joint(body, joint, position, velocity)
-        # control_joints(body, joints, positions, velocities,) # position_gain=1e-1)
-        # handles.extend(draw_pose(pose_from_pose2d(positions, z=1e-2), length=5e-2))
-
         if verbose:
             print(
                 "Waypoint: {} | Goal: {} | Sim steps: {} | Sim secs: {:.3f} | Steps/sec {:.3f}".format(
@@ -311,12 +276,9 @@ def follow_path(
 
 
 def follow_curve(body, joints, positions_curve, time_step=1e-1, **kwargs):
-    # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/pdControl.py
     control_times = np.append(
         np.arange(positions_curve.x[0], positions_curve.x[-1], step=time_step),
         [positions_curve.x[-1]],
     )
-    # TODO: sample_curve
-    # velocities_curve = positions_curve.derivative()
     path = [positions_curve(control_time) for control_time in control_times]
     return follow_path(body, joints, path, **kwargs)

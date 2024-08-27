@@ -25,7 +25,6 @@ dont_send_to_device = [
 
 
 class NetworkWrapper(ABC):
-
     def __init__(self, config, device=None):
         self.device = (
             torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -77,7 +76,6 @@ class NetworkWrapper(ABC):
 
 
 class DepthSeedingNetwork(nn.Module):
-
     def __init__(self, encoder, decoder, fg_module, cd_module):
         super(DepthSeedingNetwork, self).__init__()
         self.encoder = encoder
@@ -101,7 +99,6 @@ class DepthSeedingNetwork(nn.Module):
 
 
 class DSNWrapper(NetworkWrapper):
-
     def setup(self):
         """Setup model, losses, optimizers, misc."""
 
@@ -254,7 +251,6 @@ class DSNWrapper(NetworkWrapper):
         sigma = self.config["sigma"] if sigma is None else sigma
 
         with torch.no_grad():
-
             # Apply model
             fg_logits, center_offsets = self.model(batch["xyz"])
 
@@ -278,7 +274,6 @@ class DSNWrapper(NetworkWrapper):
 
 
 class RegionRefinementNetwork(nn.Module):
-
     def __init__(self, encoder, decoder, fg_module):
         super(RegionRefinementNetwork, self).__init__()
         self.encoder = encoder
@@ -302,7 +297,6 @@ class RegionRefinementNetwork(nn.Module):
 
 
 class RRNWrapper(NetworkWrapper):
-
     def setup(self):
         """Setup model, losses, optimizers, misc."""
 
@@ -349,7 +343,6 @@ class RRNWrapper(NetworkWrapper):
         self.send_batch_to_device(batch)
 
         with torch.no_grad():
-
             logits = self.model(batch)  # Shape: [N x H x W]
             probs = torch.sigmoid(logits)  # Shape: [N x H x W]
             masks = probs > threshold
@@ -464,7 +457,6 @@ class UOISNet3D(object):
 
         sorted_mask_ids = []
         for index, mask_id in enumerate(mask_ids):
-
             # Resize back to original size
             x_min, y_min, x_max, y_max = crop_indices[mask_id]
             orig_H = y_max - y_min + 1
@@ -485,7 +477,6 @@ class UOISNet3D(object):
         ]  # list of tuples: (index, mask_id)
 
         for index, mask_id in sorted_mask_ids:
-
             # Resize back to original size
             x_min, y_min, x_max, y_max = crop_indices[mask_id]
             orig_H = y_max - y_min + 1
@@ -523,9 +514,7 @@ class UOISNet3D(object):
 
         # Open/close morphology stuff
         if self.config["use_open_close_morphology"]:
-
             for i in range(N):
-
                 # Get object ids. Remove background (0)
                 obj_ids = np.unique(initial_masks[i])
                 if obj_ids[0] == 0:
@@ -554,10 +543,8 @@ class UOISNet3D(object):
 
         # Largest Connected Component
         if self.config["use_largest_connected_component"]:
-
             pixel_indices = util_.build_matrix_of_indices(H, W)
             for i in range(N):
-
                 # Get object ids. Remove background (0)
                 obj_ids = np.unique(initial_masks[i])
                 obj_ids = obj_ids[obj_ids >= OBJECTS_LABEL]
@@ -614,7 +601,6 @@ class UOISNet3D(object):
         # Data structure to hold everything at end
         refined_masks = torch.zeros_like(initial_masks)
         for i in range(N):
-
             im_batch, crop_indices = self.rrn_preprocess(
                 batch["rgb"][i], initial_masks[i]
             )
@@ -639,7 +625,6 @@ class UOISNet3D(object):
             refined_masks = refined_masks.cpu().numpy()  # to CPU
 
             for i in range(N):
-
                 # Get object ids. Remove background (0)
                 obj_ids = np.unique(refined_masks[i])
                 if obj_ids[0] == 0:
@@ -672,7 +657,6 @@ class UOISNet3D(object):
 
         # Get rid of small clusters. Set them to background. Rest of objects in {2, 3, ..., K+1}
         for i in range(N):
-
             mapping = {}
             curr_obj_id = OBJECTS_LABEL
             uniq_labels = torch.unique(refined_masks[i])

@@ -1,15 +1,12 @@
 import os
 import sys
-from collections import Counter, OrderedDict, namedtuple
+from collections import Counter, namedtuple
 from itertools import product
 from operator import itemgetter
 
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
-import owt.pb_utils as pbu
 from owt.estimation.belief import take_ml_estimate
 from owt.simulation.entities import BG, BOWL, CUP, OTHER, TABLE, UNKNOWN
 from owt.simulation.lis import (CKPT_PATH, DET_CKPT_PATH, DEVICE, DSN_CONFIG,
@@ -84,194 +81,6 @@ AtlasOpt = namedtuple(
         "activation",
     ],
 )
-
-
-def init_atlas(ckpt_path):
-
-    # TODO(xiaolin)
-    # RuntimeError: Error(s) in loading state_dict for EncoderDecoder:
-    #         Missing key(s) in state_dict: "encoder.conv1.weight", "encoder.conv1.bias",
-
-    from model.atlasnet import Atlasnet
-    from model.model_blocks import \
-        PointNet  # NOTE: if used together with DenseFusion, be careful about the class name
-
-    class EncoderDecoder(nn.Module):
-        def __init__(self, opt):
-            super(EncoderDecoder, self).__init__()
-            self.encoder = PointNet(nlatent=opt.bottleneck_size)
-            self.decoder = Atlasnet(opt)
-            self.to(opt.device)
-            self.eval()
-            self.device = opt.device
-
-        def forward(self, x, train=True):  # refinement
-            return self.decoder(self.encoder(x), train=train)
-
-        def generate_mesh(self, x):
-            atlas_list = self.decoder.generate_mesh(self.encoder(x))
-            return atlas_list  # a list of atlas, each can be converted to a mesh
-            # return self.decoder.generate_mesh(self.encoder(x))
-
-    opt = AtlasOpt(
-        True,
-        True,
-        ckpt_path,
-        1,
-        "SPHERE",
-        3,
-        DEVICE,
-        1024,
-        2500,
-        2500,
-        False,
-        512,
-        2,
-        "relu",
-    )
-    network = EncoderDecoder(opt)
-    sdict = torch.load(opt.reload_model_path, map_location=DEVICE)
-    # resolve key name issue in multiGPU
-    new_dict = OrderedDict()
-    for k, v in sdict.items():
-        name = k[7:]
-        new_dict[name] = v
-    network.load_state_dict(new_dict)
-    return network
-
-
-def init_msn(ckpt_path):
-    from model.model_blocks import PointGenCon, PointNetfeat, PointNetRes
-
-    class MSN(nn.Module):
-        # modified for testing purpose (remove expansion & MDS)
-        def __init__(
-            self,
-            num_points=8192,
-            bottleneck_size=1024,
-            n_primitives=16,
-            device=None,
-            use_template=False,
-        ):
-            super(MSN, self).__init__()
-            self.num_points = num_points
-            self.bottleneck_size = bottleneck_size
-            self.n_primitives = n_primitives
-            self.encoder = nn.Sequential(
-                PointNetfeat(num_points, global_feat=True),
-                nn.Linear(1024, self.bottleneck_size),
-                nn.BatchNorm1d(self.bottleneck_size),
-                nn.ReLU(),
-            )
-            self.decoder = nn.ModuleList(
-                [
-                    PointGenCon(bottleneck_size=2 + self.bottleneck_size)
-                    for i in range(0, self.n_primitives)
-                ]
-            )
-            self.res = PointNetRes()
-            self.device = device
-
-            self.use_template = use_template
-            if use_template:  # use rectangle template during inference
-                import meshzoo
-
-                # from model.template import get_template # borrow the template functions from AtlasNet
-                self.vertices, self.faces = meshzoo.rectangle(
-                    nx=23, ny=23
-                )  # (529,2),(968,3)
-                self.vertices = self.vertices.transpose(1, 0)[
-                    np.newaxis, ...
-                ]  # (1, 2, 529)
-
-        def forward(self, x):
-            partial = x
-            x = self.encoder(x)
-            outs = []
-            for i in range(0, self.n_primitives):
-                if self.use_template:
-                    y = (
-                        x.unsqueeze(2)
-                        .expand(x.size(0), x.size(1), self.vertices.shape[2])
-                        .contiguous()
-                    )
-                    y = torch.cat(
-                        (
-                            torch.FloatTensor(self.vertices)
-                            .repeat(x.size(0), 1, 1)
-                            .to(x.device),
-                            y,
-                        ),
-                        1,
-                    ).contiguous()
-                    outs.append(self.decoder[i](y))  # (1, 3, 529)
-                else:
-                    rand_grid = torch.FloatTensor(
-                        x.size(0), 2, self.num_points // self.n_primitives
-                    ).to(x.device)
-                    rand_grid.data.uniform_(0, 1)
-                    y = (
-                        x.unsqueeze(2)
-                        .expand(x.size(0), x.size(1), rand_grid.size(2))
-                        .contiguous()
-                    )
-                    y = torch.cat((rand_grid, y), 1).contiguous()
-                    outs.append(self.decoder[i](y))
-            # return outs
-            outs = torch.cat(outs, 2).contiguous()  # 1(batch_size) x 3 x KN
-            outs.transpose(1, 2).contiguous()
-
-            id0 = torch.zeros(outs.shape[0], 1, outs.shape[2]).to(x.device).contiguous()
-            outs = torch.cat((outs, id0), 1)
-            id1 = (
-                torch.ones(partial.shape[0], 1, partial.shape[2])
-                .to(x.device)
-                .contiguous()
-            )
-            partial = torch.cat((partial, id1), 1)
-            xx = torch.cat((outs, partial), 2)
-
-            delta = self.res(xx)
-            xx = xx[:, 0:3, :]
-            out2 = (xx + delta).transpose(2, 1).contiguous()
-            # step = out2.shape[1]//16
-            # return [out2.transpose(1,2)[:,:,i*step:(i+1)*step] for i in range(16)]
-            return out2.transpose(1, 2).unsqueeze(0)
-
-    network = MSN(num_points=2500, n_primitives=16, device=DEVICE)
-    network.to(DEVICE)
-    sdict = torch.load(ckpt_path, map_location=DEVICE)
-    # resolve key name issue in multiGPU
-    # TODO double check key name in checkpoints
-    new_dict = OrderedDict()
-    for k, v in sdict.items():
-        if "stn" in k:  # deprecated module. weight not used
-            continue
-        name = k  # [7:]
-        new_dict[name] = v
-    network.load_state_dict(new_dict)
-    network.eval()
-    return network
-
-
-def init_sc(base_path=None, ckpt_path=None, branch="msn"):
-    """Initialize shape completion network . atlas | msn.
-
-    base_path: root dir to vision repositories
-    ckpt_path: path to pretrained model (.pth)
-    """
-    base_path = base_path if base_path is not None else SC_PATH
-    sys.path.append(base_path)
-    ckpt_path = ckpt_path if ckpt_path is not None else CKPT_PATH
-
-    if branch == "atlas":
-        return init_atlas(ckpt_path)
-    elif branch == "msn":
-        return init_msn(ckpt_path)
-    raise NotImplementedError(branch)
-
-
-#######################################################
 
 
 def get_class_frequencies(classes, masks):
@@ -370,9 +179,9 @@ class MaskRCNN(object):
             # a) detectron2/modeling/roi_heads/roi_heads.py#L749
             # b) detectron2/modeling/roi_heads/fast_rcnn.py#L432
             # 'predictions' of (a) is output of (b)
-            self.intermediate_result["box_predictions"] = (
-                output  # output = (scores, proposal_deltas)
-            )
+            self.intermediate_result[
+                "box_predictions"
+            ] = output  # output = (scores, proposal_deltas)
 
         self.predictor.model.roi_heads.register_forward_hook(proposal_hook)
         self.predictor.model.roi_heads.box_predictor.register_forward_hook(
@@ -748,8 +557,6 @@ class CategoryAgnosticSeg(object):
             plt.subplot(1, 2, 2)
             plt.axis("off")
             plt.imshow(v.get_image())
-            # plt.show()
-            # plt.close()
 
     def vis(
         self,
@@ -880,7 +687,6 @@ class UCN(CategoryAgnosticSeg):
         num_segs=10,
         **kwargs
     ):
-
         # NOTE. ori input and output - 1) y axis pointing downward. 2) 0 for bg, 1+ for fg
         image_standardized = np.zeros_like(rgb_image).astype(np.float32)
 
@@ -959,7 +765,6 @@ class UCN(CategoryAgnosticSeg):
         dropout_p=0.5,
         **kwargs
     ):
-
         # NOTE. ori input and output - 1) y axis pointing downward. 2) 0 for bg, 1+ for fg
         image_standardized = np.zeros_like(rgb_image).astype(np.float32)
         im_h, im_w, _ = rgb_image.shape

@@ -292,7 +292,6 @@ def vanamo_m0m(args, robot, has_blocking_chair=False, **kwargs):
 
 
 def namo(args, robot, random_widths=False, **kwargs):
-
     def movability_prior(box_width, mean_width):
         # return np.random.choice([0, 1], p=[0.7, 0.3])
         return int(box_width < mean_width)
@@ -419,7 +418,6 @@ def namo(args, robot, random_widths=False, **kwargs):
 
 
 def namo_old(args, robot, **kwargs):
-
     floor_size = 6
     floor = create_pillar(width=floor_size, length=floor_size, color=TAN, **kwargs)
     # cracker_box | tomato_soup_can | potted_meat_can | bowl

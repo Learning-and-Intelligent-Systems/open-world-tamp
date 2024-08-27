@@ -33,7 +33,6 @@ class PandaRobot(Robot):
         arms=["main_arm"],
         **kwargs
     ):
-
         self.link_names = link_names
         self.body = robot_body
         self.client = client

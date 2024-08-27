@@ -1,35 +1,30 @@
 from itertools import combinations
 
 import numpy as np
+import open3d
+from trimesh.bounds import oriented_bounds
 
 import owt.pb_utils as pbu
 from owt.simulation.utils import interpolate_exterior
 
 
 def get_o3d_aabb(points):
-    import open3d
-
     pcd = open3d.geometry.PointCloud(open3d.utility.Vector3dVector(points))
     o3d_aabb = pcd.get_axis_aligned_bounding_box()
     lower = o3d_aabb.get_center() - o3d_aabb.get_extent() / 2.0
     upper = o3d_aabb.get_center() + o3d_aabb.get_extent() / 2.0
     aabb = pbu.AABB(lower, upper)
-    # draw_aabb(aabb)
     return aabb
 
 
 def convex_hull_2d(points):
-    return pbu.convex_hull(
-        point[:2] for point in points
-    ).vertices  # TODO: project onto surface
+    return pbu.convex_hull(point[:2] for point in points).vertices
 
 
 def get_surface_oobb(points, min_z):
     base_vertices2d = convex_hull_2d(points)
-    base_centroid = np.append(
-        pbu.convex_centroid(base_vertices2d), [min_z]
-    )  # TODO: 3D mesh centroid
-    base_exterior = interpolate_exterior(base_vertices2d)  # TODO: sample interior
+    base_centroid = np.append(pbu.convex_centroid(base_vertices2d), [min_z])
+    base_exterior = interpolate_exterior(base_vertices2d)
     base_oobb = pbu.oobb_from_points(base_exterior)
     base_euler = pbu.euler_from_quat(pbu.quat_from_pose(base_oobb.pose))
     origin_pose = pbu.Pose(base_centroid, base_euler)
@@ -54,8 +49,6 @@ def oriented_bounds_3D(points):
 
 
 def get_trimesh_oobb(points, use_2d=True):
-    from trimesh.bounds import oriented_bounds
-
     if use_2d:
         tform, extent = oriented_bounds_3D(points)
     else:
@@ -67,8 +60,6 @@ def get_trimesh_oobb(points, use_2d=True):
 
 
 def get_o3d_oobb(points):
-    import open3d
-
     pcd = open3d.geometry.PointCloud(open3d.utility.Vector3dVector(points))
     o3d_oobb = pcd.get_oriented_bounding_box()
     lower = -o3d_oobb.extent / 2.0
@@ -94,11 +85,7 @@ def estimate_oobb(points, min_z=None, draw=False):
     return oobb
 
 
-##################################################
-
-
 def fit_circle(*points):
-    # https://www.geeksforgeeks.org/complex-numbers-in-python-set-1-introduction/
     assert len(points) == 3
     x, y, z = [complex(*point) for point in points]
     w = z - x
@@ -114,7 +101,7 @@ def min_circle(points):
     if len(points) < 3:
         return None
     best_center, best_radius = None, np.inf
-    for triplet in combinations(points, r=3):  # random.sample(base_vertices_2d, k=3)
+    for triplet in combinations(points, r=3):
         center, radius = fit_circle(*triplet)
         if any(pbu.get_distance(center, point) > radius for point in points):
             continue

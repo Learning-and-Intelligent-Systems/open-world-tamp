@@ -201,7 +201,6 @@ class GraspNetModel:
                 )
                 return reconstruction_loss, 1
             else:
-
                 predicted = torch.round(torch.sigmoid(prediction)).squeeze()
                 correct = (predicted == self.targets).sum().item()
                 return correct, len(self.targets)

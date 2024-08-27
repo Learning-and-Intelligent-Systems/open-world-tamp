@@ -65,7 +65,6 @@ def clustering_features(features, num_seeds=100):
 
 
 def crop_rois(rgb, initial_masks, depth):
-
     N, H, W = initial_masks.shape
     crop_size = cfg.TRAIN.SYN_CROP_SIZE
     padding_percentage = 0.25
@@ -170,7 +169,6 @@ def match_label_crop(initial_masks, labels_crop, out_label_crop, rois, depth_cro
     refined_masks = torch.zeros_like(initial_masks).float()
     count = 0
     for index in sorted_ids:
-
         mask_ids = torch.unique(labels_crop[index])
         if mask_ids[0] == -1:
             mask_ids = mask_ids[1:]
@@ -193,9 +191,9 @@ def match_label_crop(initial_masks, labels_crop, out_label_crop, rois, depth_cro
 
         # Set refined mask
         h_idx, w_idx = torch.nonzero(resized_mask).t()
-        refined_masks[0, y_min : y_max + 1, x_min : x_max + 1][h_idx, w_idx] = (
-            resized_mask[h_idx, w_idx].cpu()
-        )
+        refined_masks[0, y_min : y_max + 1, x_min : x_max + 1][
+            h_idx, w_idx
+        ] = resized_mask[h_idx, w_idx].cpu()
 
     return refined_masks, labels_crop
 
@@ -251,7 +249,6 @@ def filter_labels(labels, bboxes):
 
 # test a single sample
 def test_sample(sample, network, network_crop):
-
     # construct input
     image = sample["image_color"].cuda()
     if cfg.INPUT == "DEPTH" or cfg.INPUT == "RGBD":
@@ -302,7 +299,6 @@ def test_sample(sample, network, network_crop):
 
 # test a dataset
 def test_segnet(test_loader, network, output_dir, network_crop):
-
     batch_time = AverageMeter()
     epoch_size = len(test_loader)
 
@@ -314,7 +310,6 @@ def test_segnet(test_loader, network, output_dir, network_crop):
     metrics_all = []
     metrics_all_refined = []
     for i, sample in enumerate(test_loader):
-
         end = time.time()
 
         # construct input

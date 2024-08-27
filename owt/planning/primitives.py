@@ -7,17 +7,8 @@ from open_world.simulation.control import (follow_path, stall_for_duration,
                                            step_curve)
 from open_world.simulation.entities import WORLD_BODY, ParentBody
 from pybullet_tools.retime import interpolate_path, sample_curve
-from pybullet_tools.utils import (BASE_LINK, INF, STATIC_MASS, Attachment, Ray,
-                                  State, WorldSaver, add_fixed_constraint,
-                                  add_segments, adjust_path, draw_pose,
-                                  empty_sequence, flatten, get_bodies,
-                                  get_closest_points, get_fixed_constraints,
-                                  get_joint_positions, get_mass, get_pose,
-                                  invert, is_fixed_base, link_from_name,
-                                  multiply, pose_from_pose2d,
-                                  remove_constraint, remove_handles,
-                                  set_joint_positions, set_pose, unit_pose,
-                                  wait_if_gui, waypoints_from_path)
+
+import owt.pb_utils as pbu
 
 DRAW_Z = 1e-2
 USE_CONSTRAINTS = True
@@ -234,7 +225,6 @@ class Command(object):
 
 class BaseSwitch(Command):
     def __init__(self, body, parent=None, client=None, **kwargs):
-
         self.body = body
         self.parent = parent
         self.client = client
@@ -498,7 +488,6 @@ class Trajectory(Command):
             )
 
     def controller(self, *args, **kwargs):
-
         waypoints = self.compute_waypoints()
         if LEAD_CONTROLLER:
             lead_step = 5e-2 * self.velocity_scale

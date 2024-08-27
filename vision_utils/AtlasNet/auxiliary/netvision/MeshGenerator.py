@@ -85,7 +85,6 @@ class MeshGenerator:
         return ret_str
 
     def make_mesh(self, mesh_path, title=None):
-
         # mesh_path = abspath(join(getcwd(), mesh_path))
         # mesh_path = relpath(mesh_path, dirname(self.html_path))
         out_string = f'<div id="mesh_{self.curve_it}"> <h4>{title}</h4> </div>\n'

@@ -22,7 +22,6 @@ if __name__ == "__main__":
     num = dataset._size
     num_objects = []
     for i in range(num):
-
         filename = str(dataset.image_files[i])
         # labels_filename = filename.replace('rgb', 'label')
         labels_filename = filename.replace("image_color", "annotation")

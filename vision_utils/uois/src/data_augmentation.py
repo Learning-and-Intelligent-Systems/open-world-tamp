@@ -253,7 +253,6 @@ def random_morphological_transform(label, noise_params):
     num_tries = 0
     valid_transform = False
     while not valid_transform:
-
         if num_tries >= noise_params["max_augmentation_tries"]:
             print("Morph: Exhausted number of augmentation tries...")
             return label
@@ -313,7 +312,6 @@ def random_ellipses(label, noise_params):
     num_tries = 0
     valid_transform = False
     while not valid_transform:
-
         if num_tries >= noise_params["max_augmentation_tries"]:
             print("Ellipse: Exhausted number of augmentation tries...")
             return label
@@ -398,7 +396,6 @@ def random_translation(label, noise_params):
     num_tries = 0
     valid_transform = False
     while not valid_transform:
-
         if num_tries >= noise_params["max_augmentation_tries"]:
             print("Translate: Exhausted number of augmentation tries...")
             return label
@@ -443,7 +440,6 @@ def random_rotation(label, noise_params):
     num_tries = 0
     valid_transform = False
     while not valid_transform:
-
         if num_tries >= noise_params["max_augmentation_tries"]:
             print("Rotate: Exhausted number of augmentation tries...")
             return label
@@ -489,7 +485,6 @@ def random_cut(label, noise_params):
     num_tries = 0
     valid_transform = False
     while not valid_transform:
-
         if num_tries >= noise_params["max_augmentation_tries"]:
             print("Cut: Exhausted number of augmentation tries...")
             return label
@@ -503,7 +498,6 @@ def random_cut(label, noise_params):
 
         x_min, y_min, x_max, y_max = util_.mask_to_tight_box(label)
         if np.random.rand() < 0.5:  # choose width
-
             sidelength = x_max - x_min
             if np.random.rand() < 0.5:  # from the left
                 x = int(round(cut_percentage * sidelength)) + x_min
@@ -513,7 +507,6 @@ def random_cut(label, noise_params):
                 cut_label[y_min : y_max + 1, x : x_max + 1] = 0
 
         else:  # choose height
-
             sidelength = y_max - y_min
             if np.random.rand() < 0.5:  # from the top
                 y = int(round(cut_percentage * sidelength)) + y_min
@@ -563,7 +556,6 @@ def random_add(label, noise_params):
         ty = int(round((y_max - y_min) * translation_percentage_y))
 
         if np.random.rand() < 0.5:  # choose x direction
-
             sidelength = x_max - x_min
             ty = (
                 np.random.choice([-1, 1]) * ty
@@ -573,9 +565,9 @@ def random_add(label, noise_params):
                 x = int(round(add_percentage * sidelength)) + x_min
                 try:
                     temp = added_label[y_min + ty : y_max + 1 + ty, x_min - tx : x - tx]
-                    added_label[y_min + ty : y_max + 1 + ty, x_min - tx : x - tx] = (
-                        np.logical_or(temp, added_label[y_min : y_max + 1, x_min:x])
-                    )
+                    added_label[
+                        y_min + ty : y_max + 1 + ty, x_min - tx : x - tx
+                    ] = np.logical_or(temp, added_label[y_min : y_max + 1, x_min:x])
                 except ValueError as e:  # indices were out of bounds
                     num_tries += 1
                     continue
@@ -595,7 +587,6 @@ def random_add(label, noise_params):
                     continue
 
         else:  # choose y direction
-
             sidelength = y_max - y_min
             tx = (
                 np.random.choice([-1, 1]) * tx
@@ -605,9 +596,9 @@ def random_add(label, noise_params):
                 y = int(round(add_percentage * sidelength)) + y_min
                 try:
                     temp = added_label[y_min - ty : y - ty, x_min + tx : x_max + 1 + tx]
-                    added_label[y_min - ty : y - ty, x_min + tx : x_max + 1 + tx] = (
-                        np.logical_or(temp, added_label[y_min:y, x_min : x_max + 1])
-                    )
+                    added_label[
+                        y_min - ty : y - ty, x_min + tx : x_max + 1 + tx
+                    ] = np.logical_or(temp, added_label[y_min:y, x_min : x_max + 1])
                 except ValueError as e:  # indices were out of bounds
                     num_tries += 1
                     continue

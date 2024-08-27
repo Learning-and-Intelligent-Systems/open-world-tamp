@@ -2,37 +2,9 @@ from collections import Counter, OrderedDict, namedtuple
 
 import numpy as np
 import pybullet as p
-# from open_world.simulation.utils import get_color
 from open_world.simulation.utils import get_rigid_ancestor
-from pybullet_tools.pr2_utils import (CLEAR_LEFT_ARM, COMPACT_LEFT_ARM,
-                                      MAX_KINECT_DISTANCE, arm_conf,
-                                      arm_from_side, attach_viewcone,
-                                      side_from_arm)
-from pybullet_tools.utils import (BASE_LINK, CIRCULAR_LIMITS, INF, OOBB, RED,
-                                  TRANSPARENT, CameraImage, ConfSaver,
-                                  DynamicsInfo, JointState, Pose, PoseSaver,
-                                  WorldSaver, aabb_from_oobb, add_body_name,
-                                  add_line, child_link_from_joint, clone_body,
-                                  dimensions_from_camera_matrix,
-                                  draw_collision_info, get_aabb, get_body_info,
-                                  get_closest_points, get_collision_data,
-                                  get_custom_limits, get_distance,
-                                  get_image_at_pose, get_joint_inertial_pose,
-                                  get_joint_info, get_joint_names,
-                                  get_joint_parent_frame, get_joints,
-                                  get_link_children, get_link_name,
-                                  get_link_pose, get_link_state,
-                                  get_link_subtree, get_max_limits,
-                                  get_max_velocities, get_min_limits,
-                                  get_movable_joint_descendants,
-                                  get_movable_joints, get_point, get_pose,
-                                  get_unit_vector, invert, joint_from_name,
-                                  multiply, oobb_from_data,
-                                  parent_joint_from_link, pixel_from_ray,
-                                  remove_body, remove_handles, safe_zip,
-                                  set_all_color, set_joint_position,
-                                  set_joint_positions, set_point, set_pose,
-                                  tform_oobb, unit_pose, wait_if_gui)
+
+import owt.pb_utils as pbu
 
 WORLD_BODY = None
 
@@ -88,7 +60,6 @@ class Object(object):
         draw=True,
         **kwargs
     ):
-
         self.client = client
         self.body = body
         self.labeled_points = points
@@ -729,7 +700,6 @@ class Gripper(object):
         body_finger_joints=None,
         client=None,
     ):
-
         if finger_joints is None:
             finger_joints = get_movable_joints(body)
         if body is None:

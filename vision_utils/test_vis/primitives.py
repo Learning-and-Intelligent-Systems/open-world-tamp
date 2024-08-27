@@ -644,7 +644,6 @@ def get_image(
     client=CLIENT,
     lightspc=1.0,
 ):  # modified by xiaolin Dec.23, 2019. original version is get_image_robotview
-
     diff = np.asarray(list(target_pos)) - np.asarray(list(camera_pos))
     diff_len = (diff**2).sum() ** 0.5
 
@@ -1038,7 +1037,9 @@ class Observe_specific(Command):
                         if (
                             iou >= OBS_IOU_THRESHOLD
                         ):  # state.registered[obj_i].loc == self.pose:
-                            state.registered[obj_i].pose_uncertain = (
+                            state.registered[
+                                obj_i
+                            ].pose_uncertain = (
                                 False  # TODO how to determine pose is accurate?
                             )
                 entity_list.append(state.registered[obj_i])
@@ -1292,7 +1293,9 @@ class Observe(Command):
                         if (
                             iou >= OBS_IOU_THRESHOLD
                         ):  # state.registered[obj_i].loc == self.pose:
-                            state.registered[obj_i].pose_uncertain = (
+                            state.registered[
+                                obj_i
+                            ].pose_uncertain = (
                                 False  # TODO how to determine pose is accurate?
                             )
                 entity_list.append(state.registered[obj_i])

@@ -23,7 +23,6 @@ if __name__ == "__main__":
     index = np.random.permutation(num)
 
     for idx in index:
-
         # Get scene directory, crop dose not use background
         scene_idx = idx // tabletop.NUM_VIEWS_PER_SCENE
         scene_dir = tabletop.scene_dirs[scene_idx]

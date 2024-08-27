@@ -10,7 +10,6 @@ import zarr
 
 
 class ZarrDataset(torchdata.Dataset):
-
     def __init__(self, file_path):
         super(ZarrDataset, self).__init__()
         root = zarr.open(file_path, mode="r")

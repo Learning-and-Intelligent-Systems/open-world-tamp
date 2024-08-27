@@ -16,9 +16,7 @@ from pybullet_planning.pybullet_tools.utils import (Euler, Point, Pose,
 
 
 class Snowplow(Planner):
-
     def __init__(self, env, client=None):
-
         self.env = env
         self.client = client
 

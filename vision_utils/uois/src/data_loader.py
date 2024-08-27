@@ -131,7 +131,6 @@ class Tabletop_Object_Dataset(Dataset):
         offsets = np.zeros((H, W, 3), dtype=np.float32)
         cf_3D_centers = np.zeros((100, 3), dtype=np.float32)  # 100 max object centers
         for i, k in enumerate(np.unique(foreground_labels)):
-
             # Get mask
             mask = foreground_labels == k
 
@@ -175,7 +174,6 @@ class Tabletop_Object_Dataset(Dataset):
         return offsets, cf_3D_centers
 
     def __getitem__(self, idx):
-
         cv2.setNumThreads(
             0
         )  # some hack to make sure pyTorch doesn't deadlock. Found at https://github.com/pytorch/pytorch/issues/1355. Seems to work for me
@@ -246,7 +244,6 @@ class Tabletop_Object_Dataset(Dataset):
 def get_TOD_train_dataloader(
     base_dir, config, batch_size=8, num_workers=4, shuffle=True
 ):
-
     config = config.copy()
     dataset = Tabletop_Object_Dataset(base_dir + "training_set/", "train", config)
 
@@ -262,7 +259,6 @@ def get_TOD_train_dataloader(
 def get_TOD_test_dataloader(
     base_dir, config, batch_size=8, num_workers=4, shuffle=False
 ):
-
     config = config.copy()
     dataset = Tabletop_Object_Dataset(base_dir + "test_set/", "test", config)
 
@@ -410,7 +406,6 @@ class RGB_Objects_Dataset(Dataset):
         return img_crop, morphed_label_crop, label_crop
 
     def __getitem__(self, idx):
-
         cv2.setNumThreads(
             0
         )  # some hack to make sure pyTorch doesn't deadlock. Found at https://github.com/pytorch/pytorch/issues/1355. Seems to work for me
@@ -451,7 +446,6 @@ class RGB_Objects_Dataset(Dataset):
 def get_RGBO_train_dataloader(
     base_dir, config, batch_size=8, num_workers=4, shuffle=True
 ):
-
     dataset = RGB_Objects_Dataset(base_dir, config["starts_file"], "train", config)
 
     return DataLoader(
@@ -479,7 +473,6 @@ class Synthetic_RGB_Objects_Dataset(RGB_Objects_Dataset):
         self.name = "Synth_RGB_Objects"
 
     def __getitem__(self, idx):
-
         cv2.setNumThreads(
             0
         )  # some hack to make sure pyTorch doesn't deadlock. Found at https://github.com/pytorch/pytorch/issues/1355. Seems to work for me
@@ -508,7 +501,6 @@ class Synthetic_RGB_Objects_Dataset(RGB_Objects_Dataset):
         num_pixels = 1
         num_pixel_tries = 0
         while num_pixels < 2:
-
             if num_pixel_tries > 100:
                 print("ERROR. Pixels too small. Choosing a new image.")
                 print(
@@ -547,7 +539,6 @@ class Synthetic_RGB_Objects_Dataset(RGB_Objects_Dataset):
 def get_Synth_RGBO_train_dataloader(
     base_dir, config, batch_size=8, num_workers=4, shuffle=True
 ):
-
     dataset = Synthetic_RGB_Objects_Dataset(base_dir + "training_set/", "train", config)
 
     return DataLoader(

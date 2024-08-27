@@ -1,5 +1,4 @@
 import math
-import os
 import time
 
 import numpy as np
@@ -242,22 +241,12 @@ def estimate_mesh(
             obj_mesh = (
                 concave_mesh(merged_origin)
                 if concave
-                else mesh_from_points(merged_origin)
+                else pbu.mesh_from_points(merged_origin)
             )
 
         if len(obj_mesh.vertices) >= 3:
             obj_mesh = trim_mesh(obj_mesh)
-    # TODO: check min_volume
 
-    # TODO: remove outliers from shape completion
-    # import open3d
-    # open3d.voxel_down_sample
-    # open3d.uniform_down_sample
-    # open3d.remove_statistical_outlier
-    # open3d.remove_radius_outlier
-    # open3d.sample_points_poisson_disk
-
-    # draw_mesh(obj_mesh, color=color)
     if concave:
         obj_estimate = create_concave_mesh(
             obj_mesh,

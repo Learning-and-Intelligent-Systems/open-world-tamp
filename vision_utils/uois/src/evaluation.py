@@ -125,11 +125,9 @@ def multilabel_metrics(prediction, gt, obj_detect_threshold=0.75):
 
     # For every pair of GT label vs. predicted label, calculate stuff
     for i, gt_i in enumerate(labels_gt):
-
         gt_i_mask = gt == gt_i
 
         for j, pred_j in enumerate(labels_pred):
-
             pred_j_mask = prediction == pred_j
 
             ### Overlap Stuff ###

@@ -55,7 +55,6 @@ def connected_components(Z, epsilon, metric="cosine"):
     cluster_labels = torch.ones(n, dtype=torch.long) * -1
     for i in range(n):
         if cluster_labels[i] == -1:
-
             if metric == "euclidean":
                 distances = Z.unsqueeze(1) - Z[i : i + 1].unsqueeze(
                     0
@@ -91,7 +90,6 @@ def seed_hill_climbing_ball(X, Z, kappa, max_iters=10, metric="cosine"):
     m = Z.shape[0]
 
     for _iter in range(max_iters):
-
         # Create a new object for Z
         new_Z = Z.clone()
 

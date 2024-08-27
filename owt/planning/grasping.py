@@ -272,7 +272,6 @@ def score_overlap(
     verbose=False,
     **kwargs
 ):
-
     start_time = time.time()
     handles = []
     if draw:
@@ -374,7 +373,6 @@ def generate_mesh_grasps(
     verbose=False,
     **kwargs
 ):
-
     target_vector = pbu.get_unit_vector(Z_AXIS)
 
     import trimesh

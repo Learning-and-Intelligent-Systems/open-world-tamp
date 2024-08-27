@@ -677,7 +677,6 @@ from detectron2.utils.visualizer import Visualizer
 
 
 def init_vision_utils():
-
     handlers = {}
     """ 6D pose estimator - DenseFusion """
     norm = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])

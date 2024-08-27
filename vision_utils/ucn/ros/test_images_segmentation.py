@@ -47,9 +47,7 @@ def compute_xyz(depth_img, fx, fy, px, py, height, width):
 
 
 class ImageListener:
-
     def __init__(self, network, network_crop):
-
         self.network = network
         self.network_crop = network_crop
         self.cv_bridge = CvBridge()
@@ -127,7 +125,6 @@ class ImageListener:
         ts.registerCallback(self.callback_rgbd)
 
     def callback_rgbd(self, rgb, depth):
-
         if depth.encoding == "32FC1":
             depth_cv = self.cv_bridge.imgmsg_to_cv2(depth)
         elif depth.encoding == "16UC1":
@@ -177,7 +174,6 @@ class ImageListener:
             self.rgb_frame_stamp = rgb.header.stamp
 
     def run_network(self):
-
         with lock:
             if listener.im is None:
                 return

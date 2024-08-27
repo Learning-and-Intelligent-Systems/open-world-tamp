@@ -107,7 +107,6 @@ def parse_args():
 
 # save data
 def save_data(file_rgb, out_label_refined, roi, features_crop):
-
     # meta data
     """Meta = {'roi': roi, 'features': features_crop.cpu().detach().numpy(),
     'labels': out_label_refined.cpu().detach().numpy()} filename =
@@ -133,7 +132,6 @@ def compute_xyz(depth_img, fx, fy, px, py, height, width):
 
 
 def read_sample(filename_color, filename_depth, camera_params):
-
     # bgr image
     im = cv2.imread(filename_color)
 

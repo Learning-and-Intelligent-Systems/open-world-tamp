@@ -1,9 +1,9 @@
 import math
 import os
-import random
 from itertools import count
 
 import numpy as np
+import open3d
 
 import owt.pb_utils as pbu
 from owt.simulation.lis import USING_ROS
@@ -73,8 +73,8 @@ mesh_count = count()
 
 
 def create_mesh(mesh, under=True, **kwargs):
-    pbu.ensure_dir(TEMP_DIR)
-    path = os.path.join(TEMP_DIR, "mesh{}.obj".format(next(mesh_count)))
+    pbu.ensure_dir(utils.TEMP_DIR)
+    path = os.path.join(utils.TEMP_DIR, "mesh{}.obj".format(next(mesh_count)))
     pbu.write(path, obj_file_from_mesh(mesh, under=under))
     return pbu.create_obj(path, **kwargs)
 
@@ -85,32 +85,21 @@ def write(filename, string):
 
 
 def create_concave_mesh(mesh, under=False, client=None, **kwargs):
-    pbu.ensure_dir(TEMP_DIR)
+    pbu.ensure_dir(utils.TEMP_DIR)
     num = next(mesh_count)
-    path = os.path.join(TEMP_DIR, "mesh{}.obj".format(num))
+    path = os.path.join(utils.TEMP_DIR, "mesh{}.obj".format(num))
     write(path, obj_file_from_mesh(mesh, under=under))
-    vhacd_path = os.path.join(TEMP_DIR, "vhacd_mesh{}.obj".format(num))
+    vhacd_path = os.path.join(utils.TEMP_DIR, "vhacd_mesh{}.obj".format(num))
     return create_vhacd(path, output_path=vhacd_path, **kwargs)
 
 
 def recon_bpa(points, debug=False, **kwargs):
-    # https://towardsdatascience.com/5-step-guide-to-generate-3d-meshes-from-point-clouds-with-python-36bad397d8ba
-    import open3d
-
     pcd = open3d.geometry.PointCloud(open3d.utility.Vector3dVector(np.asarray(points)))
     if debug:
         open3d.visualization.draw_geometries([pcd])
 
-    # Estimate normal + ball-pivoting surface recon
-    # pcd = pcd.uniform_down_sample(every_k_points=5)
-    pcd.normals = open3d.utility.Vector3dVector(
-        np.zeros((1, 3))
-    )  # invalidate existing normals
+    pcd.normals = open3d.utility.Vector3dVector(np.zeros((1, 3)))
     pcd.estimate_normals()
-
-    # can be very time consuming for large objects. either downsample the pcd or skip this step
-    # pcd.orient_normals_consistent_tangent_plane(100)
-
     distances = pcd.compute_nearest_neighbor_distance()
     avg_dist = np.mean(distances)
     radius = 4 * avg_dist
@@ -118,7 +107,6 @@ def recon_bpa(points, debug=False, **kwargs):
     mesh = open3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
         pcd, open3d.utility.DoubleVector([radius, radius * 2])
     )
-    # mesh = mesh.simplify_quadric_decimation(100000)
     mesh.remove_degenerate_triangles()
     mesh.remove_duplicated_triangles()
     mesh.remove_duplicated_vertices()
@@ -127,8 +115,6 @@ def recon_bpa(points, debug=False, **kwargs):
 
 
 def recon_poisson(points, debug=False, **kwargs):
-    import open3d
-
     pcd = open3d.geometry.PointCloud(open3d.utility.Vector3dVector(np.asarray(points)))
     if debug:
         open3d.visualization.draw_geometries([pcd])
@@ -148,8 +134,6 @@ def recon_poisson(points, debug=False, **kwargs):
 
 
 def recon_alpha_shape(points, alpha=DEFAULT_ALPHA, debug=False, **kwargs):
-    import open3d
-
     assert alpha > 0.0
     pcd = open3d.geometry.PointCloud(open3d.utility.Vector3dVector(np.asarray(points)))
     if debug:
@@ -164,7 +148,7 @@ def recon_alpha_shape(points, alpha=DEFAULT_ALPHA, debug=False, **kwargs):
 ##################################################
 
 
-def concave_hull(points, use_poisson=False, use_bpa=False, debug=False, **kwargs):
+def concave_hull(points, use_poisson=False, use_bpa=False, **kwargs):
     if use_poisson:
         return recon_poisson(points, **kwargs)
     if use_bpa:

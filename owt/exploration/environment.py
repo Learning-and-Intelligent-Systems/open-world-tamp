@@ -56,7 +56,6 @@ def suppress_stdout():
 
 
 class Environment(ABC):
-
     def __init__(self, vis=True, debug=False, save_dir=False, client=None):
         self.vis = vis
         self.push_only = []

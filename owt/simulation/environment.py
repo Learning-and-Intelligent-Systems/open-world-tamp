@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import math
 import os
 import string
 import sys
@@ -7,43 +8,12 @@ from itertools import product
 
 import numpy as np
 import pybullet as p
-from open_world.estimation.geometry import project_base_points
-from open_world.simulation.entities import Object, Shape
-from open_world.simulation.lis import (BOWLS_PATH, CUPS_PATH, YCB_COLORS,
-                                       YCB_MASSES, get_ycb_obj_path)
-from pybullet_tools.pr2_problems import create_floor, create_table
-from pybullet_tools.utils import (BASE_LINK, CLIENT, DEFAULT_CLIENT, GREY,
-                                  NULL_ID, PI, STATIC_MASS, TAN, WHITE, Euler,
-                                  Point, Pose, aabb_from_points, apply_alpha,
-                                  body_collision, convex_combination,
-                                  create_body, create_box,
-                                  create_collision_shape, create_mesh,
-                                  create_obj, create_plane, create_shape_array,
-                                  create_visual_shape, get_aabb_center,
-                                  get_aabb_extent, get_box_geometry,
-                                  get_link_subtree, get_mesh_geometry,
-                                  get_pose, load_pybullet, mesh_from_points,
-                                  multiply, point_from_pose, pose_from_pose2d,
-                                  quat_from_pose, read_obj, set_all_color,
-                                  set_dynamics, set_pose, set_texture,
-                                  stable_z_on_aabb, unit_point, unit_quat)
 
-# NOTE(caelan): must come before other imports
-sys.path.extend(
-    [
-        "pddlstream",
-        "pybullet-planning",
-        #'pddlstream/examples/pybullet/utils',
-        #'../ltamp_pr2',
-    ]
-)
-import math
-
-import pybullet_tools
-
-pybullet_tools.utils.TEMP_DIR = "temp_meshes/"  # TODO: resolve conflict with pddlstream
-
-from open_world.simulation.entities import Object
+import owt.pb_utils as pbu
+from owt.estimation.geometry import project_base_points
+from owt.simulation.entities import Object, Shape
+from owt.simulation.lis import (BOWLS_PATH, CUPS_PATH, YCB_COLORS, YCB_MASSES,
+                                get_ycb_obj_path)
 
 DRAKE_YCB_PATH = "/Users/caelan/Programs/external/" "drake/manipulation/models/ycb/sdf"
 PYBULLET_YCB_DIR = (
@@ -474,7 +444,6 @@ def place_surface(obj, surface, x=0.0, y=0.35, yaw=0.0, **kwargs):
 
 
 def check_occlude(occluder_obj, occluded_obj, depth_image, seg_image):
-
     # save_image(os.path.join(TEMP_DIR, 'seg'+str(time.time())+'.png'), seg_image[:, :, 0]) # [0, 255]
     # save_image(os.path.join(TEMP_DIR, 'depth'+str(time.time())+'.png'), depth_image) # [0, 1]
 
@@ -503,7 +472,6 @@ def check_occlude(occluder_obj, occluded_obj, depth_image, seg_image):
 
 
 def check_fully_occlude(occluded_obj, seg_image):
-
     # Just need to make sure none of the pixxels in the image are the occluded object
     for i in range(seg_image.shape[0]):
         for j in range(seg_image.shape[1]):

@@ -10,7 +10,6 @@ OBJECTS_LABEL = 2
 
 
 class WeightedLoss(nn.Module):
-
     def __init__(self):
         super(WeightedLoss, self).__init__()
         self.weighted = False
@@ -27,21 +26,18 @@ class WeightedLoss(nn.Module):
         N = mask.shape[0]
 
         if self.weighted:
-
             # Compute pixel weights
             weight_mask = torch.zeros_like(
                 mask
             ).float()  # Shape: [N x H x W]. weighted mean over pixels
 
             for i in range(N):
-
                 unique_object_labels = torch.unique(mask[i])
                 for (
                     obj
                 ) in (
                     unique_object_labels
                 ):  # e.g. [0, 1, 2, 5, 9, 10]. bg, table, 4 objects
-
                     if to_ignore is not None and obj in to_ignore:
                         continue
 
@@ -114,7 +110,6 @@ def create_M_GT(foreground_labels):
 
     obj_index = 0
     for k in torch.unique(foreground_labels):
-
         if k in [BACKGROUND_LABEL, TABLE_LABEL]:
             continue
 

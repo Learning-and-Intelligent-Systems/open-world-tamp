@@ -54,9 +54,7 @@ def adjust_input_image_size_for_proper_feature_alignment(
 
 
 class Resnet101_8s(nn.Module):
-
     def __init__(self, num_classes=1000):
-
         super(Resnet101_8s, self).__init__()
 
         # Load the pretrained weights, remove avg pool
@@ -76,12 +74,10 @@ class Resnet101_8s(nn.Module):
         self._normal_initialization(self.resnet101_8s.fc)
 
     def _normal_initialization(self, layer):
-
         layer.weight.data.normal_(0, 0.01)
         layer.bias.data.zero_()
 
     def forward(self, x):
-
         input_spatial_dim = x.size()[2:]
 
         x = self.resnet101_8s(x)
@@ -92,9 +88,7 @@ class Resnet101_8s(nn.Module):
 
 
 class Resnet18_8s(nn.Module):
-
     def __init__(self, num_classes=1000):
-
         super(Resnet18_8s, self).__init__()
 
         # Load the pretrained weights, remove avg pool
@@ -114,16 +108,13 @@ class Resnet18_8s(nn.Module):
         self._normal_initialization(self.resnet18_8s.fc)
 
     def _normal_initialization(self, layer):
-
         layer.weight.data.normal_(0, 0.01)
         layer.bias.data.zero_()
 
     def forward(self, x, feature_alignment=False):
-
         input_spatial_dim = x.size()[2:]
 
         if feature_alignment:
-
             x = adjust_input_image_size_for_proper_feature_alignment(x, output_stride=8)
 
         x = self.resnet18_8s(x)
@@ -138,9 +129,7 @@ class Resnet18_8s(nn.Module):
 
 
 class Resnet18_16s(nn.Module):
-
     def __init__(self, num_classes=1000):
-
         super(Resnet18_16s, self).__init__()
 
         # Load the pretrained weights, remove avg pool
@@ -160,12 +149,10 @@ class Resnet18_16s(nn.Module):
         self._normal_initialization(self.resnet18_16s.fc)
 
     def _normal_initialization(self, layer):
-
         layer.weight.data.normal_(0, 0.01)
         layer.bias.data.zero_()
 
     def forward(self, x):
-
         input_spatial_dim = x.size()[2:]
 
         x = self.resnet18_16s(x)
@@ -176,9 +163,7 @@ class Resnet18_16s(nn.Module):
 
 
 class Resnet18_32s(nn.Module):
-
     def __init__(self, num_classes=1000):
-
         super(Resnet18_32s, self).__init__()
 
         # Load the pretrained weights, remove avg pool
@@ -198,12 +183,10 @@ class Resnet18_32s(nn.Module):
         self._normal_initialization(self.resnet18_32s.fc)
 
     def _normal_initialization(self, layer):
-
         layer.weight.data.normal_(0, 0.01)
         layer.bias.data.zero_()
 
     def forward(self, x):
-
         input_spatial_dim = x.size()[2:]
 
         x = self.resnet18_32s(x)
@@ -214,9 +197,7 @@ class Resnet18_32s(nn.Module):
 
 
 class Resnet34_32s(nn.Module):
-
     def __init__(self, num_classes=1000):
-
         super(Resnet34_32s, self).__init__()
 
         # Load the pretrained weights, remove avg pool
@@ -236,12 +217,10 @@ class Resnet34_32s(nn.Module):
         self._normal_initialization(self.resnet34_32s.fc)
 
     def _normal_initialization(self, layer):
-
         layer.weight.data.normal_(0, 0.01)
         layer.bias.data.zero_()
 
     def forward(self, x):
-
         input_spatial_dim = x.size()[2:]
 
         x = self.resnet34_32s(x)
@@ -252,9 +231,7 @@ class Resnet34_32s(nn.Module):
 
 
 class Resnet34_16s(nn.Module):
-
     def __init__(self, num_classes=1000):
-
         super(Resnet34_16s, self).__init__()
 
         # Load the pretrained weights, remove avg pool
@@ -274,12 +251,10 @@ class Resnet34_16s(nn.Module):
         self._normal_initialization(self.resnet34_16s.fc)
 
     def _normal_initialization(self, layer):
-
         layer.weight.data.normal_(0, 0.01)
         layer.bias.data.zero_()
 
     def forward(self, x):
-
         input_spatial_dim = x.size()[2:]
 
         x = self.resnet34_16s(x)
@@ -290,9 +265,7 @@ class Resnet34_16s(nn.Module):
 
 
 class Resnet34_8s(nn.Module):
-
     def __init__(self, num_classes=1000, input_channels=3, pretrained=True):
-
         super(Resnet34_8s, self).__init__()
 
         # Load the pretrained weights, remove avg pool
@@ -313,16 +286,13 @@ class Resnet34_8s(nn.Module):
         self._normal_initialization(self.resnet34_8s.fc)
 
     def _normal_initialization(self, layer):
-
         layer.weight.data.normal_(0, 0.01)
         layer.bias.data.zero_()
 
     def forward(self, x, feature_alignment=False):
-
         input_spatial_dim = x.size()[2:]
 
         if feature_alignment:
-
             x = adjust_input_image_size_for_proper_feature_alignment(x, output_stride=8)
 
         x = self.resnet34_8s(x)
@@ -333,7 +303,6 @@ class Resnet34_8s(nn.Module):
 
 
 class Resnet34_8s_fc(nn.Module):
-
     def __init__(self, num_classes=1000):
         super(Resnet34_8s_fc, self).__init__()
 
@@ -363,9 +332,7 @@ class Resnet34_8s_fc(nn.Module):
 
 
 class Resnet50_32s(nn.Module):
-
     def __init__(self, num_classes=1000):
-
         super(Resnet50_32s, self).__init__()
 
         # Load the pretrained weights, remove avg pool
@@ -385,12 +352,10 @@ class Resnet50_32s(nn.Module):
         self._normal_initialization(self.resnet50_32s.fc)
 
     def _normal_initialization(self, layer):
-
         layer.weight.data.normal_(0, 0.01)
         layer.bias.data.zero_()
 
     def forward(self, x):
-
         input_spatial_dim = x.size()[2:]
 
         x = self.resnet50_32s(x)
@@ -401,9 +366,7 @@ class Resnet50_32s(nn.Module):
 
 
 class Resnet50_16s(nn.Module):
-
     def __init__(self, num_classes=1000):
-
         super(Resnet50_16s, self).__init__()
 
         # Load the pretrained weights, remove avg pool
@@ -423,12 +386,10 @@ class Resnet50_16s(nn.Module):
         self._normal_initialization(self.resnet50_8s.fc)
 
     def _normal_initialization(self, layer):
-
         layer.weight.data.normal_(0, 0.01)
         layer.bias.data.zero_()
 
     def forward(self, x):
-
         input_spatial_dim = x.size()[2:]
 
         x = self.resnet50_8s(x)
@@ -439,9 +400,7 @@ class Resnet50_16s(nn.Module):
 
 
 class Resnet50_8s(nn.Module):
-
     def __init__(self, num_classes=1000):
-
         super(Resnet50_8s, self).__init__()
 
         # Load the pretrained weights, remove avg pool
@@ -461,12 +420,10 @@ class Resnet50_8s(nn.Module):
         self._normal_initialization(self.resnet50_8s.fc)
 
     def _normal_initialization(self, layer):
-
         layer.weight.data.normal_(0, 0.01)
         layer.bias.data.zero_()
 
     def forward(self, x):
-
         input_spatial_dim = x.size()[2:]
 
         x = self.resnet50_8s(x)
@@ -477,11 +434,9 @@ class Resnet50_8s(nn.Module):
 
 
 class Resnet9_8s(nn.Module):
-
     # Gets ~ 46 MIOU on Pascal Voc
 
     def __init__(self, num_classes=1000):
-
         super(Resnet9_8s, self).__init__()
 
         # Load the pretrained weights, remove avg pool
@@ -501,12 +456,10 @@ class Resnet9_8s(nn.Module):
         self._normal_initialization(self.resnet18_8s.fc)
 
     def _normal_initialization(self, layer):
-
         layer.weight.data.normal_(0, 0.01)
         layer.bias.data.zero_()
 
     def forward(self, x):
-
         input_spatial_dim = x.size()[2:]
 
         x = self.resnet18_8s.conv1(x)

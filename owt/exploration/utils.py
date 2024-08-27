@@ -129,7 +129,6 @@ def custom_iterate_point_cloud(
 
     # depth_image = simulate_depth(depth_image)
     for pixel in iterator:
-
         depth = depth_image[pixel]
         labeled_point = extract_point(camera_image, pixel)
         if (depth <= min_depth) or (depth >= max_depth):

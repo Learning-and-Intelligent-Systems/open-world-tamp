@@ -28,7 +28,6 @@ def test_completion(
     min_points=15,
     **kwargs
 ):
-
     labeled_points = [
         labeled_point
         for labeled_point in iterate_point_cloud(camera_image)

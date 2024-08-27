@@ -133,7 +133,6 @@ class GraspEstimator:
         return all_grasps, all_confidence, all_z
 
     def refine_grasps(self, pc, grasps, refine_method, num_refine_steps=10):
-
         grasp_eulers, grasp_translations = utils.convert_qt_to_rt(grasps)
         if refine_method == "gradient":
             improve_fun = self.improve_grasps_gradient_based

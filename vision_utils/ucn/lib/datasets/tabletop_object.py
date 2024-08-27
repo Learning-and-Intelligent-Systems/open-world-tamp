@@ -99,7 +99,6 @@ def compute_xyz(depth_img, camera_params):
 
 class TableTopObject(data.Dataset, datasets.imdb):
     def __init__(self, image_set, tabletop_object_path=None):
-
         self._name = "tabletop_object_" + image_set
         self._image_set = image_set
         self._tabletop_object_path = (
@@ -260,7 +259,6 @@ class TableTopObject(data.Dataset, datasets.imdb):
         return labels_new
 
     def __getitem__(self, idx):
-
         # Get scene directory, crop dose not use background
         scene_idx = idx // self.NUM_VIEWS_PER_SCENE
         scene_dir = self.scene_dirs[scene_idx]

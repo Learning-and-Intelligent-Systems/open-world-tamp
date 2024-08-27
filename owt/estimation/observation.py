@@ -5,7 +5,7 @@ import numpy as np
 
 import owt.pb_utils as pbu
 from owt.simulation.entities import TABLE, UNKNOWN, Object
-from owt.voxels import MAX_PIXEL_VALUE
+from owt.voxel_utils import MAX_PIXEL_VALUE
 
 LabeledPoint = namedtuple("LabeledPoint", ["point", "color", "label"])  # TODO: pixel
 BACKGROUND = -1
@@ -82,7 +82,6 @@ def custom_iterate_point_cloud(
     rgb_image, depth_image = camera_image[:2]
     # depth_image = simulate_depth(depth_image)
     for pixel in iterator:
-
         depth = depth_image[pixel]
         labeled_point = extract_point(camera_image, pixel)
         if (depth <= min_depth) or (depth >= max_depth):
@@ -144,7 +143,6 @@ SPECIAL_CATEGORIES = {None: pbu.BLACK, UNKNOWN: pbu.GREY, TABLE: pbu.WHITE}
 
 
 def image_from_labeled(seg_image, **kwargs):
-
     # TODO: order special colors
     # TODO: adjust saturation and value per category
     # labels = sorted(set(get_bodies()) | set(seg_image[..., 0].flatten()))

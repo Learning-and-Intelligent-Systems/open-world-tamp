@@ -2,6 +2,8 @@ from collections import Counter
 from itertools import product
 
 import numpy as np
+import open3d
+from sklearn.cluster import DBSCAN
 
 import owt.pb_utils as pbu
 from owt.estimation.observation import (LabeledPoint, aggregate_color,
@@ -78,16 +80,9 @@ def sort_clusters(groups):
 
 
 def remove_outlier_group(points, sub_groups_idx, dist_threshold=0.2):
-    """Prunes clusters in a group with centroids too far away from the largest
-    centroid :param points:
-
-    :param sub_groups_idx:
-    :param dist_threshold:
-    :return:
-    """
     if len(sub_groups_idx) <= 1:
         return sub_groups_idx
-    # TODO: could instead use the distance between the closest pair of points
+
     points = np.asarray(points)
     cluster_mean = [
         np.take(points, sub_group_idx, 0).mean(0) for sub_group_idx in sub_groups_idx
@@ -148,9 +143,6 @@ def cluster_trimesh(
 def cluster_sklearn(
     labeled_points, groups=None, radius=DEFAULT_RADIUS, min_points=1, **kwargs
 ):
-    # same as open3d cluster_dbscan
-    from sklearn.cluster import DBSCAN
-
     if groups is None:
         groups = [list(np.arange(len(labeled_points)))]
     new_groups = []
@@ -178,8 +170,6 @@ def cluster_sklearn(
 def cluster_open3d(
     labeled_points, groups=None, radius=DEFAULT_RADIUS, min_points=1, **kwargs
 ):
-    import open3d
-
     if groups is None:
         groups = [list(np.arange(len(labeled_points)))]
     new_groups = []
@@ -188,9 +178,6 @@ def cluster_open3d(
             labeled_points[labeled_point_idx].point for labeled_point_idx in group
         ]
         cloud = open3d.geometry.PointCloud(open3d.utility.Vector3dVector(points))
-        # http://www.open3d.org/docs/release/tutorial/geometry/pointcloud.html#DBSCAN-clustering
-        # eps defines the distance to neighbors in a cluster
-        # min_points defines the minimum number of points required to form a cluster
         indices = cloud.cluster_dbscan(
             eps=radius, min_points=min_points
         )  # the label -1 indicates noise

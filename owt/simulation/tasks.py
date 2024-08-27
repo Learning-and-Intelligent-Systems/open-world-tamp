@@ -1,9 +1,10 @@
 # Currently there are only simulated tasks for pr2
 
 
-from open_world.planning.planner import PARAM, And, Exists, ForAll, Imply, On
 from pddlstream.utils import str_from_object
-from pybullet_tools.utils import get_pairs
+
+import owt.pb_utils as pbu
+from owt.planning.planner import PARAM, And, Exists, ForAll, Imply, On
 
 SKILLS = ["pick", "push"]
 
@@ -112,7 +113,6 @@ GOALS = [
 ##################################################
 
 for color in COLORS:
-
     # Object on a region of a particular color
     GOALS.append(
         lambda args, color=color: Task(

@@ -62,7 +62,6 @@ def compute_cluster_mean(x, cluster_masks, K, normalize):
 
 
 class EmbeddingLoss(nn.Module):
-
     def __init__(
         self, alpha, delta, lambda_intra, lambda_inter, metric="cosine", normalize=True
     ):

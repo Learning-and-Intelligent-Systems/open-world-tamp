@@ -4,33 +4,26 @@ import datetime
 import time
 import warnings
 
-warnings.filterwarnings("ignore")  # , category=DeprecationWarning)
+warnings.filterwarnings("ignore")
 
 import os
 
 import numpy as np
 import pybullet as p
-from open_world.estimation.belief import GRASP_EXPERIMENT, Belief
-from open_world.estimation.dnn import init_sc, init_seg
-from open_world.estimation.geometry import cloud_from_depth
-from open_world.estimation.observation import save_camera_images
-from open_world.estimation.tables import estimate_surfaces
-from open_world.exploration.environment import Environment
-from open_world.exploration.utils import GRID_RESOLUTION
-from open_world.planning.planner import (iterate_sequence, plan_pddlstream,
-                                         post_process)
-from open_world.planning.primitives import WorldState
-from open_world.simulation.entities import get_label_counts
-from open_world.simulation.tasks import Task
-from pybullet_planning.pybullet_tools.utils import (INF, SEPARATOR,
-                                                    CameraImage, LockRenderer,
-                                                    WorldSaver, elapsed_time,
-                                                    get_link_pose, get_pose,
-                                                    invert, irange,
-                                                    joint_from_name,
-                                                    link_from_name, multiply,
-                                                    set_joint_positions,
-                                                    wait_if_gui, write_pickle)
+
+import owt.pb_utils as pbu
+from owt.estimation.belief import GRASP_EXPERIMENT, Belief
+from owt.estimation.dnn import init_sc, init_seg
+from owt.estimation.geometry import cloud_from_depth
+from owt.estimation.observation import save_camera_images
+from owt.estimation.tables import estimate_surfaces
+from owt.exploration.environment import Environment
+from owt.exploration.utils import GRID_RESOLUTION
+from owt.planning.planner import (iterate_sequence, plan_pddlstream,
+                                  post_process)
+from owt.planning.primitives import WorldState
+from owt.simulation.entities import get_label_counts
+from owt.simulation.tasks import Task
 
 SUCCESS_STATUS = True
 FAILURE_STATUS = False
@@ -102,7 +95,6 @@ def fuse_predicted_labels(
 
 class Policy(object):
     def __init__(self, args, robot, known=[], teleport=False, client=None, **kwargs):
-
         self.args = args
         self.robot = robot
         self.known = tuple(known)
@@ -162,7 +154,6 @@ class Policy(object):
     ##################################################
 
     def get_image(self):
-
         if not self.args.real_camera:
             [camera] = self.robot.cameras
             camera_image = camera.get_image()  # TODO: remove_alpha

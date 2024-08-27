@@ -3,11 +3,12 @@ from itertools import combinations
 
 import numpy as np
 from open_world.estimation.surfaces import create_surface, z_plane
-from pybullet_tools.utils import get_connected_components, pose_from_tform
 from trimesh.intersections import mesh_multiplane
 from trimesh.path.exchange.misc import lines_to_path, polygon_to_path
 from trimesh.path.path import Path2D
 from trimesh.path.polygons import plot_polygon, projected
+
+import owt.pb_utils as pbu
 
 
 def cluster_identical(points, tolerance=1e-6):
@@ -52,7 +53,6 @@ def manual_slice_mesh(mesh, plane=z_plane()):
 
 
 def project_mesh(mesh, plane=z_plane()):
-
     plane_normal, plane_origin = plane
     # mesh = slice_mesh_plane(mesh, -plane_normal, plane_origin)
     try:

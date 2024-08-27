@@ -30,7 +30,6 @@ def shuffle_pc(file, output_path, limit=None, count=None):
 
 
 def shuffle_folder(args):
-
     ply_classes = "/".join([args.shapenet_path, "ply"])
     npy_classes = "/".join([args.shapenet_path, "npy"])
 

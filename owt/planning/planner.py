@@ -34,10 +34,8 @@ from pddlstream.language.function import FunctionInfo
 from pddlstream.language.generator import from_fn, from_gen_fn, from_test
 from pddlstream.language.stream import PartialInputs, StreamInfo
 from pddlstream.utils import Profiler, get_file_path, lowercase, read
-from pybullet_tools.utils import (CHROMATIC_COLORS, INF, YELLOW, LockRenderer,
-                                  enable_gravity, flatten, get_difference_fn,
-                                  is_center_on_aabb, wait_for_duration,
-                                  wait_if_gui)
+
+import owt.pb_utils as pbu
 
 MOST = "most"  # superlatives, ordinals
 LEAST = "least"
@@ -86,7 +84,6 @@ def find_closest_object(target_object, candidate_objects, **kwargs):
 
 
 def get_attribute_facts(objects, color_from_name=COLORS, hue_only=False, **kwargs):
-
     init = []
     color_from_body = get_color_from_obj(objects)
     for obj, color in color_from_body.items():

@@ -27,7 +27,6 @@ class MovoController(Controller):
     def command_group_trajectory(
         self, group, positions, times_from_start, blocking=True, simulate=True, **kwargs
     ):
-
         joint_names = self.robot.command_joint_groups[group]
 
         timeout = 1 / 10.0 * len(positions) * 1.1

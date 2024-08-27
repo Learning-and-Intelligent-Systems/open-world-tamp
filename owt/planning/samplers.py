@@ -17,7 +17,6 @@ DISABLE_ALL_COLLISIONS = True
 
 
 def get_closest_distance(robot, arm_joints, parent_link, tool_link, gripper_pose, obj):
-
     reach_pose = (pbu.point_from_pose(gripper_pose), None)
     sample_fn = pbu.get_sample_fn(robot, arm_joints)
     pbu.set_joint_positions(robot, arm_joints, sample_fn())
@@ -61,7 +60,6 @@ def create_grasp_attachment(robot, side, grasp, **kwargs):
 def plan_workspace_motion(
     robot, side, tool_waypoints, attachment=None, obstacles=[], max_attempts=2, **kwargs
 ):  # , randomize=True, teleport=False):
-
     assert tool_waypoints
     # TODO: omit collisions between the attachment and surface
     # TODO: check attachment collisions after a certain tool distance

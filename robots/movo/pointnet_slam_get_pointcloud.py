@@ -162,7 +162,6 @@ def forward(args, model, coords, feats):
 
 
 def predict_label(args, model, coords, feats):
-
     output_coords, output_preds = [], []
     preds = forward(args, model, coords, feats)
 
@@ -318,7 +317,6 @@ def compute_projection_s2(points, depth, camera_to_world):
 
 
 def compute_multiview_projection(point_cloud, frame_list):
-
     # load frames
     scene_images = np.zeros((len(frame_list), 3, 256, 328))
     scene_depths = np.zeros((len(frame_list), 32, 41))

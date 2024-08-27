@@ -120,7 +120,6 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-
     def __init__(
         self,
         block,
@@ -133,7 +132,6 @@ class ResNet(nn.Module):
         additional_blocks=0,
         multi_grid=(1, 1, 1),
     ):
-
         # Add additional variables to track
         # output stride. Necessary to achieve
         # specified output stride.
@@ -163,13 +161,11 @@ class ResNet(nn.Module):
         self.additional_blocks = additional_blocks
 
         if additional_blocks == 1:
-
             self.layer5 = self._make_layer(
                 block, 512, layers[3], stride=2, multi_grid=multi_grid
             )
 
         if additional_blocks == 2:
-
             self.layer5 = self._make_layer(
                 block, 512, layers[3], stride=2, multi_grid=multi_grid
             )
@@ -178,7 +174,6 @@ class ResNet(nn.Module):
             )
 
         if additional_blocks == 3:
-
             self.layer5 = self._make_layer(
                 block, 512, layers[3], stride=2, multi_grid=multi_grid
             )
@@ -208,20 +203,16 @@ class ResNet(nn.Module):
                 m.bias.data.zero_()
 
     def _make_layer(self, block, planes, blocks, stride=1, multi_grid=None):
-
         downsample = None
 
         if stride != 1 or self.inplanes != planes * block.expansion:
-
             # Check if we already achieved desired output stride.
             if self.current_stride == self.output_stride:
-
                 # If so, replace subsampling with a dilation to preserve
                 # current spatial resolution.
                 self.current_dilation = self.current_dilation * stride
                 stride = 1
             else:
-
                 # If not, perform subsampling and update current
                 # new output stride.
                 self.current_stride = self.current_stride * stride
@@ -253,7 +244,6 @@ class ResNet(nn.Module):
         self.inplanes = planes * block.expansion
 
         for i in range(1, blocks):
-
             dilation = (
                 multi_grid[i] * self.current_dilation
                 if multi_grid
@@ -275,16 +265,13 @@ class ResNet(nn.Module):
         x = self.layer4(x)
 
         if self.additional_blocks == 1:
-
             x = self.layer5(x)
 
         if self.additional_blocks == 2:
-
             x = self.layer5(x)
             x = self.layer6(x)
 
         if self.additional_blocks == 3:
-
             x = self.layer5(x)
             x = self.layer6(x)
             x = self.layer7(x)
@@ -309,9 +296,7 @@ def resnet18(pretrained=False, **kwargs):
     model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
 
     if pretrained:
-
         if model.additional_blocks:
-
             model.load_state_dict(
                 model_zoo.load_url(model_urls["resnet18"]), strict=False
             )
@@ -362,7 +347,6 @@ def resnet34(pretrained=False, **kwargs):
 
     if pretrained:
         if model.additional_blocks:
-
             model.load_state_dict(
                 model_zoo.load_url(model_urls["resnet34"]), strict=False
             )
@@ -387,9 +371,7 @@ def resnet50(pretrained=False, **kwargs):
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
 
     if pretrained:
-
         if model.additional_blocks:
-
             model.load_state_dict(
                 model_zoo.load_url(model_urls["resnet50"]), strict=False
             )
@@ -410,9 +392,7 @@ def resnet101(pretrained=False, **kwargs):
     model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
 
     if pretrained:
-
         if model.additional_blocks:
-
             model.load_state_dict(
                 model_zoo.load_url(model_urls["resnet101"]), strict=False
             )

@@ -75,7 +75,6 @@ def draw_scene(
         grasp_scores = np.array(grasp_scores)
 
     if len(grasps) > max_grasps:
-
         print("Downsampling grasps, there are too many")
         chosen_ones = np.random.randint(low=0, high=len(grasps), size=max_grasps)
         grasps = grasps[chosen_ones]

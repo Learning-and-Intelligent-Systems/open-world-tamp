@@ -62,7 +62,6 @@ def hill_climb_one_iter(Z, X, sigmas):
 
 
 class Trainer(ABC):
-
     def __init__(self, model_wrapper, config):
         self.model_wrapper = model_wrapper
         self.device = self.model_wrapper.device
@@ -142,9 +141,7 @@ class Trainer(ABC):
 
 
 class DSNTrainer(Trainer):
-
     def setup(self):
-
         # Initialize stuff
         self.epoch_num = 1
         self.iter_num = 1
@@ -175,7 +172,6 @@ class DSNTrainer(Trainer):
         )
 
     def train(self, num_epochs, data_loader):
-
         # Some stuff to keep track of
         batch_time = util_.AverageMeter()
         data_time = util_.AverageMeter()
@@ -191,7 +187,6 @@ class DSNTrainer(Trainer):
 
         for epoch_iter in range(num_epochs):
             for i, batch in enumerate(data_loader):
-
                 if self.iter_num >= self.config["max_iters"]:
                     print("Reached maximum number of iterations...")
                     break
@@ -226,7 +221,6 @@ class DSNTrainer(Trainer):
                 cluster_loss = torch.tensor(0.0).to(self.device)
                 L = self.config["max_GMS_iters"]
                 for j in range(N):
-
                     fg_mask_j = fg_masks[j] == OBJECTS_LABEL
                     if torch.sum(fg_mask_j) == 0:
                         continue
@@ -347,9 +341,7 @@ class DSNTrainer(Trainer):
 
 
 class RRNTrainer(Trainer):
-
     def setup(self):
-
         # Initialize stuff
         self.epoch_num = 1
         self.iter_num = 1
@@ -374,7 +366,6 @@ class RRNTrainer(Trainer):
         )
 
     def train(self, num_epochs, data_loader):
-
         # Some stuff to keep track of
         batch_time = util_.AverageMeter()
         data_time = util_.AverageMeter()
@@ -386,7 +377,6 @@ class RRNTrainer(Trainer):
 
         for epoch_iter in range(num_epochs):
             for i, batch in enumerate(data_loader):
-
                 if self.iter_num >= self.config["max_iters"]:
                     print("Reached maximum number of iterations...")
                     break

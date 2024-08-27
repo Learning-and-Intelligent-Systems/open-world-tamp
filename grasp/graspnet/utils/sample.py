@@ -847,20 +847,26 @@ if __name__ == "__main__":
 
         gripper = create_gripper(args.gripper)
 
-        points, normals, transforms, roll_angles, standoffs, collisions, qualities = (
-            sample_multiple_grasps(
-                args.num_samples,
-                obj.mesh,
-                gripper_name=args.gripper,
-                systematic_sampling=args.systematic_sampling,
-                roll_density=args.systematic_roll_density,
-                standoff_density=args.systematic_standoff_density,
-                surface_density=args.systematic_surface_density,
-                type_of_quality=args.quality,
-                filter_best_per_position=args.filter_best_per_position,
-                min_quality=args.min_quality,
-                silent=args.silent,
-            )
+        (
+            points,
+            normals,
+            transforms,
+            roll_angles,
+            standoffs,
+            collisions,
+            qualities,
+        ) = sample_multiple_grasps(
+            args.num_samples,
+            obj.mesh,
+            gripper_name=args.gripper,
+            systematic_sampling=args.systematic_sampling,
+            roll_density=args.systematic_roll_density,
+            standoff_density=args.systematic_standoff_density,
+            surface_density=args.systematic_surface_density,
+            type_of_quality=args.quality,
+            filter_best_per_position=args.filter_best_per_position,
+            min_quality=args.min_quality,
+            silent=args.silent,
         )
 
         # save transforms

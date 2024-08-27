@@ -7,7 +7,6 @@ from model.template import get_template
 
 
 class Atlasnet(nn.Module):
-
     def __init__(self, opt):
         """
         Core Atlasnet module : decoder to meshes and pointclouds.

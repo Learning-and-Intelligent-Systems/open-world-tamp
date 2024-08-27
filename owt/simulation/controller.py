@@ -1,9 +1,6 @@
 import time
 
-from pybullet_tools.pr2_utils import open_gripper
-from pybullet_tools.utils import (get_joint_names, get_joint_positions,
-                                  get_joints, joints_from_names,
-                                  set_joint_positions)
+import owt.pb_utils as pbu
 
 
 class Controller(object):

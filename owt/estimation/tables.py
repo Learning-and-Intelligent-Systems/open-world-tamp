@@ -104,7 +104,6 @@ def estimate_region(
     category=None,
     **kwargs
 ):  # Squares are 0.2 x 0.2
-
     points = list(set([lp.point for lp in labeled_points]))
     # points = safe_sample(points, k=500)
     # draw_points(points)
@@ -262,7 +261,6 @@ def estimate_regions(
     save_relabled=False,
     **kwargs
 ):
-
     _, pos_table_points = extract_table(camera_image, **kwargs)
     extracted_pos_table = list(set([lp.point for lp in pos_table_points]))
     table_plane, inliers = ransac_estimate_plane(

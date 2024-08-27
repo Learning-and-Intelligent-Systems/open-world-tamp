@@ -316,7 +316,6 @@ class MovoRobot(Robot):
         arms=["right_arm"],
         **kwargs
     ):
-
         self.real_execute = real_execute
         self.real_camera = real_camera
         self.body = robot_body
@@ -406,7 +405,6 @@ class MovoRobot(Robot):
         return "head"
 
     def get_default_conf(self):
-
         default_default_joints = copy.deepcopy(DEFAULT_JOINTS)
         get_jval = lambda j: (
             default_default_joints[j]

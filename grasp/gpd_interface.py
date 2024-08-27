@@ -7,7 +7,6 @@ DEFAULT_PCD = "./temp/obj.pcd"
 
 
 def convert_pcd(pc):
-
     pcd_text = ""
     pcd_text += "VERSION .7\n"
     pcd_text += "FIELDS x y z rgb\n"

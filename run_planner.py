@@ -226,7 +226,6 @@ def create_parser():
 
 
 def setup_robot_pybullet(args):
-
     if args.viewer and args.client == 0:
         client = bc.BulletClient(connection_mode=p.GUI)
     else:

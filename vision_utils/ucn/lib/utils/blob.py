@@ -110,7 +110,6 @@ def chromatic_transform(im, label=None, d_h=None, d_s=None, d_l=None):
 
 
 def add_noise(image, level=0.1):
-
     # random number
     r = np.random.rand(1)
 
@@ -156,7 +155,6 @@ def add_noise_depth_cuda(image, level=0.1):
 
 
 def add_gaussian_noise_cuda(image, level=0.1):
-
     # gaussian noise
     noise_level = random.uniform(0, level)
     gauss = torch.randn_like(image) * noise_level

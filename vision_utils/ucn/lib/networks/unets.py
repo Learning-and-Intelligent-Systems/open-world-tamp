@@ -171,7 +171,6 @@ def make_decoder_layers(cfg, in_channels, batch_norm=False):
 
 
 class UNet_Encoder(nn.Module):
-
     def __init__(self, input_channels, feature_dim):
         super(UNet_Encoder, self).__init__()
         self.ic = input_channels
@@ -189,7 +188,6 @@ class UNet_Encoder(nn.Module):
         self.last_layer = Conv2d_GN_ReLU(self.fd * 8, self.fd * 16, self.fd)
 
     def forward(self, images):
-
         x1 = self.layer1(images)
         mp_x1 = maxpool2x2(x1)
         x2 = self.layer2(mp_x1)

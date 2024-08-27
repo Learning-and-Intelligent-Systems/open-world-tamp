@@ -418,7 +418,6 @@ def rotate_point_by_quaternion(point, q, device="cpu"):
 
 def tc_rotation_matrix(az, el, th, batched=False):
     if batched:
-
         cx = torch.cos(torch.reshape(az, [-1, 1]))
         cy = torch.cos(torch.reshape(el, [-1, 1]))
         cz = torch.cos(torch.reshape(th, [-1, 1]))

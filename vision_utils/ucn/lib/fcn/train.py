@@ -37,7 +37,6 @@ class AverageMeter(object):
 
 
 def train_segnet(train_loader, network, optimizer, epoch):
-
     batch_time = AverageMeter()
     epoch_size = len(train_loader)
 
@@ -45,7 +44,6 @@ def train_segnet(train_loader, network, optimizer, epoch):
     network.train()
 
     for i, sample in enumerate(train_loader):
-
         end = time.time()
 
         # construct input

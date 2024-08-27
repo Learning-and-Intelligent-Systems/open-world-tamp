@@ -9,7 +9,6 @@ from pybullet_planning.pybullet_tools.utils import joint_from_name
 
 
 class AStarSearch(Planner):
-
     def __init__(self, env, client=None):
         self.env = env
 
