@@ -10,11 +10,9 @@ import pickle5
 import rospy
 import sensor_msgs.point_cloud2 as pc2
 import zmq
-from control_msgs.msg import (
-    FollowJointTrajectoryAction,
-    FollowJointTrajectoryGoal,
-    JointTrajectoryControllerState,
-)
+from control_msgs.msg import (FollowJointTrajectoryAction,
+                              FollowJointTrajectoryGoal,
+                              JointTrajectoryControllerState)
 from movo_msgs.msg import GripperCmd, GripperStat
 from rtabmap_ros.msg import MapData
 from sensor_msgs.msg import Image, JointState, PointCloud2, PointField
@@ -250,9 +248,11 @@ def command_head(message):
     head_client.wait_for_result(timeout=rospy.Duration(message["timeout"]))
     socket.send(zlib.compress(pickle5.dumps({"success": True})))
 
+
 def command_base(message):
     print(message)
     socket.send(zlib.compress(pickle5.dumps({"success": False})))
+
 
 while True:
     #  Wait for next request from client

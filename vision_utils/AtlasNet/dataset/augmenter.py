@@ -2,11 +2,19 @@ import dataset.pointcloud_processor as pointcloud_processor
 
 
 class Augmenter(object):
-    """
-    Class defining data augmentation for a batch of points.
+    """Class defining data augmentation for a batch of points.
+
     Author : Thibault Groueix 01.11.2019
     """
-    def __init__(self, translation=False, rotation_axis=[], rotation_3D=False, anisotropic_scaling=False, flips=[]):
+
+    def __init__(
+        self,
+        translation=False,
+        rotation_axis=[],
+        rotation_3D=False,
+        anisotropic_scaling=False,
+        flips=[],
+    ):
         self.translation = translation
         self.rotation_axis = rotation_axis
         self.rotation_3D = rotation_3D

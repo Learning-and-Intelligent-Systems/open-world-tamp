@@ -1,10 +1,12 @@
 import os
-import gpustat
 import time
+
+import gpustat
 
 """
     Author : Thibault Groueix 01.11.2019
 """
+
 
 class Experiments(object):
     def __init__(self):
@@ -92,16 +94,18 @@ exp = Experiments()
 
 
 def get_first_available_gpu():
-    """
-    Check if a gpu is free and returns it
-    :return: gpu_id
-    """
+    """Check if a gpu is free and returns it :return: gpu_id."""
     query = gpustat.new_query()
     for gpu_id in range(len(query)):
         gpu = query[gpu_id]
         print(gpu_id, gpu.memory_used)
         if gpu.memory_used < 2000:
-            if gpu.utilization == 0 and gpu.memory_used < 12 and gpu_id == 0 and gpu.processes.__len__() == 0:
+            if (
+                gpu.utilization == 0
+                and gpu.memory_used < 12
+                and gpu_id == 0
+                and gpu.processes.__len__() == 0
+            ):
                 os.system(f"tmux kill-session -t GPU{gpu_id}")
             has = os.system(f"tmux has-session -t GPU{gpu_id} 2>/dev/null")
             if not int(has) == 0:
@@ -110,10 +114,8 @@ def get_first_available_gpu():
 
 
 def job_scheduler_parralel(dict_of_jobs):
-    """
-    Launch Tmux session each time it finds a free gpu
-    :param dict_of_jobs:
-    """
+    """Launch Tmux session each time it finds a free gpu :param
+    dict_of_jobs:"""
     keys = list(dict_of_jobs.keys())
     while len(keys) > 0:
         job_key = keys.pop()
@@ -132,8 +134,9 @@ def job_scheduler_parralel(dict_of_jobs):
 
 
 def job_scheduler_sequential(dict_of_jobs):
-    """
-    Choose a gpum then launches jobs sequentially on that GPU in tmux sessions.
+    """Choose a gpum then launches jobs sequentially on that GPU in tmux
+    sessions.
+
     :param dict_of_jobs:
     """
     keys = list(dict_of_jobs.keys())
@@ -167,4 +170,3 @@ job_scheduler_parralel(exp.num_layers)
 job_scheduler_parralel(exp.normalization)
 job_scheduler_parralel(exp.template)
 job_scheduler_parralel(exp.num_prim)
-

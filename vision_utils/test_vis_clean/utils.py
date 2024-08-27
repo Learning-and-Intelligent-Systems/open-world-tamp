@@ -61,7 +61,7 @@ class ICC(nn.Module):
 
     def quaternion_matrix(self, quaternion, tran):
         quaternion = quaternion.view(1, -1)  # .contiguous()
-        norm = torch.sum(quaternion ** 2)
+        norm = torch.sum(quaternion**2)
         quaternion = quaternion * torch.sqrt(2.0 / norm)
         quaternion = outer(quaternion, quaternion)
         matrix = QuaternionMatrix()(quaternion, tran)

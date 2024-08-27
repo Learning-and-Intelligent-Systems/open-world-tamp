@@ -4,82 +4,28 @@ import cv2
 import numpy as np
 from examples.discrete_belief.dist import DDist
 from examples.pybullet.utils.pybullet_tools.pr2_primitives import (  # , Entity
-    SELF_COLLISIONS,
-    Attach,
-    Command,
-    Conf,
-    Detach,
-    Pose,
-    Trajectory,
-    create_trajectory,
-    get_target_path,
-)
-from examples.pybullet.utils.pybullet_tools.pr2_problems import get_fixed_bodies
+    SELF_COLLISIONS, Attach, Command, Conf, Detach, Pose, Trajectory,
+    create_trajectory, get_target_path)
+from examples.pybullet.utils.pybullet_tools.pr2_problems import \
+    get_fixed_bodies
 from examples.pybullet.utils.pybullet_tools.pr2_utils import (  # , get_viewcone_proj
-    HEAD_LINK_NAME,
-    MAX_KINECT_DISTANCE,
-    attach_viewcone,
-    get_detection_cone,
-    get_group_conf,
-    get_group_joints,
-    get_kinect_registrations,
-    get_viewcone,
-    get_visual_detections,
-    inverse_visibility,
-    plan_scan_path,
-    set_group_conf,
-    visible_base_generator,
-)
+    HEAD_LINK_NAME, MAX_KINECT_DISTANCE, attach_viewcone, get_detection_cone,
+    get_group_conf, get_group_joints, get_kinect_registrations, get_viewcone,
+    get_visual_detections, inverse_visibility, plan_scan_path, set_group_conf,
+    visible_base_generator)
 from examples.pybullet.utils.pybullet_tools.utils import (
-    CLIENT,
-    GREEN,
-    INF,
-    PI,
-    RED,
-    BodySaver,
-    CameraImage,
-    LockRenderer,
-    add_text,
-    apply_alpha,
-    child_link_from_joint,
-    create_cylinder,
-    create_mesh,
-    dump_body,
-    get_body_name,
-    get_length,
-    get_link_name,
-    get_link_pose,
-    get_link_subtree,
-    get_name,
-    get_projection_matrix,
-    is_center_stable,
-    link_from_name,
-    load_pybullet,
-    mesh_from_points,
-    multiply,
-    pairwise_collision,
-    plan_direct_joint_motion,
-    plan_waypoints_joint_motion,
-    point_from_pose,
-    read_obj,
-    remove_body,
-    set_color,
-    set_euler,
-    set_joint_positions,
-    set_point,
-    set_pose,
-    unit_pose,
-    vertices_from_rigid,
-    wait_for_duration,
-    wait_for_user,
-)
+    CLIENT, GREEN, INF, PI, RED, BodySaver, CameraImage, LockRenderer,
+    add_text, apply_alpha, child_link_from_joint, create_cylinder, create_mesh,
+    dump_body, get_body_name, get_length, get_link_name, get_link_pose,
+    get_link_subtree, get_name, get_projection_matrix, is_center_stable,
+    link_from_name, load_pybullet, mesh_from_points, multiply,
+    pairwise_collision, plan_direct_joint_motion, plan_waypoints_joint_motion,
+    point_from_pose, read_obj, remove_body, set_color, set_euler,
+    set_joint_positions, set_point, set_pose, unit_pose, vertices_from_rigid,
+    wait_for_duration, wait_for_user)
 
-from .constant import (
-    OBS_IOU_THRESHOLD,
-    OBS_TIME_THRESHOLD,
-    REAL_WORLD_CLIENT,
-    YCB_BANK_DIR,
-)
+from .constant import (OBS_IOU_THRESHOLD, OBS_TIME_THRESHOLD,
+                       REAL_WORLD_CLIENT, YCB_BANK_DIR)
 
 VIS_RANGE = (0.5, 1.5)
 REG_RANGE = (0.5, 1.5)
@@ -296,7 +242,7 @@ def get_visclear_test(task):
         base_pose = EYE_BASE_POSITION  # TODO adhoc
         target_pose = pvis.value[0]
         diff = np.asarray(list(target_pose)) - np.asarray(list(base_pose))
-        diff_len = (diff ** 2).sum() ** 0.5
+        diff_len = (diff**2).sum() ** 0.5
         (rgba, depth, segment), view_matrix, projection_matrix, _, _ = get_image(
             base_pose, target_pose, segment=False, client=REAL_WORLD_CLIENT
         )
@@ -700,11 +646,11 @@ def get_image(
 ):  # modified by xiaolin Dec.23, 2019. original version is get_image_robotview
 
     diff = np.asarray(list(target_pos)) - np.asarray(list(camera_pos))
-    diff_len = (diff ** 2).sum() ** 0.5
+    diff_len = (diff**2).sum() ** 0.5
 
     right = np.cross(diff, np.asarray([0, 0, 1]))
     up_vector = np.cross(right, diff)
-    if (up_vector ** 2).sum() == 0:  # look perpendicular to the ground
+    if (up_vector**2).sum() == 0:  # look perpendicular to the ground
         up_vector = np.asarray([1, 0, 0])
 
     view_matrix = p.computeViewMatrix(
@@ -936,9 +882,7 @@ class Observe_specific(Command):
             plt.imsave(f"render/rgba_{isii}.png", rgba)
             print(f"save image to {isii}")
         img_predpose = rgba[:, :, :3]
-        """
-        1) object detection & 6d pose estimation 
-        """
+        """1) object detection & 6d pose estimation."""
         proj_matrix_real = np.asarray(projection_matrix).reshape(4, 4).transpose(1, 0)
         view_matrix_real = np.asarray(view_matrix).reshape(4, 4).transpose(1, 0)
         # print(f'GT mat  eye of obj {i}: {np.dot(np.linalg.inv(view_matrix_real),mat_world)}')
@@ -1079,7 +1023,7 @@ class Observe_specific(Command):
                         ps = ps - ps.mean(0)
                         std = np.std(ps)
                         mesh = create_mesh(
-                            mesh_from_points(ps[(ps ** 2).sum(1) <= 0.5 * std])
+                            mesh_from_points(ps[(ps**2).sum(1) <= 0.5 * std])
                         )
                         set_point(
                             mesh, (1 + 0.5 * len(state.registered.keys()), 1, 1.5)
@@ -1094,9 +1038,7 @@ class Observe_specific(Command):
                         if (
                             iou >= OBS_IOU_THRESHOLD
                         ):  # state.registered[obj_i].loc == self.pose:
-                            state.registered[
-                                obj_i
-                            ].pose_uncertain = (
+                            state.registered[obj_i].pose_uncertain = (
                                 False  # TODO how to determine pose is accurate?
                             )
                 entity_list.append(state.registered[obj_i])
@@ -1193,9 +1135,7 @@ class Observe(Command):
             # import pdb
             # pdb.set_trace()
         img_predpose = rgba[:, :, :3]
-        """
-        1) object detection & 6d pose estimation 
-        """
+        """1) object detection & 6d pose estimation."""
         proj_matrix_real = np.asarray(projection_matrix).reshape(4, 4).transpose(1, 0)
         view_matrix_real = np.asarray(view_matrix).reshape(4, 4).transpose(1, 0)
         # print(f'GT mat  eye of obj {i}: {np.dot(np.linalg.inv(view_matrix_real),mat_world)}')
@@ -1337,7 +1277,7 @@ class Observe(Command):
                         ps = ps - ps.mean(0)
                         std = np.std(ps)
                         mesh = create_mesh(
-                            mesh_from_points(ps[(ps ** 2).sum(1) <= 0.5 * std])
+                            mesh_from_points(ps[(ps**2).sum(1) <= 0.5 * std])
                         )
                         set_point(
                             mesh, (1 + 0.5 * len(state.registered.keys()), 1, 1.5)
@@ -1352,9 +1292,7 @@ class Observe(Command):
                         if (
                             iou >= OBS_IOU_THRESHOLD
                         ):  # state.registered[obj_i].loc == self.pose:
-                            state.registered[
-                                obj_i
-                            ].pose_uncertain = (
+                            state.registered[obj_i].pose_uncertain = (
                                 False  # TODO how to determine pose is accurate?
                             )
                 entity_list.append(state.registered[obj_i])

@@ -35,31 +35,25 @@ sys.path.extend(
 
 # TODO: all ROS should be the last import otherwise segfaults
 import rospy
-
 # from nav_msgs.msg import OccupancyGrid
 from cv_bridge import CvBridge
-from geometry_msgs.msg import PointStamped
-from image_geometry import PinholeCameraModel
-from pybullet_tools.utils import AABB, RGB, SEPARATOR, CameraImage, elapsed_time
-from sensor_msgs.msg import CameraInfo, Image, JointState, PointCloud2  # PointCloud
-from sensor_msgs.point_cloud2 import (
-    PointField,
-    create_cloud,
-    create_cloud_xyz32,
-    read_points,
-)
-
 # from shape_msgs.msg import Mesh, Plane # http://wiki.ros.org/shape_msgs?distro=indigo
 from depth_filter import DEPTH_TOPIC, FILTERED_TOPIC
+from geometry_msgs.msg import PointStamped
+from image_geometry import PinholeCameraModel
 from open_world.estimation.dnn import str_from_int_seg_general
-from open_world.estimation.observation import (
-    LabeledPoint,
-    image_from_labeled,
-    save_camera_images,
-)
+from open_world.estimation.observation import (LabeledPoint,
+                                               image_from_labeled,
+                                               save_camera_images)
 from open_world.simulation.entities import get_label_counts
 from open_world.simulation.lis import CAMERA_OPTICAL_FRAME
+from pybullet_tools.utils import (AABB, RGB, SEPARATOR, CameraImage,
+                                  elapsed_time)
 from run_estimator import cloud_from_depth, create_parser, init_seg
+from sensor_msgs.msg import (CameraInfo, Image, JointState,  # PointCloud
+                             PointCloud2)
+from sensor_msgs.point_cloud2 import (PointField, create_cloud,
+                                      create_cloud_xyz32, read_points)
 
 # from tf import TransformListener, TransformerROS # TODO: ImportError: dynamic module does not define module export function (PyInit__tf2)
 # from std_msgs.msg import Header, ColorRGBA

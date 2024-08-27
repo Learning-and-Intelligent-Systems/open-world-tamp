@@ -3,12 +3,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 CHANNELS = [20, 50, 500]
-#CHANNELS = [40, 100, 500]
-#CHANNELS = [10, 20, 100]
+# CHANNELS = [40, 100, 500]
+# CHANNELS = [10, 20, 100]
 
-#CHANNELS = [6, 16, 120, 84]
-#CHANNELS = [12, 32, 120, 84]
-#CHANNELS = [32, 32, 120, 84]
+# CHANNELS = [6, 16, 120, 84]
+# CHANNELS = [12, 32, 120, 84]
+# CHANNELS = [32, 32, 120, 84]
+
 
 class NetCCFFF(nn.Module):
     def __init__(self, input_channels):
@@ -29,6 +30,7 @@ class NetCCFFF(nn.Module):
         x = self.fc3(x)
         return x
 
+
 class Net(nn.Module):
     def __init__(self, input_channels):
         super(Net, self).__init__()
@@ -45,6 +47,7 @@ class Net(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+
 
 def train(model, criterion, optimizer, data, device):
     # Get the inputs and transfer them to the CPU/GPU.
@@ -63,11 +66,12 @@ def train(model, criterion, optimizer, data, device):
 
     return loss
 
+
 def eval(model, test_loader, device):
     model.eval()
     correct = 0
     total = 0
-    print('Testing the network on the test data ...')
+    print("Testing the network on the test data ...")
 
     with torch.no_grad():
         for data in test_loader:
@@ -82,7 +86,6 @@ def eval(model, test_loader, device):
             correct += (predicted == labels.long()).sum().item()
 
     accuracy = 100.0 * float(correct) / float(total)
-    print('Accuracy of the network on the test set: %.3f%%' % (
-        accuracy))
+    print("Accuracy of the network on the test set: %.3f%%" % (accuracy))
 
     return accuracy

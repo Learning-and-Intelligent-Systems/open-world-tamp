@@ -1,22 +1,15 @@
 import time
 
-from pybullet_tools.utils import joints_from_names, set_joint_positions
-
-from robots.movo.movo_sender import (
-    command,
-    command_gripper,
-    command_torso,
-    command_trajectory,
-    get_joint_states,
-)
-from open_world.simulation.controller import Controller
 from open_world.estimation.dnn import str_from_int_seg_general
 from open_world.estimation.geometry import cloud_from_depth
-from open_world.estimation.observation import image_from_labeled, save_camera_images
-from pybullet_tools.utils import (
-    CameraImage,
-    set_joint_positions,
-)
+from open_world.estimation.observation import (image_from_labeled,
+                                               save_camera_images)
+from open_world.simulation.controller import Controller
+from pybullet_tools.utils import (CameraImage, joints_from_names,
+                                  set_joint_positions)
+
+from robots.movo.movo_sender import (command, command_gripper, command_torso,
+                                     command_trajectory, get_joint_states)
 
 
 class MovoController(Controller):

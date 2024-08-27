@@ -1,24 +1,31 @@
-from torch import nn
-from torch.autograd import Function
-import torch
 import importlib
 import os
+
+import torch
+from torch import nn
+from torch.autograd import Function
+
 chamfer_found = importlib.find_loader("chamfer_2D") is not None
 if not chamfer_found:
     ## Cool trick from https://github.com/chrdiller
     print("Jitting Chamfer 2D")
 
     from torch.utils.cpp_extension import load
-    chamfer_2D = load(name="chamfer_2D",
-                  sources=[
-                      "/".join(os.path.abspath(__file__).split('/')[:-1] + ["chamfer_cuda.cpp"]),
-                      "/".join(os.path.abspath(__file__).split('/')[:-1] + ["chamfer2D.cu"]),
-                  ])
+
+    chamfer_2D = load(
+        name="chamfer_2D",
+        sources=[
+            "/".join(os.path.abspath(__file__).split("/")[:-1] + ["chamfer_cuda.cpp"]),
+            "/".join(os.path.abspath(__file__).split("/")[:-1] + ["chamfer2D.cu"]),
+        ],
+    )
     print("Loaded JIT 2D CUDA chamfer distance")
 
 else:
     import chamfer_2D
+
     print("Loaded compiled 2D CUDA chamfer distance")
+
 
 # Chamfer's distance module @thibaultgroueix
 # GPU tensors only

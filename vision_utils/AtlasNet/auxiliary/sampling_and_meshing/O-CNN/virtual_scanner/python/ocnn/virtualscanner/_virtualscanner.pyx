@@ -1,7 +1,9 @@
-from ocnn.virtualscanner cimport _virtualscanner_extern
-from libcpp.string cimport string
 from libcpp cimport bool
+from libcpp.string cimport string
+from ocnn.virtualscanner cimport _virtualscanner_extern
+
 from ocnn.virtualscanner.scanner_settings import ScannerSettings
+
 
 cdef class VirtualScanner:
     """

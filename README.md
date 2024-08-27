@@ -29,7 +29,7 @@ git submodule update --init --recursive
 
 Install the python dependencies. If possible, install using python3.8 as that appears to be the only python version that supports all of the perceptual dependencies:
 ```
-$ python -m pip install -r requirements.txt
+python -m pip install -e .
 ```
 If you get errors when installing detectron, you may need to modify your paths. Make sure to switch out `11.4` for your current cuda version.
 ```

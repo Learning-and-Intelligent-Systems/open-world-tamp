@@ -1,18 +1,21 @@
+import sys
+from collections import OrderedDict
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import sys
-from collections import OrderedDict
 from network import Net, NetCCFFF
 
 if len(sys.argv) < 4:
-    print('ERROR: Not enough input arguments!')
-    print('Usage: python torch_to_onxx.py pathToPytorchModel.pwf pathToONNXModel.onnx num_channels')
+    print("ERROR: Not enough input arguments!")
+    print(
+        "Usage: python torch_to_onxx.py pathToPytorchModel.pwf pathToONNXModel.onnx num_channels"
+    )
     exit(-1)
 
 state_dict = torch.load(sys.argv[1])
-#new_state_dict = OrderedDict()
-#for k, v in state_dict.items():
+# new_state_dict = OrderedDict()
+# for k, v in state_dict.items():
 #    name = k[7:]
 #    new_state_dict[name] = v
 

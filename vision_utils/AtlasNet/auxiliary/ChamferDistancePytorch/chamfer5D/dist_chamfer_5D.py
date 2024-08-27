@@ -1,8 +1,9 @@
-from torch import nn
-from torch.autograd import Function
-import torch
 import importlib
 import os
+
+import torch
+from torch import nn
+from torch.autograd import Function
 
 chamfer_found = importlib.find_loader("chamfer_5D") is not None
 if not chamfer_found:
@@ -10,15 +11,19 @@ if not chamfer_found:
     print("Jitting Chamfer 5D")
 
     from torch.utils.cpp_extension import load
-    chamfer_5D = load(name="chamfer_5D",
-                      sources=[
-                          "/".join(os.path.abspath(__file__).split('/')[:-1] + ["chamfer_cuda.cpp"]),
-                          "/".join(os.path.abspath(__file__).split('/')[:-1] + ["chamfer5D.cu"]),
-                      ])
+
+    chamfer_5D = load(
+        name="chamfer_5D",
+        sources=[
+            "/".join(os.path.abspath(__file__).split("/")[:-1] + ["chamfer_cuda.cpp"]),
+            "/".join(os.path.abspath(__file__).split("/")[:-1] + ["chamfer5D.cu"]),
+        ],
+    )
     print("Loaded JIT 5D CUDA chamfer distance")
 
 else:
     import chamfer_5D
+
     print("Loaded compiled 5D CUDA chamfer distance")
 
 

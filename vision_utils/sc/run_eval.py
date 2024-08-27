@@ -25,67 +25,29 @@ from collections import Counter
 
 import cv2
 import trimesh
-from pybullet_tools.pr2_problems import create_table
-from pybullet_tools.utils import (
-    CLIENT,
-    INF,
-    PI,
-    STATIC_MASS,
-    TAN,
-    TEMP_DIR,
-    WHITE,
-    CameraImage,
-    Euler,
-    Mesh,
-    Point,
-    Pose,
-    aabb_from_points,
-    aabb_union,
-    connect,
-    create_box,
-    create_collision_shape,
-    create_obj,
-    create_plane,
-    create_visual_shape,
-    dimensions_from_camera_matrix,
-    disable_gravity,
-    disconnect,
-    enable_gravity,
-    get_field_of_view,
-    get_image,
-    get_image_at_pose,
-    get_mesh_data,
-    get_pose,
-    get_visual_data,
-    invert,
-    matrix_from_quat,
-    mesh_from_points,
-    multiply,
-    remove_body,
-    set_all_static,
-    set_euler,
-    set_point,
-    set_pose,
-    stable_z,
-    tform_points,
-)
-
 from open_world.estimation.bounding import estimate_oobb
 from open_world.estimation.dnn import init_sc, init_seg
-from open_world.estimation.geometry import (
-    estimate_surface_mesh,
-    filter_visible,
-    project_base_points,
-    refine_shape,
-)
+from open_world.estimation.geometry import (estimate_surface_mesh,
+                                            filter_visible,
+                                            project_base_points, refine_shape)
 from open_world.simulation.environment import create_ycb
-from open_world.simulation.lis import (
-    CAMERA_MATRIX,
-    YCB_COLORS,
-    YCB_MASSES,
-    Z_EPSILON,
-    get_ycb_obj_path,
-)
+from open_world.simulation.lis import (CAMERA_MATRIX, YCB_COLORS, YCB_MASSES,
+                                       Z_EPSILON, get_ycb_obj_path)
+from pybullet_tools.pr2_problems import create_table
+from pybullet_tools.utils import (CLIENT, INF, PI, STATIC_MASS, TAN, TEMP_DIR,
+                                  WHITE, CameraImage, Euler, Mesh, Point, Pose,
+                                  aabb_from_points, aabb_union, connect,
+                                  create_box, create_collision_shape,
+                                  create_obj, create_plane,
+                                  create_visual_shape,
+                                  dimensions_from_camera_matrix,
+                                  disable_gravity, disconnect, enable_gravity,
+                                  get_field_of_view, get_image,
+                                  get_image_at_pose, get_mesh_data, get_pose,
+                                  get_visual_data, invert, matrix_from_quat,
+                                  mesh_from_points, multiply, remove_body,
+                                  set_all_static, set_euler, set_point,
+                                  set_pose, stable_z, tform_points)
 
 
 def cloud_from_depth(camera_matrix, depth, max_depth=10.0):

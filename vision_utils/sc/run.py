@@ -32,23 +32,10 @@ sys.path.extend(
 )
 from examples.pybullet.utils.pybullet_tools.pr2_problems import create_floor
 from examples.pybullet.utils.pybullet_tools.utils import (
-    CLIENT,
-    PI,
-    CameraImage,
-    add_data_path,
-    connect,
-    create_mesh,
-    get_projection_matrix,
-    invert_quat,
-    load_pybullet,
-    obj_file_from_mesh,
-    quat_from_matrix,
-    read_pcd_file,
-    remove_body,
-    set_point,
-    set_quat,
-    wait_for_user,
-)
+    CLIENT, PI, CameraImage, add_data_path, connect, create_mesh,
+    get_projection_matrix, invert_quat, load_pybullet, obj_file_from_mesh,
+    quat_from_matrix, read_pcd_file, remove_body, set_point, set_quat,
+    wait_for_user)
 
 # """""""""""""""""""""""""""""""""""""
 # EDITED FUNCTIONS
@@ -68,11 +55,11 @@ def get_image(
     client=CLIENT,
 ):
     diff = np.asarray(list(target_pos)) - np.asarray(list(camera_pos))
-    diff_len = (diff ** 2).sum() ** 0.5
+    diff_len = (diff**2).sum() ** 0.5
 
     right = np.cross(diff, np.asarray([0, 0, 1]))
     up_vector = np.cross(right, diff)
-    if (up_vector ** 2).sum() == 0:  # look perpendicular to the ground
+    if (up_vector**2).sum() == 0:  # look perpendicular to the ground
         up_vector = np.asarray([1, 0, 0])
 
     view_matrix = p.computeViewMatrix(
@@ -114,8 +101,8 @@ def get_image(
 
 
 class EncoderDecoder(nn.Module):
-    """
-    Wrapper for a encoder and a decoder.
+    """Wrapper for a encoder and a decoder.
+
     Author : Thibault Groueix 01.11.2019
     """
 
@@ -124,9 +111,8 @@ class EncoderDecoder(nn.Module):
 
         sys.path.append(ATLAS_PATH)
         from model.atlasnet import Atlasnet
-        from model.model_blocks import (
-            PointNet,
-        )  # NOTE: if used together with DenseFusion, be careful about the class name
+        from model.model_blocks import \
+            PointNet  # NOTE: if used together with DenseFusion, be careful about the class name
 
         self.encoder = PointNet(nlatent=opt.bottleneck_size)
         self.decoder = Atlasnet(opt)
@@ -270,7 +256,7 @@ def main(room_k=-1, time_step=0.01):
             pc_incomplete = eye_loc[choose, :]
             mean = pc_incomplete.mean(0)
             pc_incomplete -= mean
-            scale_fac = (pc_incomplete ** 2).sum(1).max() ** 0.5
+            scale_fac = (pc_incomplete**2).sum(1).max() ** 0.5
             pc_incomplete = (pc_incomplete / scale_fac).transpose(1, 0)
             data = torch.Tensor(pc_incomplete).unsqueeze(0)
             network_input = data.to(DEVICE)

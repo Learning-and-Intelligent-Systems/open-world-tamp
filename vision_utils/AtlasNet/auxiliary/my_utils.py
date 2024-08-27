@@ -1,12 +1,13 @@
 import random
+
 import numpy as np
 import torch
 from termcolor import colored
 
-
 """
     Author : Thibault Groueix 01.11.2019
 """
+
 
 def grey_print(x):
     print(colored(x, "grey"))
@@ -49,6 +50,7 @@ def print_arg(opt):
             + " : "
             + colored(str(opt.__dict__[a]), "cyan")
         )
+
 
 def plant_seeds(random_seed=False):
     if random_seed:

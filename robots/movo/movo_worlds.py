@@ -1,45 +1,24 @@
-from pybullet_tools.utils import (
-    GREEN,
-    PI,
-    RGBA,
-    TAN,
-    HideOutput,
-    Point,
-    Pose,
-    add_data_path,
-    create_box,
-    load_model,
-    draw_pose,
-    joint_from_name,
-    set_joint_position,
-    set_camera_pose,
-    set_dynamics,
-    set_pose,
-    create_box,
-    AABB,
-    Euler,
-    get_link_names,
-    get_all_links
-)
-
+import math
 import random
 
-from open_world.simulation.entities import Object, RealWorld
-from open_world.simulation.environment import (
-    Pose2D,
-    create_floor_object,
-    create_pillar,
-    create_table_object,
-    create_ycb,
-    place_object,
-    place_surface,
-)
-from open_world.exploration.utils import Room, LIGHT_GREY, GRID_HEIGHT
-import math
 import pybullet as p
+from open_world.exploration.utils import GRID_HEIGHT, LIGHT_GREY, Room
+from open_world.simulation.entities import Object, RealWorld
+from open_world.simulation.environment import (Pose2D, create_floor_object,
+                                               create_pillar,
+                                               create_table_object, create_ycb,
+                                               place_object, place_surface)
+from pybullet_tools.utils import (AABB, GREEN, PI, RGBA, TAN, Euler,
+                                  HideOutput, Point, Pose, add_data_path,
+                                  create_box, draw_pose, get_all_links,
+                                  get_link_names, joint_from_name, load_model,
+                                  set_camera_pose, set_dynamics,
+                                  set_joint_position, set_pose)
 
 
-def create_world(robot, movable=[], attachable=[], fixed=[], surfaces=[], room=None, **kwargs):
+def create_world(
+    robot, movable=[], attachable=[], fixed=[], surfaces=[], room=None, **kwargs
+):
     obstacles = sorted(set(fixed) | set(surfaces))
     return RealWorld(
         robot,
@@ -104,8 +83,9 @@ def problem0(args, robot, **kwargs):
     real_world = create_world(
         robot, movable=[obj1], fixed=obstacles, surfaces=[table, region], **kwargs
     )
-    
+
     return real_world
+
 
 def red_block_mobile(args, robot, vg=None, **kwargs):
     floor_size = 6
@@ -122,23 +102,34 @@ def red_block_mobile(args, robot, vg=None, **kwargs):
             color=RGBA(219 / 256.0, 50 / 256.0, 54 / 256.0, 1.0),
             mass=box_mass,
             **kwargs
-        ), **kwargs
+        ),
+        **kwargs
     )
 
-    if(vg != None):
+    if vg != None:
         x, y = random.choice(vg.get_frontier())
-        block_pose = Pose(point=Point(x = x-(floor_size / 2), y = y-(floor_size / 2), z = height / 2.0))
+        block_pose = Pose(
+            point=Point(x=x - (floor_size / 2), y=y - (floor_size / 2), z=height / 2.0)
+        )
     else:
-        block_pose = Pose(point=Point(x=random.uniform(-floor_size / 2, floor_size / 2), y=random.uniform(-floor_size / 2, floor_size / 2), z = height / 2.0)) 
-
+        block_pose = Pose(
+            point=Point(
+                x=random.uniform(-floor_size / 2, floor_size / 2),
+                y=random.uniform(-floor_size / 2, floor_size / 2),
+                z=height / 2.0,
+            )
+        )
 
     set_pose(red_box, block_pose, **kwargs)
-    real_world = create_world(robot, movable=[red_box], fixed=[], surfaces=[floor], **kwargs)
+    real_world = create_world(
+        robot, movable=[red_box], fixed=[], surfaces=[floor], **kwargs
+    )
     return real_world
 
 
 def vanamo_m0m_chair(args, robot, **kwargs):
     return vanamo_m0m(args, robot, has_blocking_chair=True, **kwargs)
+
 
 def vanamo_m0m(args, robot, has_blocking_chair=False, **kwargs):
     width = 4
@@ -150,53 +141,128 @@ def vanamo_m0m(args, robot, has_blocking_chair=False, **kwargs):
     set_pose(floor1, Pose(Point(x=center[0], y=center[1])), **kwargs)
 
     wall_thickness = 0.1
-    wall_1 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_1,
-                Pose(point=Point(x=center[0], y=center[1] + length / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
+    wall_1 = create_pillar(
+        width=width,
+        length=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_1,
+        Pose(
+            point=Point(
+                x=center[0],
+                y=center[1] + length / 2 + wall_thickness / 2,
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
-    wall_2 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_2,
-                Pose(point=Point(x=center[0], y=center[1] - (length / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
+    wall_2 = create_pillar(
+        width=width,
+        length=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_2,
+        Pose(
+            point=Point(
+                x=center[0],
+                y=center[1] - (length / 2 + wall_thickness / 2),
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
-    wall_3 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_3,
-                Pose(point=Point(y=center[1], x=center[0] + width / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
+    wall_3 = create_pillar(
+        length=length,
+        width=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_3,
+        Pose(
+            point=Point(
+                y=center[1],
+                x=center[0] + width / 2 + wall_thickness / 2,
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
-    wall_4 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_4,
-                Pose(point=Point(y=center[1], x=center[0] - (width / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
+    wall_4 = create_pillar(
+        length=length,
+        width=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_4,
+        Pose(
+            point=Point(
+                y=center[1],
+                x=center[0] - (width / 2 + wall_thickness / 2),
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
-    wall_5 = create_pillar(length=4.4, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_5,
-                Pose(point=Point(y=1.2, x=1.2, z=wall_height / 2)), **kwargs)
+    wall_5 = create_pillar(
+        length=4.4, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs
+    )
+    set_pose(wall_5, Pose(point=Point(y=1.2, x=1.2, z=wall_height / 2)), **kwargs)
 
     walls = [wall_1, wall_2, wall_3, wall_4, wall_5]
     floors = [floor1]
-    aabb = AABB(lower=(center[0] - width / 2.0, center[1] - length / 2.0, 0.05),
-                upper=(center[0] + width / 2.0, center[1] + length / 2.0, GRID_HEIGHT))
+    aabb = AABB(
+        lower=(center[0] - width / 2.0, center[1] - length / 2.0, 0.05),
+        upper=(center[0] + width / 2.0, center[1] + length / 2.0, GRID_HEIGHT),
+    )
 
     movable_obstacles = []
-    if(has_blocking_chair):
-        blocking_chair1 = load_model("../models/partnet_mobility/179/mobility.urdf", scale=0.5, **kwargs)
-        chair_color = (0.8,0.8,0,1)
-        link_names = get_link_names(blocking_chair1, get_all_links(blocking_chair1, **kwargs), **kwargs)
+    if has_blocking_chair:
+        blocking_chair1 = load_model(
+            "../models/partnet_mobility/179/mobility.urdf", scale=0.5, **kwargs
+        )
+        chair_color = (0.8, 0.8, 0, 1)
+        link_names = get_link_names(
+            blocking_chair1, get_all_links(blocking_chair1, **kwargs), **kwargs
+        )
         set_joint_position(blocking_chair1, 17, math.pi, **kwargs)
 
-        kwargs["client"].changeVisualShape(blocking_chair1, link_names.index("link_15"), rgbaColor=chair_color)
-        kwargs["client"].changeVisualShape(blocking_chair1, link_names.index("link_15_helper"), rgbaColor=chair_color)
-        
+        kwargs["client"].changeVisualShape(
+            blocking_chair1, link_names.index("link_15"), rgbaColor=chair_color
+        )
+        kwargs["client"].changeVisualShape(
+            blocking_chair1, link_names.index("link_15_helper"), rgbaColor=chair_color
+        )
+
         chair_pos1 = (1.4, 4.3, 0.42)
-        set_pose(blocking_chair1, Pose(point=Point(x=chair_pos1[0], y=chair_pos1[1], z=chair_pos1[2])), **kwargs)
+        set_pose(
+            blocking_chair1,
+            Pose(point=Point(x=chair_pos1[0], y=chair_pos1[1], z=chair_pos1[2])),
+            **kwargs
+        )
 
         movable_obstacles = [blocking_chair1]
-        print("Movable obstacles: "+str(movable_obstacles))
+        print("Movable obstacles: " + str(movable_obstacles))
 
     room = Room(walls, floors, aabb, movable_obstacles)
 
     add_data_path()
     with HideOutput(enable=True):
         table = create_table_object(color=LIGHT_GREY, **kwargs)
-        set_pose(table, Pose(Point(2.2, 0, 0), Euler(yaw=math.pi/2.0)), **kwargs)
+        set_pose(table, Pose(Point(2.2, 0, 0), Euler(yaw=math.pi / 2.0)), **kwargs)
         obstacles = [
             table,
         ]
@@ -214,13 +280,19 @@ def vanamo_m0m(args, robot, has_blocking_chair=False, **kwargs):
     )
 
     real_world = create_world(
-        robot, movable=[obj1], fixed=obstacles, surfaces=[table, region], room=room, **kwargs
+        robot,
+        movable=[obj1],
+        fixed=obstacles,
+        surfaces=[table, region],
+        room=room,
+        **kwargs
     )
 
     return real_world
 
+
 def namo(args, robot, random_widths=False, **kwargs):
-    
+
     def movability_prior(box_width, mean_width):
         # return np.random.choice([0, 1], p=[0.7, 0.3])
         return int(box_width < mean_width)
@@ -239,10 +311,10 @@ def namo(args, robot, random_widths=False, **kwargs):
     obj1 = place_object(
         create_ycb("potted_meat_can", **kwargs), table, Pose2D(yaw=PI / 4), **kwargs
     )
-   
+
     # Don't set the pose of the robot, only the joint confs
     robot.set_group_positions("base", [2, 0, math.pi, 0])
-   
+
     total_width = 0
     spacing = 0.65
     block_height = 0.8
@@ -278,7 +350,8 @@ def namo(args, robot, random_widths=False, **kwargs):
                         y=-floor_size / 2 + total_width + spacing + block_width / 2,
                         z=block_width / 2.0,
                     )
-                ), **kwargs
+                ),
+                **kwargs
             )
 
             total_width += block_width
@@ -293,21 +366,31 @@ def namo(args, robot, random_widths=False, **kwargs):
             0.1129144419011968,
             0.179910954976249,
             0.19335698094573505,
-            0.1554801454275457   ]
+            0.1554801454275457,
+        ]
         for block_width in width_list:
-            blocking_box = Object(load_model(
-                "../models/partnet_mobility/179/mobility.urdf", scale=0.4, **kwargs
-            ), **kwargs)
-            set_joint_position(blocking_box, 17, random.uniform(-math.pi, math.pi), **kwargs)
+            blocking_box = Object(
+                load_model(
+                    "../models/partnet_mobility/179/mobility.urdf", scale=0.4, **kwargs
+                ),
+                **kwargs
+            )
+            set_joint_position(
+                blocking_box, 17, random.uniform(-math.pi, math.pi), **kwargs
+            )
             set_pose(
                 blocking_box,
                 Pose(
                     point=Point(
                         x=-block_width / 2,
-                        y=-floor_size / 2 + total_width + spacing/2.0 + block_width / 2,
+                        y=-floor_size / 2
+                        + total_width
+                        + spacing / 2.0
+                        + block_width / 2,
                         z=block_height / 2.0,
                     )
-                ), **kwargs
+                ),
+                **kwargs
             )
 
             total_width += block_width
@@ -315,13 +398,25 @@ def namo(args, robot, random_widths=False, **kwargs):
             blocking_boxes.append(blocking_box)
 
     BUFFER = 0.5
-    robot.custom_limits[joint_from_name(robot, 'x', **kwargs)] = (-floor_size/2.0+BUFFER, floor_size/2.0-BUFFER)
-    robot.custom_limits[joint_from_name(robot, 'y', **kwargs)] = (-floor_size/2.0+BUFFER, floor_size/2.0-BUFFER)
+    robot.custom_limits[joint_from_name(robot, "x", **kwargs)] = (
+        -floor_size / 2.0 + BUFFER,
+        floor_size / 2.0 - BUFFER,
+    )
+    robot.custom_limits[joint_from_name(robot, "y", **kwargs)] = (
+        -floor_size / 2.0 + BUFFER,
+        floor_size / 2.0 - BUFFER,
+    )
 
     real_world = create_world(
-        robot, movable=[obj1], attachable=blocking_boxes, fixed=[], surfaces=[floor], **kwargs
+        robot,
+        movable=[obj1],
+        attachable=blocking_boxes,
+        fixed=[],
+        surfaces=[floor],
+        **kwargs
     )
     return real_world
+
 
 def namo_old(args, robot, **kwargs):
 
@@ -339,7 +434,8 @@ def namo_old(args, robot, **kwargs):
             color=RGBA(219 / 256.0, 50 / 256.0, 54 / 256.0, 1.0),
             mass=box_mass,
             **kwargs
-        ), **kwargs
+        ),
+        **kwargs
     )
 
     box_x, box_y = -2, 0
@@ -349,18 +445,15 @@ def namo_old(args, robot, **kwargs):
     robot.set_group_positions("base", [2, 0, math.pi])
     set_pose(red_box, Pose(point=Point(x=box_x, y=box_y, z=height / 2.0)), **kwargs)
 
-
     def movability_prior(box_width, mean_width):
         # return np.random.choice([0, 1], p=[0.7, 0.3])
         return int(box_width < mean_width)
-
-
 
     total_width = 0
     spacing = 0.2
     blocking_boxes = []
     mean_box_width = 0.3
-    colors = [RGBA(0.3, 0.3, 0.3, 1.0), RGBA(54 / 256.0, 50 / 256.0, 219 / 256.0, 1.0)]  
+    colors = [RGBA(0.3, 0.3, 0.3, 1.0), RGBA(54 / 256.0, 50 / 256.0, 219 / 256.0, 1.0)]
     width_list = [
         0.45954404643140534,
         0.3506706557568167,
@@ -380,12 +473,11 @@ def namo_old(args, robot, **kwargs):
                 w=block_width,
                 l=block_width,
                 h=block_width,
-                color=colors[
-                    movability_prior(block_width, mean_width=mean_box_width)
-                ],
+                color=colors[movability_prior(block_width, mean_width=mean_box_width)],
                 mass=box_mass,
                 **kwargs
-            ), **kwargs
+            ),
+            **kwargs
         )
         set_pose(
             blocking_box,
@@ -395,7 +487,8 @@ def namo_old(args, robot, **kwargs):
                     y=-floor_size / 2 + total_width + spacing + block_width / 2,
                     z=block_width / 2.0,
                 )
-            ), **kwargs
+            ),
+            **kwargs
         )
 
         total_width += block_width
@@ -406,6 +499,7 @@ def namo_old(args, robot, **kwargs):
         robot, movable=[red_box] + blocking_boxes, fixed=[], surfaces=[floor], **kwargs
     )
     return real_world
+
 
 def empty(args, robot, **kwargs):
     floor = create_pillar(width=6, length=6, color=TAN, **kwargs)
@@ -423,40 +517,108 @@ def empty_room(args, robot, **kwargs):
     set_pose(floor1, Pose(Point(x=center[0], y=center[1])), **kwargs)
 
     wall_thickness = 0.1
-    wall_1 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_1,
-                Pose(point=Point(x=center[0], y=center[1] + length / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
+    wall_1 = create_pillar(
+        width=width,
+        length=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_1,
+        Pose(
+            point=Point(
+                x=center[0],
+                y=center[1] + length / 2 + wall_thickness / 2,
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
-    wall_2 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_2,
-                Pose(point=Point(x=center[0], y=center[1] - (length / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
+    wall_2 = create_pillar(
+        width=width,
+        length=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_2,
+        Pose(
+            point=Point(
+                x=center[0],
+                y=center[1] - (length / 2 + wall_thickness / 2),
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
-    wall_3 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_3,
-                Pose(point=Point(y=center[1], x=center[0] + width / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
+    wall_3 = create_pillar(
+        length=length,
+        width=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_3,
+        Pose(
+            point=Point(
+                y=center[1],
+                x=center[0] + width / 2 + wall_thickness / 2,
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
-    wall_4 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_4,
-                Pose(point=Point(y=center[1], x=center[0] - (width / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
-
-  
+    wall_4 = create_pillar(
+        length=length,
+        width=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_4,
+        Pose(
+            point=Point(
+                y=center[1],
+                x=center[0] - (width / 2 + wall_thickness / 2),
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
     walls = [wall_1, wall_2, wall_3, wall_4]
 
     floors = [floor1]
-    aabb = AABB(lower=(center[0] - width / 2.0, center[1] - length / 2.0, 0.05),
-                upper=(center[0] + width / 2.0, center[1] + length / 2.0, GRID_HEIGHT))
+    aabb = AABB(
+        lower=(center[0] - width / 2.0, center[1] - length / 2.0, 0.05),
+        upper=(center[0] + width / 2.0, center[1] + length / 2.0, GRID_HEIGHT),
+    )
 
     room = Room(walls, floors, aabb, [])
 
     real_world = create_world(
-            robot, movable=[], fixed=[], surfaces=[], room=room, **kwargs
-        )
+        robot, movable=[], fixed=[], surfaces=[], room=room, **kwargs
+    )
 
     return real_world
 
 
-WORLDS = [problem0, empty, red_block_mobile, namo, vanamo_m0m, vanamo_m0m_chair, empty_room]
+WORLDS = [
+    problem0,
+    empty,
+    red_block_mobile,
+    namo,
+    vanamo_m0m,
+    vanamo_m0m_chair,
+    empty_room,
+]
 
 
 def movo_world_from_problem(problem, robot, args, **kwargs):

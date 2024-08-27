@@ -1,12 +1,12 @@
 import sys
 
-sys.path.append('./auxiliary/netvision/')
+sys.path.append("./auxiliary/netvision/")
 from HtmlGenerator import HtmlGenerator
 
 
 def main():
-    """
-    Create a master webpage to summurize results of all experiments.
+    """Create a master webpage to summurize results of all experiments.
+
     Author : Thibault Groueix 01.11.2019
     """
     webpage = HtmlGenerator(path="master.html")

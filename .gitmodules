@@ -13,9 +13,6 @@
 [submodule "grasp/gpd"] ; TODO: Replace with git@github.com:aidan-curtis/gpd_python_interface.git
 	path = grasp/gpd
 	url = https://github.com/atenpas/gpd.git
-[submodule "pybullet_planning"]
-	path = pybullet_planning
-	url = https://github.com/aidan-curtis/pybullet-planning.git
 [submodule "tamp"]
 	path = tamp
 	url = https://github.com/aidan-curtis/pddlstream

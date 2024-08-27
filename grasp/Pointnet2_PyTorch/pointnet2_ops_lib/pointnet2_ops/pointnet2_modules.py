@@ -75,7 +75,7 @@ class _PointnetSAModuleBase(nn.Module):
 
 
 class PointnetSAModuleMSG(_PointnetSAModuleBase):
-    r"""Pointnet set abstrction layer with multiscale grouping
+    r"""Pointnet set abstrction layer with multiscale grouping.
 
     Parameters
     ----------
@@ -116,7 +116,7 @@ class PointnetSAModuleMSG(_PointnetSAModuleBase):
 
 
 class PointnetSAModule(PointnetSAModuleMSG):
-    r"""Pointnet set abstrction layer
+    r"""Pointnet set abstrction layer.
 
     Parameters
     ----------
@@ -147,7 +147,7 @@ class PointnetSAModule(PointnetSAModuleMSG):
 
 
 class PointnetFPModule(nn.Module):
-    r"""Propigates the features of one set to another
+    r"""Propigates the features of one set to another.
 
     Parameters
     ----------

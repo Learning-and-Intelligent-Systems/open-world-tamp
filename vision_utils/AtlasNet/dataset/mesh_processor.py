@@ -1,6 +1,7 @@
 # import pymesh
+from os.path import dirname, join
+
 import numpy as np
-from os.path import join, dirname
 
 """
 Author : Thibault Groueix 01.09.2019
@@ -10,7 +11,7 @@ Author : Thibault Groueix 01.09.2019
 class ColorMap:
     def __init__(self):
         self.colormap_path = "auxiliary/colormap.npy"
-        self.colormap = (np.load(self.colormap_path) * 255).astype('int')
+        self.colormap = (np.load(self.colormap_path) * 255).astype("int")
 
     def __call__(self, index):
         """
@@ -23,9 +24,13 @@ class ColorMap:
 
 def save(mesh, path, colormap):
     try:
-        vertex_sources = mesh.get_attribute("vertex_sources")  # batch, nb_prim, num_point, 3
+        vertex_sources = mesh.get_attribute(
+            "vertex_sources"
+        )  # batch, nb_prim, num_point, 3
         if vertex_sources.max() > 0:
-            vertex_sources = (255 * (vertex_sources / vertex_sources.max())).astype('int')
+            vertex_sources = (255 * (vertex_sources / vertex_sources.max())).astype(
+                "int"
+            )
             mesh.add_attribute("vertex_red")
             mesh.add_attribute("vertex_green")
             mesh.add_attribute("vertex_blue")

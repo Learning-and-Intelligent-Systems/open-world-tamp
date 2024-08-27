@@ -1,38 +1,43 @@
 # Use tensors to speed up loading data onto the GPU during training.
 
+import sys
+
 import h5py
 import numpy as np
 import torch
+import torch.multiprocessing
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as torchdata
-import torch.multiprocessing
-import sys
 
-torch.multiprocessing.set_start_method('spawn')
+torch.multiprocessing.set_start_method("spawn")
+
 
 class H5Dataset(torchdata.Dataset):
     def __init__(self, file_path):
         super(H5Dataset, self).__init__()
         self.file_path = file_path
         self.file = None
-        with h5py.File(self.file_path, 'r') as f:
-            self.length = f['labels'].shape[0]
+        with h5py.File(self.file_path, "r") as f:
+            self.length = f["labels"].shape[0]
 
     def __getitem__(self, index):
         if self.file == None:
-            self.file = h5py.File(self.file_path, 'r')
-        print('Accessing image ...')
-        image = torch.from_numpy(np.array(self.file['images'][index])).to(torch.float32)
+            self.file = h5py.File(self.file_path, "r")
+        print("Accessing image ...")
+        image = torch.from_numpy(np.array(self.file["images"][index])).to(torch.float32)
         # ptorch uses NCHW format
         image = image.reshape((image.shape[2], image.shape[0], image.shape[1]))
-        print('Accessing label ...')
-        label = torch.from_numpy(np.array(self.file['labels'][index][0])).to(torch.int32)
+        print("Accessing label ...")
+        label = torch.from_numpy(np.array(self.file["labels"][index][0])).to(
+            torch.int32
+        )
         return (image, label)
 
     def __len__(self):
         return self.length
+
 
 class Net(nn.Module):
     def __init__(self, input_channels):
@@ -55,9 +60,10 @@ class Net(nn.Module):
         # x = self.fc3(x)
         return x
 
-with h5py.File(sys.argv[1], 'r') as db:
-    num_train = len(db['images'])
-print('Have', num_train, 'total training examples')
+
+with h5py.File(sys.argv[1], "r") as db:
+    num_train = len(db["images"])
+print("Have", num_train, "total training examples")
 num_epochs = 10
 repeats = 1
 early_stop_loss = 0.05
@@ -68,14 +74,14 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 # Load the training data.
-print('Loading data ...')
+print("Loading data ...")
 
 # Create the network.
 input_channels = int(sys.argv[3])
 net = Net(input_channels)
 print(net)
 
-print('Copying network to GPU ...')
+print("Copying network to GPU ...")
 net.to(device)
 
 # Define the loss function and optimizer.
@@ -93,19 +99,19 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(net.parameters(), weight_decay=0.01)
 # optimizer = optim.Adam(net.parameters(), weight_decay=0.05)
 
-#scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.96)
+# scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.96)
 
 dset = H5Dataset(sys.argv[1])
 train_loader = torchdata.DataLoader(dset, batch_size=64, shuffle=True, num_workers=4)
 
 early_stop = False
-print('Training ...')
+print("Training ...")
 
 for epoch in range(num_epochs):
-    print('epoch: %d/%d' % (epoch, num_epochs))
- #   scheduler.step()
+    print("epoch: %d/%d" % (epoch, num_epochs))
+    #   scheduler.step()
     for param_group in optimizer.param_groups:
-        print('learning rate:', param_group['lr'])
+        print("learning rate:", param_group["lr"])
 
         running_loss = 0.0
 
@@ -126,9 +132,11 @@ for epoch in range(num_epochs):
 
         # print statistics
         running_loss += loss.item()
-        if i % 100 == 99: # print every 10 mini-batches
-            print('epoch: %d, batch: %5d, loss: %.5f' %
-                  (epoch + 1, i + 1, running_loss / 100))
+        if i % 100 == 99:  # print every 10 mini-batches
+            print(
+                "epoch: %d, batch: %5d, loss: %.5f"
+                % (epoch + 1, i + 1, running_loss / 100)
+            )
 #            if running_loss / 100 < early_stop_loss:
 #                print('reached loss threshold for early stopping: %.5f', early_stop_loss)
 #                early_stop = True
@@ -139,7 +147,7 @@ for epoch in range(num_epochs):
 #        if early_stop:
 #            break
 
-print('Finished Training')
+print("Finished Training")
 
 model_path = raw_input("Enter the filename/path for the trained model: ")
 torch.save(net.state_dict(), model_path)
@@ -149,7 +157,7 @@ test_set = H5Dataset(sys.argv[2], 0, 20000)
 test_loader = torchdata.DataLoader(test_set, batch_size=64, shuffle=True)
 correct = 0
 total = 0
-print('Testing the network on the test data ...')
+print("Testing the network on the test data ...")
 with torch.no_grad():
     for data in test_loader:
         inputs, labels = data
@@ -160,5 +168,6 @@ with torch.no_grad():
         total += labels.size(0)
         correct += (predicted == labels.long()).sum().item()
 
-print('Accuracy of the network on the 20000 test images: %d %%' % (
-    100 * correct / total))
+print(
+    "Accuracy of the network on the 20000 test images: %d %%" % (100 * correct / total)
+)

@@ -24,28 +24,31 @@ import open3d
 import pybullet as p
 import pybullet_data
 import pybullet_utils.bullet_client as bc
+from movo.movo_utils import MOVO_PATH, MovoPolicy, MovoRobot
+from movo.movo_worlds import movo_world_from_problem
+from open_world.estimation.belief import (Belief, EstimatedObject,
+                                          downsample_cluster, is_object_label,
+                                          iterate_image)
+from open_world.estimation.dnn import str_from_int_seg_general
+from open_world.estimation.geometry import (cloud_from_depth,
+                                            estimate_surface_mesh)
+from open_world.estimation.observation import (extract_point,
+                                               image_from_labeled,
+                                               save_camera_images)
+from open_world.planning.planner import iterate_sequence
+from open_world.planning.primitives import (GroupConf, RelativePose, Sequence,
+                                            WorldState)
+from open_world.planning.streams import (get_grasp_gen_fn, get_plan_motion_fn,
+                                         get_plan_pick_fn)
+from open_world.simulation.tasks import GOALS
 from pddlstream.algorithms.algorithm import reset_globals
 from pddlstream.algorithms.meta import analyze_goal
 from pddlstream.algorithms.serialized import solve_all_goals, solve_next_goal
-from pddlstream.language.constants import (
-    NOT,
-    And,
-    Equal,
-    Evaluation,
-    Exists,
-    Fact,
-    ForAll,
-    Head,
-    Imply,
-    Not,
-    PDDLProblem,
-    Solution,
-    get_args,
-    get_prefix,
-    is_head,
-    is_plan,
-    print_solution,
-)
+from pddlstream.language.constants import (NOT, And, Equal, Evaluation, Exists,
+                                           Fact, ForAll, Head, Imply, Not,
+                                           PDDLProblem, Solution, get_args,
+                                           get_prefix, is_head, is_plan,
+                                           print_solution)
 from pddlstream.language.conversion import replace_expression
 from pddlstream.language.external import never_defer
 from pddlstream.language.function import FunctionInfo
@@ -53,65 +56,15 @@ from pddlstream.language.generator import from_fn, from_gen_fn, from_test
 from pddlstream.language.stream import StreamInfo
 from pddlstream.utils import Profiler, get_file_path, lowercase, read
 from pybullet_tools.pr2_utils import ARM_NAMES, LEFT_ARM, set_group_positions
-from pybullet_tools.utils import (
-    AABB,
-    BLUE,
-    PI,
-    CameraImage,
-    Point,
-    Pose,
-    connect,
-    disconnect,
-    get_pairs,
-    invert,
-    load_pybullet,
-    pixel_from_point,
-    read,
-    tform_point,
-    wait_if_gui,
-)
+from pybullet_tools.utils import (AABB, BLUE, PI, CameraImage, Point, Pose,
+                                  connect, disconnect, get_pairs, invert,
+                                  load_pybullet, pixel_from_point, read,
+                                  tform_point, wait_if_gui)
 from pybullet_tools.voxels import VoxelGrid
 from sklearn.metrics import pairwise_distances_argmin_min
 
-from movo.movo_utils import MOVO_PATH, MovoPolicy, MovoRobot
-from movo.movo_worlds import movo_world_from_problem
-from open_world.estimation.belief import (
-    Belief,
-    EstimatedObject,
-    downsample_cluster,
-    is_object_label,
-    iterate_image,
-)
-from open_world.estimation.dnn import str_from_int_seg_general
-from open_world.estimation.geometry import cloud_from_depth, estimate_surface_mesh
-from open_world.estimation.observation import (
-    extract_point,
-    image_from_labeled,
-    save_camera_images,
-)
-from open_world.planning.planner import (
-    iterate_sequence,
-)
-from open_world.planning.primitives import (
-    GroupConf,
-    RelativePose,
-    Sequence,
-    WorldState,
-)
-from open_world.planning.streams import (
-    get_grasp_gen_fn,
-    get_plan_motion_fn,
-    get_plan_pick_fn,
-)
-
-from open_world.simulation.tasks import GOALS
-
-from run_planner import (
-    create_parser,
-    robot_entities,
-    robot_simulated_worlds,
-    setup_robot_pybullet,
-)
+from run_planner import (create_parser, robot_entities, robot_simulated_worlds,
+                         setup_robot_pybullet)
 
 SAVE_DIR = "temp_graphs/"
 

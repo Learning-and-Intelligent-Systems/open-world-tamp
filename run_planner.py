@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
 
 from __future__ import print_function
-import sys
-import argparse
-import warnings
-import pybullet_utils.bullet_client as bc
-import pybullet as p
 
-sys.path.extend(["tamp","pybullet_planning"])
+import argparse
+import sys
+import warnings
+
+import pybullet as p
+import pybullet_utils.bullet_client as bc
+
+sys.path.extend(["tamp", "pybullet_planning"])
 warnings.filterwarnings("ignore")
 
 from itertools import product
 
-from pybullet_tools.utils import (load_pybullet, wait_for_user, wait_if_gui)
-
-from open_world.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
-from open_world.simulation.policy import Policy
-from open_world.simulation.tasks import GOALS, task_from_goal
-
 from open_world.exploration.base_planners.a_star_search import AStarSearch
-from open_world.exploration.base_planners.snowplow import Snowplow
-from open_world.exploration.base_planners.rrt import RRT
 from open_world.exploration.base_planners.lamb import Lamb
-
+from open_world.exploration.base_planners.rrt import RRT
+from open_world.exploration.base_planners.snowplow import Snowplow
 from open_world.nlp.speech_to_goal import get_goal_audio
 from open_world.nlp.text_to_goal import text_to_goal
+from open_world.planning.streams import (GEOMETRIC_MODES, LEARNED_MODES,
+                                         MODE_ORDERS)
+from open_world.simulation.policy import Policy
+from open_world.simulation.tasks import GOALS, task_from_goal
+from pybullet_tools.utils import load_pybullet, wait_for_user, wait_if_gui
 
 from robots.movo.movo_utils import MOVO_PATH, MovoRobot
 from robots.movo.movo_worlds import movo_world_from_problem
@@ -39,20 +39,27 @@ ROBOTS = ["pr2", "panda", "movo", "spot"]
 SEG_MODELS = ["maskrcnn", "uois", "ucn", "all"]
 SHAPE_MODELS = ["msn", "atlas"]
 
-robot_paths = {"pr2": PR2_PATH, "panda": PANDA_PATH, "movo": MOVO_PATH, "spot": SPOT_PATH}
-robot_entities = {"pr2": PR2Robot, "panda": PandaRobot, "movo": MovoRobot, "spot": SpotRobot}
+robot_paths = {
+    "pr2": PR2_PATH,
+    "panda": PANDA_PATH,
+    "movo": MOVO_PATH,
+    "spot": SPOT_PATH,
+}
+robot_entities = {
+    "pr2": PR2Robot,
+    "panda": PandaRobot,
+    "movo": MovoRobot,
+    "spot": SpotRobot,
+}
 
 robot_simulated_worlds = {
     "pr2": pr2_world_from_problem,
     "panda": panda_world_from_problem,
     "movo": movo_world_from_problem,
-    "spot": spot_world_from_problem
+    "spot": spot_world_from_problem,
 }
 
-base_planners = {"snowplow": Snowplow,
-                 "astar": AStarSearch,
-                 "rrt": RRT,
-                 "lamb": Lamb}
+base_planners = {"snowplow": Snowplow, "astar": AStarSearch, "rrt": RRT, "lamb": Lamb}
 
 GRASP_MODES = GEOMETRIC_MODES + [
     mode + order for mode, order in product(LEARNED_MODES, MODE_ORDERS)
@@ -82,10 +89,11 @@ def create_parser():
     )
 
     parser.add_argument(
-        "-i", "--max-iters",
-        type=int, 
-        default=1, 
-        help="Max number of iterations to run the policy for before termination"
+        "-i",
+        "--max-iters",
+        type=int,
+        default=1,
+        help="Max number of iterations to run the policy for before termination",
     )
 
     parser.add_argument(
@@ -151,10 +159,7 @@ def create_parser():
     )
 
     parser.add_argument(
-        "-rgbd", 
-        "--maskrcnn-rgbd", 
-        action="store_true", 
-        help="Uses RGBD for maskrcnn"
+        "-rgbd", "--maskrcnn-rgbd", action="store_true", help="Uses RGBD for maskrcnn"
     )
     parser.add_argument(
         "-segm",
@@ -164,7 +169,7 @@ def create_parser():
         choices=SEG_MODELS,
         help="Selects the DDN model for segmentation",
     )
-    
+
     parser.add_argument(
         "-det",
         "--fasterrcnn-detection",
@@ -186,16 +191,36 @@ def create_parser():
     parser.add_argument("-p", "--goal", default="all_green", help="Specifies the task.")
     parser.add_argument("-w", "--world", default="problem0", help="Specifies the task.")
 
-    # exploration    
-    parser.add_argument("-exp", "--exploration", action="store_true", help="Use exploration prior to running m0m")
-    parser.add_argument("-bp", "--base-planner", default="lamb", help="Specifies the planner to use for base navigation")
+    # exploration
+    parser.add_argument(
+        "-exp",
+        "--exploration",
+        action="store_true",
+        help="Use exploration prior to running m0m",
+    )
+    parser.add_argument(
+        "-bp",
+        "--base-planner",
+        default="lamb",
+        help="Specifies the planner to use for base navigation",
+    )
 
     # robot
     parser.add_argument("-r", "--robot", default="pr2", help="Specifies the robot.")
 
     # interactive goals
-    parser.add_argument("-ti", "--text-interactive",  action="store_true", help="Use text input to specify the goal")
-    parser.add_argument("-vi", "--voice-interactive",  action="store_true", help="Use audio input to specify the goal")
+    parser.add_argument(
+        "-ti",
+        "--text-interactive",
+        action="store_true",
+        help="Use text input to specify the goal",
+    )
+    parser.add_argument(
+        "-vi",
+        "--voice-interactive",
+        action="store_true",
+        help="Use audio input to specify the goal",
+    )
 
     return parser
 
@@ -210,14 +235,15 @@ def setup_robot_pybullet(args):
     robot_body = load_pybullet(robot_paths[args.robot], fixed_base=True, client=client)
     return robot_body, client
 
+
 def get_task(args):
     problem_from_name = {fn.__name__: fn for fn in GOALS}
-    if(args.voice_interactive):
+    if args.voice_interactive:
         return task_from_goal(args, get_goal_audio())
-    elif(args.text_interactive):
+    elif args.text_interactive:
         goal, _ = text_to_goal(wait_for_user("Enter a command: \n"))
         return task_from_goal(args, goal)
-    else:    
+    else:
         if args.goal not in problem_from_name:
             raise ValueError(args.goal)
         problem_fn = problem_from_name[args.goal]
@@ -230,10 +256,12 @@ def main(args):
     # Create the robot
     robot_body, client = setup_robot_pybullet(args)
 
-    robot = robot_entities[args.robot](robot_body, 
-                                       real_execute = args.real_execute, 
-                                       real_camera = args.real_camera,
-                                       client=client)
+    robot = robot_entities[args.robot](
+        robot_body,
+        real_execute=args.real_execute,
+        real_camera=args.real_camera,
+        client=client,
+    )
 
     # Set up the world run the task
     real_world = robot_simulated_worlds[args.robot](
@@ -241,26 +269,27 @@ def main(args):
     )
 
     # Set up the policy, which in turn sets up the simulated or real-robot controller
-    policy = Policy(args, robot, 
-                    known=real_world.known,
-                    teleport=args.teleport, 
-                    client=client)
-    
+    policy = Policy(
+        args, robot, known=real_world.known, teleport=args.teleport, client=client
+    )
+
     # Get the task. TODO(curtisa): Remove args
     task = get_task(args)
 
-    if(args.exploration):
-        policy.run_exploration(task, 
-                               real_world=real_world, 
-                               room = real_world.room, 
-                               base_planner=base_planners[args.base_planner],
-                               num_iterations=args.max_iters,
-                               client=client)
+    if args.exploration:
+        policy.run_exploration(
+            task,
+            real_world=real_world,
+            room=real_world.room,
+            base_planner=base_planners[args.base_planner],
+            num_iterations=args.max_iters,
+            client=client,
+        )
     else:
-        policy.run(task, 
-                   real_world=real_world, 
-                   num_iterations=args.max_iters,
-                   client=client)
+        policy.run(
+            task, real_world=real_world, num_iterations=args.max_iters, client=client
+        )
+
 
 if __name__ == "__main__":
     # Parse the args

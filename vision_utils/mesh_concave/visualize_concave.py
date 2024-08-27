@@ -18,30 +18,13 @@ sys.path.extend(
 from collections import Counter
 
 from environments import Z_EPSILON, create_default_env, create_floor_object
-from pybullet_tools.utils import (
-    PI,
-    TEMP_DIR,
-    CameraImage,
-    Euler,
-    LockRenderer,
-    Point,
-    Pose,
-    add_data_path,
-    add_text,
-    connect,
-    draw_point,
-    enable_gravity,
-    enable_real_time,
-    get_point,
-    load_pybullet,
-    set_all_static,
-    set_camera_pose,
-    set_point,
-    set_pose,
-    stable_z,
-    wait_for_user,
-    wait_if_gui,
-)
+from pybullet_tools.utils import (PI, TEMP_DIR, CameraImage, Euler,
+                                  LockRenderer, Point, Pose, add_data_path,
+                                  add_text, connect, draw_point,
+                                  enable_gravity, enable_real_time, get_point,
+                                  load_pybullet, set_all_static,
+                                  set_camera_pose, set_point, set_pose,
+                                  stable_z, wait_for_user, wait_if_gui)
 
 connect(use_gui=True)
 add_data_path()

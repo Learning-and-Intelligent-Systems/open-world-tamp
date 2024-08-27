@@ -1,72 +1,46 @@
 #!/usr/bin/env python3
 
 from __future__ import print_function
+
+import os
 import warnings
 
 import numpy as np
-
-import os
-
-import numpy as np
-from pybullet_tools.pr2_utils import (
-    CLEAR_LEFT_ARM,
-    LEFT_ARM,
-    PR2_GROUPS,
-    PR2_TOOL_FRAMES,
-    RIGHT_ARM,
-    arm_from_side,
-    gripper_from_side,
-    open_gripper,
-    rightarm_from_leftarm,
-    side_from_arm,
-)
-from pybullet_tools.utils import (
-    PI,
-    custom_limits_from_base_limits,
-    link_from_name,
-)
-
+import pybullet_tools
 from open_world.simulation.entities import Robot
 from open_world.simulation.lis import PR2_INFOS
+from pybullet_tools.pr2_utils import (CLEAR_LEFT_ARM, LEFT_ARM, PR2_GROUPS,
+                                      PR2_TOOL_FRAMES, RIGHT_ARM,
+                                      arm_from_side, gripper_from_side,
+                                      open_gripper, rightarm_from_leftarm,
+                                      side_from_arm)
+from pybullet_tools.utils import (PI, custom_limits_from_base_limits,
+                                  link_from_name)
 
-import pybullet_tools
 pybullet_tools.utils.TEMP_DIR = "temp_meshes/"  # TODO: resolve conflict with pddlstream
 
-from pybullet_tools.utils import (
-    PI,
-    get_max_limits,
-    link_from_name,
-)
-
 from open_world.simulation.entities import Camera, Manipulator
-from open_world.simulation.lis import (
-    CAMERA_FRAME,
-    CAMERA_MATRIX,
-    CAMERA_OPTICAL_FRAME,
-    PR2_INFOS,
-)
+from open_world.simulation.lis import (CAMERA_FRAME, CAMERA_MATRIX,
+                                       CAMERA_OPTICAL_FRAME, PR2_INFOS)
+from pybullet_tools.utils import PI, get_max_limits, link_from_name
 
 DEFAULT_LEFT_ARM = CLEAR_LEFT_ARM
 
-from pybullet_tools.utils import (
-    link_from_name,
-    user_input,
-)
-
+from open_world.simulation.controller import SimulatedController
 # from run_estimator import create_parser
 from open_world.simulation.environment import set_gripper_friction
+from pybullet_tools.utils import link_from_name, user_input
 
 # TODO: all ROS should be the last import otherwise segfaults
 from robots.pr2.pr2_controller import PR2Controller
-from open_world.simulation.controller import SimulatedController
 
 PR2_PATH = os.path.abspath("models/ltamp/pr2_description/pr2.urdf")
 
 warnings.filterwarnings("ignore")  # , category=DeprecationWarning)
 
-from pybullet_tools.utils import Pose, add_data_path
 from open_world.simulation.environment import create_floor_object
 from open_world.simulation.lis import CAMERA_OPTICAL_FRAME
+from pybullet_tools.utils import Pose, add_data_path
 
 PR2_DISABLED_COLLISIONS = [
     (76, 3),
@@ -105,8 +79,17 @@ def get_input(message, options):
         response = user_input(full_message)
     return response
 
+
 class PR2Robot(Robot):
-    def __init__(self, robot_body, client=None, real_camera=False, real_execute=False, arms=[LEFT_ARM], **kwargs):
+    def __init__(
+        self,
+        robot_body,
+        client=None,
+        real_camera=False,
+        real_execute=False,
+        arms=[LEFT_ARM],
+        **kwargs
+    ):
         self.arms = [arm + "_arm" for arm in arms]
 
         self.real_execute = real_execute
@@ -123,7 +106,6 @@ class PR2Robot(Robot):
         self.max_depth = float("inf")
         self.client = client
         self.min_z = 0.0
-
 
         self.set_default_conf()
         set_gripper_friction(self, client=self.client)

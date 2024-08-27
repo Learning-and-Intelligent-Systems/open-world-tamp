@@ -1,7 +1,8 @@
 # distutils: language = c++
 
-from libcpp.string cimport string
 from libcpp cimport bool
+from libcpp.string cimport string
+
 
 cdef extern from "virtual_scanner/virtual_scanner.h" nogil:
     cdef cppclass VirtualScanner:

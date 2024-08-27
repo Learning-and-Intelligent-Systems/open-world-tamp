@@ -3,9 +3,9 @@ from collections import namedtuple
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from pointnet2_ops.pointnet2_modules import PointnetFPModule, PointnetSAModuleMSG
-
 from pointnet2.models.pointnet2_ssg_sem import PointNet2SemSegSSG
+from pointnet2_ops.pointnet2_modules import (PointnetFPModule,
+                                             PointnetSAModuleMSG)
 
 
 class PointNet2SemSegMSG(PointNet2SemSegSSG):

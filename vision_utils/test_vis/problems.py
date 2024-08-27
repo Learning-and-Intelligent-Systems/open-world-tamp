@@ -1,39 +1,20 @@
 from __future__ import print_function
 
 import numpy as np
-from examples.discrete_belief.dist import DeltaDist, MixtureDD, MixtureDist, UniformDist
+from examples.discrete_belief.dist import (DeltaDist, MixtureDD, MixtureDist,
+                                           UniformDist)
 from examples.pybullet.utils.pybullet_tools.pr2_primitives import State
 from examples.pybullet.utils.pybullet_tools.pr2_problems import (
-    create_box,
-    create_floor,
-    create_kitchen,
-    create_pr2,
-    set_point,
-    unit_pose,
-)
+    create_box, create_floor, create_kitchen, create_pr2, set_point, unit_pose)
 from examples.pybullet.utils.pybullet_tools.pr2_utils import (
-    CENTER_LEFT_ARM,
-    REST_LEFT_ARM,
-    SIDE_HOLDING_LEFT_ARM,
-    TOP_HOLDING_LEFT_ARM,
-    WIDE_LEFT_ARM,
-    arm_conf,
-    close_arm,
-    create_gripper,
-    get_carry_conf,
-    get_other_arm,
-    open_arm,
-    set_arm_conf,
-)
-from examples.pybullet.utils.pybullet_tools.utils import (
-    HideOutput,
-    all_between,
-    get_bodies,
-    get_name,
-    is_center_stable,
-    set_pose,
-)
-
+    CENTER_LEFT_ARM, REST_LEFT_ARM, SIDE_HOLDING_LEFT_ARM,
+    TOP_HOLDING_LEFT_ARM, WIDE_LEFT_ARM, arm_conf, close_arm, create_gripper,
+    get_carry_conf, get_other_arm, open_arm, set_arm_conf)
+from examples.pybullet.utils.pybullet_tools.utils import (HideOutput,
+                                                          all_between,
+                                                          get_bodies, get_name,
+                                                          is_center_stable,
+                                                          set_pose)
 """ ========================  modified/added classes ======================== """
 
 
@@ -101,9 +82,7 @@ class Voxelgrid(object):
         )
 
     def voxel_from_point(self, point):
-        """
-        index of voxel for the target point
-        """
+        """Index of voxel for the target point."""
         if not self.point_in_space(point):
             return -1
         return np.floor(np.subtract(point, self.lower) / self.resolution).astype(np.int)
@@ -231,7 +210,7 @@ class Voxelgrid(object):
         object_list = {e.category + 2: e for e in entity_list}
         base_pose = camera_pos
         diff = np.asarray(list(target_point)) - np.asarray(list(base_pose))
-        diff_len = (diff ** 2).sum() ** 0.5
+        diff_len = (diff**2).sum() ** 0.5
 
         for voxel in self.occupied:
             center_loc = np.asarray(self.center_from_voxel(voxel))
@@ -299,7 +278,7 @@ class Voxelgrid(object):
                     # TODO collision check of (eye,target)
                     tgt = self.center_from_voxel(voxel)
                     diff = np.asarray(list(tgt)) - np.asarray(list(camera_pos))
-                    diff_len = (diff ** 2).sum() ** 0.5
+                    diff_len = (diff**2).sum() ** 0.5
                     tilt = np.arcsin(-diff[2] / diff_len)
                     pan = np.arctan(diff[1] / diff[0])
                     vis_ray = create_cylinder(0.01, diff_len)
@@ -341,6 +320,7 @@ class Voxelgrid(object):
 USE_DRAKE_PR2 = True
 OTHER = "other"
 LOCALIZED_PROB = 0.99
+
 
 # TODO: operate on histories to do open-world
 class BeliefState(State):

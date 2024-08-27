@@ -1,10 +1,10 @@
 from __future__ import print_function
 
-from grasp.graspnet import grasp_estimator
 import numpy as np
 import open3d as o3d
 from utils import utils
 
+from grasp.graspnet import grasp_estimator
 # from grasp.graspnet.utils.visualization_utils import *
 from grasp.graspnet.utils import utils
 
@@ -12,6 +12,7 @@ from grasp.graspnet.utils import utils
 class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
+
 
 def backproject(
     depth_cv, intrinsic_matrix, return_finite_depth=True, return_selection=False
@@ -110,5 +111,3 @@ def visualize_grasps(pc, pc_colors, save_name):
     write_to_minio(mayavi_data, "%s" % (save_name))
     generated_grasps, generated_scores = generate_grasps(pc, pc_colors)
     return estimator
-
-

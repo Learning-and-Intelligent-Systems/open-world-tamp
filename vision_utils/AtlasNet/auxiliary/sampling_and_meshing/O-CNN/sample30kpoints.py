@@ -1,15 +1,15 @@
 import argparse
-from os import listdir
-from os.path import isfile, join
-import pymesh
-import numpy as np
 import copy
-import joblib
-from joblib import Parallel, delayed
-from collections import defaultdict
-from os.path import join, basename, relpath, dirname, exists
 import os
+from collections import defaultdict
+from os import listdir
+from os.path import basename, dirname, exists, isfile, join, relpath
+
+import joblib
+import numpy as np
+import pymesh
 from easydict import EasyDict
+from joblib import Parallel, delayed
 from pcSamplingInfRayShapeNet import Count
 
 
@@ -41,8 +41,9 @@ def test_folder(args):
         if not exists(npy_path):
             os.makedirs(npy_path)
 
-        onlyfiles = [join(npy_path, f) for f in listdir(npy_path) if
-                     isfile(join(npy_path, f))]
+        onlyfiles = [
+            join(npy_path, f) for f in listdir(npy_path) if isfile(join(npy_path, f))
+        ]
 
         class BatchCompletionCallBack(object):
             completed = defaultdict(int)
@@ -58,8 +59,9 @@ def test_folder(args):
 
         joblib.parallel.BatchCompletionCallBack = BatchCompletionCallBack
 
-        _ = Parallel(n_jobs=1, backend="multiprocessing") \
-            (delayed(test_pc)(i) for i in onlyfiles)
+        _ = Parallel(n_jobs=1, backend="multiprocessing")(
+            delayed(test_pc)(i) for i in onlyfiles
+        )
 
     print(f"{Count.failed_example} failed examples")
     print(Count.failed_example_path)

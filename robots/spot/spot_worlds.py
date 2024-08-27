@@ -1,33 +1,19 @@
-from pybullet_tools.utils import (
-    GREEN,
-    PI,
-    TAN,
-    HideOutput,
-    Point,
-    Pose,
-    add_data_path,
-    draw_pose,
-    set_camera_pose,
-    set_dynamics,
-    set_pose,
-    AABB,
-)
-
 import random
 
+from open_world.exploration.utils import GRID_HEIGHT, LIGHT_GREY, Room
 from open_world.simulation.entities import RealWorld
-from open_world.simulation.environment import (
-    Pose2D,
-    create_floor_object,
-    create_pillar,
-    create_table_object,
-    create_ycb,
-    place_object,
-    place_surface,
-)
-from open_world.exploration.utils import Room, LIGHT_GREY, GRID_HEIGHT
+from open_world.simulation.environment import (Pose2D, create_floor_object,
+                                               create_pillar,
+                                               create_table_object, create_ycb,
+                                               place_object, place_surface)
+from pybullet_tools.utils import (AABB, GREEN, PI, TAN, HideOutput, Point,
+                                  Pose, add_data_path, draw_pose,
+                                  set_camera_pose, set_dynamics, set_pose)
 
-def create_world(robot, movable=[], attachable=[], fixed=[], surfaces=[], room=None, **kwargs):
+
+def create_world(
+    robot, movable=[], attachable=[], fixed=[], surfaces=[], room=None, **kwargs
+):
     obstacles = sorted(set(fixed) | set(surfaces))
     return RealWorld(
         robot,
@@ -92,8 +78,9 @@ def problem0(args, robot, **kwargs):
     real_world = create_world(
         robot, movable=[obj1], fixed=obstacles, surfaces=[table, region], **kwargs
     )
-    
+
     return real_world
+
 
 def empty_room(args, robot, **kwargs):
     width = 4
@@ -105,39 +92,101 @@ def empty_room(args, robot, **kwargs):
     set_pose(floor1, Pose(Point(x=center[0], y=center[1])), **kwargs)
 
     wall_thickness = 0.1
-    wall_1 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_1,
-                Pose(point=Point(x=center[0], y=center[1] + length / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
+    wall_1 = create_pillar(
+        width=width,
+        length=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_1,
+        Pose(
+            point=Point(
+                x=center[0],
+                y=center[1] + length / 2 + wall_thickness / 2,
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
-    wall_2 = create_pillar(width=width, length=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_2,
-                Pose(point=Point(x=center[0], y=center[1] - (length / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
+    wall_2 = create_pillar(
+        width=width,
+        length=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_2,
+        Pose(
+            point=Point(
+                x=center[0],
+                y=center[1] - (length / 2 + wall_thickness / 2),
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
-    wall_3 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_3,
-                Pose(point=Point(y=center[1], x=center[0] + width / 2 + wall_thickness / 2, z=wall_height / 2)), **kwargs)
+    wall_3 = create_pillar(
+        length=length,
+        width=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_3,
+        Pose(
+            point=Point(
+                y=center[1],
+                x=center[0] + width / 2 + wall_thickness / 2,
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
-    wall_4 = create_pillar(length=length, width=wall_thickness, height=wall_height, color=LIGHT_GREY, **kwargs)
-    set_pose(wall_4,
-                Pose(point=Point(y=center[1], x=center[0] - (width / 2 + wall_thickness / 2), z=wall_height / 2)), **kwargs)
-
+    wall_4 = create_pillar(
+        length=length,
+        width=wall_thickness,
+        height=wall_height,
+        color=LIGHT_GREY,
+        **kwargs
+    )
+    set_pose(
+        wall_4,
+        Pose(
+            point=Point(
+                y=center[1],
+                x=center[0] - (width / 2 + wall_thickness / 2),
+                z=wall_height / 2,
+            )
+        ),
+        **kwargs
+    )
 
     walls = [wall_1, wall_2, wall_3, wall_4]
 
     floors = [floor1]
-    aabb = AABB(lower=(center[0] - width / 2.0, center[1] - length / 2.0, 0.05),
-                upper=(center[0] + width / 2.0, center[1] + length / 2.0, GRID_HEIGHT))
+    aabb = AABB(
+        lower=(center[0] - width / 2.0, center[1] - length / 2.0, 0.05),
+        upper=(center[0] + width / 2.0, center[1] + length / 2.0, GRID_HEIGHT),
+    )
 
     room = Room(walls, floors, aabb, [])
 
     real_world = create_world(
-            robot, movable=[], fixed=[], surfaces=[], room=room, **kwargs
-        )
+        robot, movable=[], fixed=[], surfaces=[], room=room, **kwargs
+    )
 
     return real_world
 
 
 WORLDS = [problem0, empty_room]
+
 
 def spot_world_from_problem(problem, robot, args, **kwargs):
     worlds_dict = {fn.__name__: fn for fn in WORLDS}

@@ -33,7 +33,6 @@ def convert_pcd(pc):
 
 
 def write_pc(pc, pcd_filename=DEFAULT_PCD):
-
     """Input: Num_points x 3 dimensional numpy array containing the x, y, z coordinates of the points in the pointcloud
     Effects: Writes the pointcloud to a pcd file specified by the pcd_filename
     """

@@ -3,21 +3,24 @@
 # Copyright (c) 2020 NVIDIA Corporation. All rights reserved.
 # This work is licensed under the NVIDIA Source Code License - Non-commercial. Full
 # text can be found in LICENSE.md
+"""Collect images from Intel RealSense D435."""
 
-"""collect images from Intel RealSense D435"""
-
-import rospy
-import message_filters
-import cv2
 import argparse
-import pprint
-import time, os, sys
-import os.path as osp
-import numpy as np
-import yaml
 import json
+import os
+import os.path as osp
+import pprint
+import sys
+import time
+
+import cv2
+import message_filters
+import numpy as np
+import rospy
+import yaml
 from cv_bridge import CvBridge, CvBridgeError
-from sensor_msgs.msg import Image, CameraInfo
+from sensor_msgs.msg import CameraInfo, Image
+
 
 class ImageListener:
 

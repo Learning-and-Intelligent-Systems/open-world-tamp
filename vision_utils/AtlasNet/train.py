@@ -1,7 +1,8 @@
 import sys
+import time
+
 import auxiliary.argument_parser as argument_parser
 import auxiliary.my_utils as my_utils
-import time
 import torch
 from auxiliary.my_utils import yellow_print
 
@@ -41,5 +42,7 @@ for epoch in range(trainer.epoch, opt.nepoch):
     trainer.save_network()
 
 yellow_print(f"Visdom url http://localhost:{trainer.opt.visdom_port}/")
-yellow_print(f"Netvision report url http://localhost:{trainer.opt.http_port}/{trainer.opt.dir_name}/index.html")
+yellow_print(
+    f"Netvision report url http://localhost:{trainer.opt.http_port}/{trainer.opt.dir_name}/index.html"
+)
 yellow_print(f"Training time {(time.time() - trainer.start_time)//60} minutes.")

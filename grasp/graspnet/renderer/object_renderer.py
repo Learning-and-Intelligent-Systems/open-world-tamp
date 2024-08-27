@@ -1,25 +1,25 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-import trimesh
-import trimesh.transformations as tra
-import pyrender
-import numpy as np
+import argparse
 import copy
+import math
+import os
+import sys
+
 import cv2
 import h5py
+import numpy as np
+import pyrender
+import trimesh
+import trimesh.transformations as tra
 import utils.sample as sample
-import math
-import sys
-import argparse
-import os
 
 
 class ObjectRenderer:
     def __init__(self, fov=np.pi / 6, object_paths=[], object_scales=[]):
         """
         Args:
-          fov: float, 
+          fov: float,
         """
         self._fov = fov
         self.mesh = None
@@ -30,8 +30,8 @@ class ObjectRenderer:
         self._object_means = []
         self._object_distances = []
 
-        assert (isinstance(object_paths, list))
-        assert (len(object_paths) > 0)
+        assert isinstance(object_paths, list)
+        assert len(object_paths) > 0
 
         for path, scale in zip(object_paths, object_scales):
             node, obj_mean = self._load_object(path, scale)
@@ -41,24 +41,26 @@ class ObjectRenderer:
     def _init_scene(self):
         self._scene = pyrender.Scene()
         camera = pyrender.PerspectiveCamera(
-            yfov=self._fov, aspectRatio=1.0,
-            znear=0.001)  # do not change aspect ratio
+            yfov=self._fov, aspectRatio=1.0, znear=0.001
+        )  # do not change aspect ratio
         camera_pose = tra.euler_matrix(np.pi, 0, 0)
 
-        self._scene.add(camera, pose=camera_pose, name='camera')
+        self._scene.add(camera, pose=camera_pose, name="camera")
 
-        light = pyrender.SpotLight(color=np.ones(4),
-                                   intensity=3.,
-                                   innerConeAngle=np.pi / 16,
-                                   outerConeAngle=np.pi / 6.0)
-        self._scene.add(light, pose=camera_pose, name='light')
+        light = pyrender.SpotLight(
+            color=np.ones(4),
+            intensity=3.0,
+            innerConeAngle=np.pi / 16,
+            outerConeAngle=np.pi / 6.0,
+        )
+        self._scene.add(light, pose=camera_pose, name="light")
 
         self.renderer = pyrender.OffscreenRenderer(400, 400)
 
     def _load_object(self, path, scale=1.0):
         obj = sample.Object(path)
         obj.rescale(scale)
-        print('rescaling with scale', scale)
+        print("rescaling with scale", scale)
 
         tmesh = obj.mesh
         tmesh_mean = np.mean(tmesh.vertices, 0)
@@ -73,8 +75,7 @@ class ObjectRenderer:
         self.tmesh = copy.deepcopy(tmesh)
         mesh = pyrender.Mesh.from_trimesh(tmesh)
 
-        return self._scene.add(mesh,
-                               name='object'), np.expand_dims(tmesh_mean, 0)
+        return self._scene.add(mesh, name="object"), np.expand_dims(tmesh_mean, 0)
 
     def _to_pointcloud(self, depth):
         fy = fx = 0.5 / np.tan(self._fov * 0.5)  # aspectRatio is one.
@@ -97,12 +98,13 @@ class ObjectRenderer:
         return np.vstack((world_x, world_y, world_z, ones)).T
 
     def render(self, object_poses, render_pc=True):
-        assert (isinstance(object_poses, list))
-        assert (len(object_poses) == len(self._object_nodes))
+        assert isinstance(object_poses, list)
+        assert len(object_poses) == len(self._object_nodes)
 
         all_transferred_poses = []
         for object_pose, object_node, object_distance in zip(
-                object_poses, self._object_nodes, self._object_distances):
+            object_poses, self._object_nodes, self._object_distances
+        ):
             transferred_pose = object_pose.copy()
             transferred_pose[2, 3] = object_distance
             all_transferred_poses.append(transferred_pose)
@@ -126,42 +128,50 @@ class ObjectRenderer:
         """
         if len(self._object_nodes) != 1:
             raise ValueError(
-                'object nodes should have 1 element, not {}'.format(
-                    len(self._object_nodes)))
+                "object nodes should have 1 element, not {}".format(
+                    len(self._object_nodes)
+                )
+            )
 
         hf = h5py.File(output_path)
-        #point_grp = hf.create_group('points')
-        #pose_grp = hf.create_group('object_poses')
-        mean_grp = hf.create_dataset('object_mean', data=self._object_means[0])
+        # point_grp = hf.create_group('points')
+        # pose_grp = hf.create_group('object_poses')
+        mean_grp = hf.create_dataset("object_mean", data=self._object_means[0])
 
         pcs = []
         rotations = []
-        #import mayavi.mlab as mlab
+        # import mayavi.mlab as mlab
         for i, euler in enumerate(all_eulers):
             assert isinstance(euler, tuple) and len(euler) == 3
             rotation = tra.euler_matrix(*euler)
             color, _, pc, final_rotation = self.render([rotation])
             MAX_POINTS = 3000
             if pc.shape[0] > MAX_POINTS:
-                pc = pc[np.random.choice(
-                    range(pc.shape[0]), replace=False, size=MAX_POINTS), :]
+                pc = pc[
+                    np.random.choice(
+                        range(pc.shape[0]), replace=False, size=MAX_POINTS
+                    ),
+                    :,
+                ]
             elif pc.shape[0] < MAX_POINTS:
-                pc = pc[np.random.choice(
-                    range(pc.shape[0]), replace=True, size=MAX_POINTS), :]
+                pc = pc[
+                    np.random.choice(range(pc.shape[0]), replace=True, size=MAX_POINTS),
+                    :,
+                ]
 
-            #print('{}/{}: {}'.format(i, len(all_eulers), pc.shape))
-            cv2.imshow('w', color)
+            # print('{}/{}: {}'.format(i, len(all_eulers), pc.shape))
+            cv2.imshow("w", color)
             cv2.waitKey(1)
 
             # mlab.figure()
-            #mlab.points3d(pc[:, 0], pc[:, 1], pc[:, 2])
+            # mlab.points3d(pc[:, 0], pc[:, 1], pc[:, 2])
             # mlab.show()
-            key = '{}_{}_{}'.format(euler[0], euler[1], euler[2])
+            key = "{}_{}_{}".format(euler[0], euler[1], euler[2])
             pcs.append(pc)
             rotations.append(final_rotation[0])
 
-        hf.create_dataset('pcs', data=pcs, compression='gzip')
-        hf.create_dataset('object_poses', data=rotations, compression='gzip')
+        hf.create_dataset("pcs", data=pcs, compression="gzip")
+        hf.create_dataset("object_poses", data=rotations, compression="gzip")
 
         hf.close()
 

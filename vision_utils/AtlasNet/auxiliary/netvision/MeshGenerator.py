@@ -1,6 +1,8 @@
-from os.path import join, dirname, relpath, abspath
 from os import getcwd
+from os.path import abspath, dirname, join, relpath
+
 import numpy as np
+
 
 class Mesh(object):
     def __init__(self, obj_path):
@@ -15,13 +17,13 @@ class Mesh(object):
             faces = []
             for line in in_file:
                 line_s = line.split()
-                if len(line_s)==0:
+                if len(line_s) == 0:
                     continue
                 if line_s[0] == "v":
                     points.append([float(x) for x in line_s[1:4]])
                 if line_s[0] == "f":
-                    faces.append([int(x.split(sep='/')[0]) - 1 for x in line_s[1:4]])
-        
+                    faces.append([int(x.split(sep="/")[0]) - 1 for x in line_s[1:4]])
+
         self.points = points
         self.faces = faces
 
@@ -32,11 +34,22 @@ class Mesh(object):
 
     def write_obj(self):
         with open(self.obj_path, "w") as out_file:
-            out_file.write("\n".join(["v " + " ".join([str(coord) for coord in point]) for point in
-                                      self.points])
-                           + "\n"
-                           + "\n".join(["f " + " ".join([str(int(tri + 1)) for tri in face]) for face in
-                                        self.faces]))
+            out_file.write(
+                "\n".join(
+                    [
+                        "v " + " ".join([str(coord) for coord in point])
+                        for point in self.points
+                    ]
+                )
+                + "\n"
+                + "\n".join(
+                    [
+                        "f " + " ".join([str(int(tri + 1)) for tri in face])
+                        for face in self.faces
+                    ]
+                )
+            )
+
 
 class MeshGenerator:
     def __init__(self, html_path):
@@ -51,24 +64,31 @@ class MeshGenerator:
         self.added_mesh = []
         self.html_path = html_path
 
-
     def make_header(self):
         ret_str = ""
-        js_libs = [self.three_path, self.Detector_path, self.OrbitControls_path, self.OBJLoader_path,
-                   self.MTLLoader_path]
+        js_libs = [
+            self.three_path,
+            self.Detector_path,
+            self.OrbitControls_path,
+            self.OBJLoader_path,
+            self.MTLLoader_path,
+        ]
         print(js_libs)
         for file in js_libs:
             with open(file, "r") as js_file:
                 print(file)
-                ret_str += "  <script type=\"text/javascript\">\n  " + js_file.read().replace("\n",
-                                                                                              "\n  ") + " \n</script>\n"
+                ret_str += (
+                    '  <script type="text/javascript">\n  '
+                    + js_file.read().replace("\n", "\n  ")
+                    + " \n</script>\n"
+                )
         return ret_str
 
     def make_mesh(self, mesh_path, title=None):
 
         # mesh_path = abspath(join(getcwd(), mesh_path))
         # mesh_path = relpath(mesh_path, dirname(self.html_path))
-        out_string = f"<div id=\"mesh_{self.curve_it}\"> <h4>{title}</h4> </div>\n"
+        out_string = f'<div id="mesh_{self.curve_it}"> <h4>{title}</h4> </div>\n'
 
         out_string += "     <script>\n"
         out_string += "     if (!Detector.webgl) {\nDetector.addGetWebGLMessage();\n}\n"
@@ -137,7 +157,9 @@ class MeshGenerator:
                 }\n\
              "
 
-        init_function = init_function.replace("my_mesh", "mesh_" + str(self.curve_it)).replace('output_atlas.obj', mesh_path)
+        init_function = init_function.replace(
+            "my_mesh", "mesh_" + str(self.curve_it)
+        ).replace("output_atlas.obj", mesh_path)
         self.added_mesh.append("mesh_" + str(self.curve_it))
         out_string += init_function
 
@@ -148,11 +170,13 @@ class MeshGenerator:
         return out_string
 
     def make_onWindowResize(self):
-        self.event_listener.append("\
+        self.event_listener.append(
+            "\
             window.addEventListener('resize', onWindowResize, false);\n\
             window.addEventListener('keydown', onKeyboardEvent, false);\n\
             \n\
-            ")
+            "
+        )
 
         onWindowResize = "\n\
                 function onWindowResize() {\n\
@@ -206,10 +230,7 @@ class MeshGenerator:
         self.event_listener.append(init_function)
 
     def end_mesh(self):
-        """
-        This function is safe to call as many time as one wants
-        :return:
-        """
+        """This function is safe to call as many time as one wants :return:"""
         self.event_listener = []
         self.event_listener.append("<script>\n")
         self.make_onWindowResize()

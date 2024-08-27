@@ -1,18 +1,20 @@
+import json
+import time
+from os import mkdir
+from os.path import exists, join
+
+import auxiliary.meter as meter
+import auxiliary.my_utils as my_utils
+import auxiliary.visualization as visualization
 import torch
 import torch.optim as optim
-import auxiliary.my_utils as my_utils
-import json
-import auxiliary.visualization as visualization
-from os.path import join, exists
-from os import mkdir
-import auxiliary.meter as meter
 from termcolor import colored
-import time
 
 
 class TrainerAbstract(object):
-    """
-    This class implements an abtsract deep learning trainer. It is supposed to be generic for any data, task, architecture, loss...
+    """This class implements an abtsract deep learning trainer.
+
+    It is supposed to be generic for any data, task, architecture, loss...
     It defines the usual generic fonctions.
     Author : Thibault Groueix 01.11.2019
     """
@@ -29,15 +31,15 @@ class TrainerAbstract(object):
             my_utils.print_arg(self.opt)
 
     def start_visdom(self):
-        self.visualizer = visualization.Visualizer(self.opt.visdom_port, self.opt.env, self.opt.http_port)
+        self.visualizer = visualization.Visualizer(
+            self.opt.visdom_port, self.opt.env, self.opt.http_port
+        )
         self.opt.visdom_port = self.visualizer.visdom_port
         self.opt.http_port = self.visualizer.http_port
 
     def get_log_paths(self):
-        """
-        Define paths to save and reload networks from parsed options
-        :return:
-        """
+        """Define paths to save and reload networks from parsed options
+        :return:"""
 
         if not self.opt.demo:
             if not exists("log"):
@@ -48,7 +50,7 @@ class TrainerAbstract(object):
                 mkdir(self.opt.dir_name)
 
         self.opt.log_path = join(self.opt.dir_name, "log.txt")
-        self.opt.optimizer_path = join(self.opt.dir_name, 'optimizer.pth')
+        self.opt.optimizer_path = join(self.opt.dir_name, "optimizer.pth")
         self.opt.model_path = join(self.opt.dir_name, "network.pth")
         self.opt.reload_optimizer_path = ""
 
@@ -70,9 +72,7 @@ class TrainerAbstract(object):
         print("network saved")
 
     def dump_stats(self):
-        """
-        Save stats at each epoch
-        """
+        """Save stats at each epoch."""
 
         log_table = {
             "epoch": self.epoch + 1,
@@ -91,13 +91,19 @@ class TrainerAbstract(object):
             f.write(json.dumps(save_dict))
 
     def print_iteration_stats(self, loss):
-        """
-        print stats at each iteration
-        """
+        """Print stats at each iteration."""
         current_time = time.time()
         ellpased_time = current_time - self.start_train_time
-        total_time_estimated = self.opt.nepoch * (self.datasets.len_dataset / self.opt.batch_size) * ellpased_time / (
-                0.00001 + self.iteration + 1.0 * self.epoch * self.datasets.len_dataset / self.opt.batch_size)  # regle de 3
+        total_time_estimated = (
+            self.opt.nepoch
+            * (self.datasets.len_dataset / self.opt.batch_size)
+            * ellpased_time
+            / (
+                0.00001
+                + self.iteration
+                + 1.0 * self.epoch * self.datasets.len_dataset / self.opt.batch_size
+            )
+        )  # regle de 3
         ETL = total_time_estimated - ellpased_time
         print(
             f"\r["
@@ -114,15 +120,13 @@ class TrainerAbstract(object):
         )
 
     def learning_rate_scheduler(self):
-        """
-        Defines the learning rate schedule
-        """
+        """Defines the learning rate schedule."""
         # Warm-up following https://arxiv.org/pdf/1706.02677.pdf
         if len(self.next_learning_rates) > 0:
             next_learning_rate = self.next_learning_rates.pop()
             print(f"warm-up learning rate {next_learning_rate}")
             for g in self.optimizer.param_groups:
-                g['lr'] = next_learning_rate
+                g["lr"] = next_learning_rate
 
         # Learning rate decay
         if self.epoch == self.opt.lr_decay_1:

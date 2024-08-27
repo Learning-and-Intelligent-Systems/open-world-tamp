@@ -5,55 +5,30 @@ sys.path.extend(["pddlstream", "pybullet-planning"])
 
 import csv
 import importlib
-
 # System libs
 import os
 
 import numpy as np
-
 # Our libs
 import open3d as o3d
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
-from plyfile import PlyData, PlyElement
-from pybullet_tools.utils import (
-    connect,
-    load_pybullet,
-)
-
-from movo.movo_utils import (
-    ARMS,
-    BASE_LINK,
-    COMMAND_MOVO_GROUPS,
-    MOVO_CLOSED_CONF,
-    MOVO_DISABLED_COLLISIONS,
-    MOVO_GROUPS,
-    MOVO_INFOS,
-    MOVO_OPEN_CONF,
-    MOVO_TOOL_FRAMES,
-    MOVO_URDF,
-    arm_from_side,
-    create_floor,
-    get_default_conf,
-    get_full_default_conf,
-    gripper_from_arm,
-    side_from_arm,
-)
+from movo.movo_utils import (ARMS, BASE_LINK, COMMAND_MOVO_GROUPS,
+                             MOVO_CLOSED_CONF, MOVO_DISABLED_COLLISIONS,
+                             MOVO_GROUPS, MOVO_INFOS, MOVO_OPEN_CONF,
+                             MOVO_TOOL_FRAMES, MOVO_URDF, arm_from_side,
+                             create_floor, get_default_conf,
+                             get_full_default_conf, gripper_from_arm,
+                             side_from_arm)
 from movo.run_movo import Movo_Robot
 from open_world.estimation.dnn import init_seg, str_from_int_seg_general
 from open_world.estimation.geometry import cloud_from_depth
-from open_world.estimation.observation import image_from_labeled, save_camera_images
+from open_world.estimation.observation import (image_from_labeled,
+                                               save_camera_images)
 from open_world.estimation.tables import estimate_surfaces
-from open_world.planning.planner import (
-    DEFAULT_SHAPE,
-    PARAM,
-    And,
-    Exists,
-    ForAll,
-    Imply,
-    On,
-)
+from open_world.planning.planner import (DEFAULT_SHAPE, PARAM, And, Exists,
+                                         ForAll, Imply, On)
 from open_world.planning.primitives import GroupConf
 from open_world.planning.streams import get_plan_motion_fn
 from open_world.real_world.movo_controller import MovoController
@@ -61,6 +36,9 @@ from open_world.simulation.entities import BOWL, Manipulator, Robot
 from open_world.simulation.lis import YCB_MASSES
 from open_world.simulation.policy import Policy, run_policy
 from open_world.simulation.tasks import Task
+from plyfile import PlyData, PlyElement
+from pybullet_tools.utils import connect, load_pybullet
+
 from run_planner import create_parser
 from vision_utils.pointnet_scene_seg.lib.enet import create_enet_for_3d
 

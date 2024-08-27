@@ -36,27 +36,13 @@ import cv2
 import torch
 import torchvision.transforms as transforms
 from pybullet_tools.pr2_problems import create_floor
-from pybullet_tools.utils import (
-    LockRenderer,
-    WorldSaver,
-    add_data_path,
-    connect,
-    create_box,
-    disable_gravity,
-    disconnect,
-    enable_gravity,
-    get_pose,
-    remove_body,
-    save_image,
-    set_client,
-    set_euler,
-    set_joint_positions,
-    set_point,
-    set_pose,
-    set_quat,
-    step_simulation,
-    wait_for_user,
-)
+from pybullet_tools.utils import (LockRenderer, WorldSaver, add_data_path,
+                                  connect, create_box, disable_gravity,
+                                  disconnect, enable_gravity, get_pose,
+                                  remove_body, save_image, set_client,
+                                  set_euler, set_joint_positions, set_point,
+                                  set_pose, set_quat, step_simulation,
+                                  wait_for_user)
 from src.evaluation import multilabel_metrics
 from src.util.utilities import subplotter  # import from uois
 from src.util.utilities import get_color_mask, torch_to_numpy
@@ -107,7 +93,7 @@ def init_vision_utils(
     dsn_sigma=0.02,
 ):
     toolbox = {}
-    """ Detection & Segmentation """
+    """Detection & Segmentation."""
     if init_maskrcnn:
         import detectron2
         from detectron2 import model_zoo
@@ -334,10 +320,7 @@ def main(time_step=0.01):
     table_h = 0.7
     table = create_box(table_len1, table_len2, table_h, color=(0.75, 0.75, 0.75, 1.0))
     set_point(table, (0, 0, table_h / 2))
-
-    """
-        arglist
-    """
+    """arglist."""
     print("==> Args:")
     for arg in vars(args):
         print(f"{arg}\t {getattr(args, arg)}")
@@ -353,8 +336,7 @@ def main(time_step=0.01):
     os.system(
         f"cp vision_utils/test_vis_clean/{os.path.basename(__file__)} {save_dir}/"
     )
-    """
-    """
+    """"""
     objlist_ = os.listdir(YCB_BANK_DIR)
     objlist = [x for x in objlist_ if x[0] == "0"]
     objlist.sort()

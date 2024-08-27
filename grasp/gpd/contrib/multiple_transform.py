@@ -3,15 +3,17 @@
 Created on Wed Jul  25 16:22:08 2018
 @author: haoshu fang
 """
-import os
-import numpy as np
-import h5py as h5
-from scipy.misc import imread
-import IPython
 import math
-from open3d import *
-from tqdm import tqdm
+import os
 import sys
+
+import h5py as h5
+import IPython
+import numpy as np
+from open3d import *
+from scipy.misc import imread
+from tqdm import tqdm
+
 
 def getTransform(calibration, viewpoint_camera, referenceCamera, transformation):
     CamFromRefKey = "H_{0}_from_{1}".format(viewpoint_camera, referenceCamera)

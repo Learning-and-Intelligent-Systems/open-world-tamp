@@ -1,25 +1,10 @@
-from pybullet_tools.utils import (
-    GREEN,
-    RGBA,
-    HideOutput,
-    Point,
-    Pose,
-    add_data_path,
-    create_box,
-    load_model,
-    set_camera_pose,
-    set_dynamics,
-    set_pose,
-)
-
-
 from open_world.simulation.entities import Object, RealWorld, Shape
-from open_world.simulation.environment import (
-    create_floor_object,
-    create_pillar,
-    create_ycb,
-    place_surface,
-)
+from open_world.simulation.environment import (create_floor_object,
+                                               create_pillar, create_ycb,
+                                               place_surface)
+from pybullet_tools.utils import (GREEN, RGBA, HideOutput, Point, Pose,
+                                  add_data_path, create_box, load_model,
+                                  set_camera_pose, set_dynamics, set_pose)
 
 
 def create_world(robot, movable=[], fixed=[], surfaces=[], **kwargs):

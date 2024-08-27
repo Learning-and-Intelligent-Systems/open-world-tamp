@@ -165,6 +165,7 @@ def is_client_active(client):
 
 ##################################################
 
+
 class PR2Controller(Controller):
     # simple_clients = {
     #     'torso': Client('torso_controller/position_joint_action', SingleJointPositionAction),
@@ -183,7 +184,6 @@ class PR2Controller(Controller):
     INIT_LOGS = True
     ERROR_LOGS = True
     COMMAND_LOGS = True
-
     """
     ============================================================================
                     Initializing all controllers    
@@ -191,7 +191,7 @@ class PR2Controller(Controller):
     """
 
     def __init__(self, robot, client, arms=ARMS, verbose=True, **kwargs):
-        super(PR2Controller, self).__init__( **kwargs)
+        super(PR2Controller, self).__init__(**kwargs)
         self.arms = tuple(arms)
         self.rate = rospy.Rate(10)
 

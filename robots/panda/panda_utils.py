@@ -1,13 +1,14 @@
 import os
 
-# from run_estimator import *
-
-from pybullet_tools.ikfast.utils import IKFastInfo
-from pybullet_tools.utils import link_from_name
+from open_world.simulation.controller import SimulatedController
 from open_world.simulation.entities import Camera, Manipulator, Robot
 from open_world.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
+from pybullet_tools.ikfast.utils import IKFastInfo
+from pybullet_tools.utils import link_from_name
+
 from robots.panda.panda_controller import PandaController
-from open_world.simulation.controller import SimulatedController
+
+# from run_estimator import *
 
 
 CAMERA_FRAME = "camera_frame"
@@ -22,7 +23,16 @@ PANDA_PATH = os.path.abspath("models/srl/franka_description/robots/panda_arm_han
 
 
 class PandaRobot(Robot):
-    def __init__(self, robot_body, link_names={}, client=None, real_camera=False, real_execute=False, arms = ["main_arm"], **kwargs):
+    def __init__(
+        self,
+        robot_body,
+        link_names={},
+        client=None,
+        real_camera=False,
+        real_execute=False,
+        arms=["main_arm"],
+        **kwargs
+    ):
 
         self.link_names = link_names
         self.body = robot_body
@@ -38,7 +48,7 @@ class PandaRobot(Robot):
         }
 
         PANDA_TOOL_FRAMES = {
-            "main_arm": "panda_tool_tip", 
+            "main_arm": "panda_tool_tip",
         }
 
         panda_manipulators = {
@@ -83,7 +93,6 @@ class PandaRobot(Robot):
         self.min_z = 0.0
         self.BASE_LINK = "panda_link0"
         self.MAX_PANDA_FINGER = 0.045
-        
 
     def get_default_conf(self):
         conf = {
@@ -139,8 +148,7 @@ class PandaRobot(Robot):
         for group, positions in conf.items():
             if self.real_execute:
                 group_dict = {
-                    name: pos
-                    for pos, name in zip(positions, self.joint_groups[group])
+                    name: pos for pos, name in zip(positions, self.joint_groups[group])
                 }
                 self.controller.command_group_dict(group, group_dict)
             else:

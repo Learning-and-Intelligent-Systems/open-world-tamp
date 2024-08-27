@@ -1,10 +1,12 @@
-import time
-from options.train_options import TrainOptions
-from data import DataLoader
-from models import create_model
-from utils.writer import Writer
-from test import run_test
 import threading
+import time
+from test import run_test
+
+from data import DataLoader
+from options.train_options import TrainOptions
+from utils.writer import Writer
+
+from models import create_model
 
 
 def main():
@@ -33,51 +35,66 @@ def main():
                 loss_types = []
                 if opt.arch == "vae":
                     loss = [
-                        model.loss, model.kl_loss, model.reconstruction_loss,
-                        model.confidence_loss
+                        model.loss,
+                        model.kl_loss,
+                        model.reconstruction_loss,
+                        model.confidence_loss,
                     ]
                     loss_types = [
-                        "total_loss", "kl_loss", "reconstruction_loss",
-                        "confidence loss"
+                        "total_loss",
+                        "kl_loss",
+                        "reconstruction_loss",
+                        "confidence loss",
                     ]
                 elif opt.arch == "gan":
                     loss = [
-                        model.loss, model.reconstruction_loss,
-                        model.confidence_loss
+                        model.loss,
+                        model.reconstruction_loss,
+                        model.confidence_loss,
                     ]
                     loss_types = [
-                        "total_loss", "reconstruction_loss", "confidence_loss"
+                        "total_loss",
+                        "reconstruction_loss",
+                        "confidence_loss",
                     ]
                 else:
                     loss = [
-                        model.loss, model.classification_loss,
-                        model.confidence_loss
+                        model.loss,
+                        model.classification_loss,
+                        model.confidence_loss,
                     ]
                     loss_types = [
-                        "total_loss", "classification_loss", "confidence_loss"
+                        "total_loss",
+                        "classification_loss",
+                        "confidence_loss",
                     ]
                 t = (time.time() - iter_start_time) / opt.batch_size
-                writer.print_current_losses(epoch, epoch_iter, loss, t, t_data,
-                                            loss_types)
-                writer.plot_loss(loss, epoch, epoch_iter, dataset_size,
-                                 loss_types)
+                writer.print_current_losses(
+                    epoch, epoch_iter, loss, t, t_data, loss_types
+                )
+                writer.plot_loss(loss, epoch, epoch_iter, dataset_size, loss_types)
 
             if i % opt.save_latest_freq == 0:
-                print('saving the latest model (epoch %d, total_steps %d)' %
-                      (epoch, total_steps))
-                model.save_network('latest', epoch)
+                print(
+                    "saving the latest model (epoch %d, total_steps %d)"
+                    % (epoch, total_steps)
+                )
+                model.save_network("latest", epoch)
 
             iter_data_time = time.time()
 
         if epoch % opt.save_epoch_freq == 0:
-            print('saving the model at the end of epoch %d, iters %d' %
-                  (epoch, total_steps))
-            model.save_network('latest', epoch)
+            print(
+                "saving the model at the end of epoch %d, iters %d"
+                % (epoch, total_steps)
+            )
+            model.save_network("latest", epoch)
             model.save_network(str(epoch), epoch)
 
-        print('End of epoch %d / %d \t Time Taken: %d sec' %
-              (epoch, opt.niter + opt.niter_decay,
-               time.time() - epoch_start_time))
+        print(
+            "End of epoch %d / %d \t Time Taken: %d sec"
+            % (epoch, opt.niter + opt.niter_decay, time.time() - epoch_start_time)
+        )
         model.update_learning_rate()
         if opt.verbose_plot:
             writer.plot_model_wts(model, epoch)
@@ -89,5 +106,5 @@ def main():
     writer.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -6,7 +6,6 @@ sys.path.extend(["pddlstream", "pybullet-planning"])
 import argparse
 import copy
 import importlib
-
 # System libs
 import os
 import pickle
@@ -14,31 +13,17 @@ import sys
 import time
 
 import numpy as np
-
 # Our libs
 import open3d as o3d
 import torch
 import torch.optim as optim
-from pybullet_tools.utils import (
-    RGBA,
-    connect,
-    load_pybullet
-)
-
-from movo.movo_utils import (
-    ARMS,
-    COMMAND_MOVO_GROUPS,
-    MOVO_DISABLED_COLLISIONS,
-    MOVO_GROUPS,
-    MOVO_INFOS,
-    MOVO_TOOL_FRAMES,
-    MOVO_URDF,
-    create_floor,
-    gripper_from_arm,
-    side_from_arm,
-)
+from movo.movo_utils import (ARMS, COMMAND_MOVO_GROUPS,
+                             MOVO_DISABLED_COLLISIONS, MOVO_GROUPS, MOVO_INFOS,
+                             MOVO_TOOL_FRAMES, MOVO_URDF, create_floor,
+                             gripper_from_arm, side_from_arm)
 from open_world.estimation.bounding import estimate_oobb
-from open_world.simulation.entities import  Manipulator
+from open_world.simulation.entities import Manipulator
+from pybullet_tools.utils import RGBA, connect, load_pybullet
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR + "/../vision_utils/votenet"
@@ -49,21 +34,14 @@ sys.path.append(os.path.join(ROOT_DIR, "models"))
 
 from ap_helper import parse_predictions
 from pc_util import random_sampling, read_ply
-from pybullet_tools.utils import (
-    Pose,
-    aabb_from_points,
-    create_mesh,
-    invert,
-    mesh_from_points,
-    set_pose,
-    tform_points,
-)
+from pybullet_tools.utils import (Pose, aabb_from_points, create_mesh, invert,
+                                  mesh_from_points, set_pose, tform_points)
 
 from vision_utils.votenet.scannet.scannet_detection_dataset import DC
 
 
 def preprocess_point_cloud(point_cloud):
-    """Prepare the numpy point cloud (N,3) for forward pass"""
+    """Prepare the numpy point cloud (N,3) for forward pass."""
     point_cloud = point_cloud[:, 0:3]  # do not use color for now
     floor_height = np.percentile(point_cloud[:, 2], 0.99)
     height = point_cloud[:, 2] - floor_height

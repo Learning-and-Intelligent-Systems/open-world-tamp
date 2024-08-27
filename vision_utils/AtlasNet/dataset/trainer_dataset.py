@@ -1,6 +1,6 @@
-import torch
-import dataset.dataset_shapenet as dataset_shapenet
 import dataset.augmenter as augmenter
+import dataset.dataset_shapenet as dataset_shapenet
+import torch
 from easydict import EasyDict
 
 
@@ -21,13 +21,18 @@ class TrainerDataset(object):
 
         if not self.opt.demo:
             # Create dataloaders
-            self.datasets.dataloader_train = torch.utils.data.DataLoader(self.datasets.dataset_train,
-                                                                         batch_size=self.opt.batch_size,
-                                                                         shuffle=True,
-                                                                         num_workers=int(self.opt.workers))
-            self.datasets.dataloader_test = torch.utils.data.DataLoader(self.datasets.dataset_test,
-                                                                        batch_size=self.opt.batch_size_test,
-                                                                        shuffle=True, num_workers=int(self.opt.workers))
+            self.datasets.dataloader_train = torch.utils.data.DataLoader(
+                self.datasets.dataset_train,
+                batch_size=self.opt.batch_size,
+                shuffle=True,
+                num_workers=int(self.opt.workers),
+            )
+            self.datasets.dataloader_test = torch.utils.data.DataLoader(
+                self.datasets.dataset_test,
+                batch_size=self.opt.batch_size_test,
+                shuffle=True,
+                num_workers=int(self.opt.workers),
+            )
             axis = []
             if self.opt.data_augmentation_axis_rotation:
                 axis = [1]
@@ -37,11 +42,13 @@ class TrainerDataset(object):
                 flips = [0, 2]
 
             # Create Data Augmentation
-            self.datasets.data_augmenter = augmenter.Augmenter(translation=self.opt.random_translation,
-                                                               rotation_axis=axis,
-                                                               anisotropic_scaling=self.opt.anisotropic_scaling,
-                                                               rotation_3D=self.opt.random_rotation,
-                                                               flips=flips)
+            self.datasets.data_augmenter = augmenter.Augmenter(
+                translation=self.opt.random_translation,
+                rotation_axis=axis,
+                anisotropic_scaling=self.opt.anisotropic_scaling,
+                rotation_3D=self.opt.random_rotation,
+                flips=flips,
+            )
 
             self.datasets.len_dataset = len(self.datasets.dataset_train)
             self.datasets.len_dataset_test = len(self.datasets.dataset_test)

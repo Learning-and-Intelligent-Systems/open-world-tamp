@@ -30,120 +30,78 @@ sys.path.extend(
 
 from examples.discrete_belief.run import MAX_COST, clip_cost, revisit_mdp_cost
 from examples.pybullet.utils.pybullet_tools.pr2_primitives import (
-    Attach,
-    Conf,
-    Detach,
-    Pose,
-    Trajectory,
-    apply_commands,
-    get_base_limits,
-    get_grasp_gen,
-    get_ik_fn,
-    get_ik_ir_gen,
-    get_motion_gen,
-    get_stable_gen,
-)
-from examples.pybullet.utils.pybullet_tools.pr2_utils import (
-    ARM_NAMES,
-    attach_viewcone,
-    get_arm_joints,
-    get_group_conf,
-    get_group_joints,
-    get_link_pose,
-    is_drake_pr2,
-)
+    Attach, Conf, Detach, Pose, Trajectory, apply_commands, get_base_limits,
+    get_grasp_gen, get_ik_fn, get_ik_ir_gen, get_motion_gen, get_stable_gen)
+from examples.pybullet.utils.pybullet_tools.pr2_utils import (ARM_NAMES,
+                                                              attach_viewcone,
+                                                              get_arm_joints,
+                                                              get_group_conf,
+                                                              get_group_joints,
+                                                              get_link_pose,
+                                                              is_drake_pr2)
 from examples.pybullet.utils.pybullet_tools.transformations import (
-    quaternion_from_matrix,
-    quaternion_matrix,
-)
-from examples.pybullet.utils.pybullet_tools.utils import (
-    AABB,
-    CLIENT,
-    INFO_FROM_BODY,
-    STATIC_MASS,
-    ClientSaver,
-    HideOutput,
-    LockRenderer,
-    ModelInfo,
-    WorldSaver,
-    add_body_name,
-    add_data_path,
-    clone_body,
-    connect,
-    create_box,
-    create_cylinder,
-    disable_gravity,
-    disconnect,
-    draw_aabb,
-    draw_base_limits,
-    enable_gravity,
-    get_bodies,
-    get_configuration,
-    get_distance,
-    get_joint_position,
-    get_joint_positions,
-    get_mesh_geometry,
-    get_pose,
-    has_gui,
-    is_center_stable,
-    load_pybullet,
-    pairwise_collision,
-    remove_body,
-    save_image,
-    set_client,
-    set_configuration,
-    set_euler,
-    set_joint_positions,
-    set_point,
-    set_pose,
-    step_simulation,
-    unit_pose,
-    wait_for_user,
-)
+    quaternion_from_matrix, quaternion_matrix)
+from examples.pybullet.utils.pybullet_tools.utils import (AABB, CLIENT,
+                                                          INFO_FROM_BODY,
+                                                          STATIC_MASS,
+                                                          ClientSaver,
+                                                          HideOutput,
+                                                          LockRenderer,
+                                                          ModelInfo,
+                                                          WorldSaver,
+                                                          add_body_name,
+                                                          add_data_path,
+                                                          clone_body, connect,
+                                                          create_box,
+                                                          create_cylinder,
+                                                          disable_gravity,
+                                                          disconnect,
+                                                          draw_aabb,
+                                                          draw_base_limits,
+                                                          enable_gravity,
+                                                          get_bodies,
+                                                          get_configuration,
+                                                          get_distance,
+                                                          get_joint_position,
+                                                          get_joint_positions,
+                                                          get_mesh_geometry,
+                                                          get_pose, has_gui,
+                                                          is_center_stable,
+                                                          load_pybullet,
+                                                          pairwise_collision,
+                                                          remove_body,
+                                                          save_image,
+                                                          set_client,
+                                                          set_configuration,
+                                                          set_euler,
+                                                          set_joint_positions,
+                                                          set_point, set_pose,
+                                                          step_simulation,
+                                                          unit_pose,
+                                                          wait_for_user)
 from pddlstream.algorithms.focused import solve_focused
 from pddlstream.algorithms.search import ABSTRIPSLayer
-from pddlstream.language.constants import And, Equal, Or, PDDLProblem, print_solution
-from pddlstream.language.generator import (
-    accelerate_list_gen_fn,
-    fn_from_constant,
-    from_fn,
-    from_gen_fn,
-    from_list_fn,
-    from_test,
-)
+from pddlstream.language.constants import (And, Equal, Or, PDDLProblem,
+                                           print_solution)
+from pddlstream.language.generator import (accelerate_list_gen_fn,
+                                           fn_from_constant, from_fn,
+                                           from_gen_fn, from_list_fn,
+                                           from_test)
 from pddlstream.language.stream import StreamInfo
 from pddlstream.utils import get_file_path, read
 
-from .primitives import (
-    REG_RANGE,
-    VIS_RANGE,
-    Detect,
-    Mark,
-    Observe,
-    Observe_specific,
-    Register,
-    Scan,
-    ScanRoom,
-    get_cone_commands,
-    get_fo_test,
-    get_in_range_test,
-    get_inverse_visibility_fixbase_fn,
-    get_inverse_visibility_fn,
-    get_isGraspable_test,
-    get_isPoseCertain_test,
-    get_isTarget_test,
-    get_unblock_test,
-    get_vis_base_gen,
-    get_visclear_test,
-    move_look_trajectory,
-    plan_head_traj,
-)
+from .primitives import (REG_RANGE, VIS_RANGE, Detect, Mark, Observe,
+                         Observe_specific, Register, Scan, ScanRoom,
+                         get_cone_commands, get_fo_test, get_in_range_test,
+                         get_inverse_visibility_fixbase_fn,
+                         get_inverse_visibility_fn, get_isGraspable_test,
+                         get_isPoseCertain_test, get_isTarget_test,
+                         get_unblock_test, get_vis_base_gen, get_visclear_test,
+                         move_look_trajectory, plan_head_traj)
 from .problems import USE_DRAKE_PR2, create_pr2, get_problem1
 
 BASE_CONSTANT = 1
 BASE_VELOCITY = 0.5
-
-
 """  ================ modified function ================  """
 
 
@@ -450,7 +408,7 @@ def pddlstream_from_state(state, teleport=False):
     #     if body in state.registered:
     #         init.append(('Registered', body))
     for block_obj in state.block_list.keys():  # observation test
-        for (obj_loc, blocked_loc) in state.block_list[block_obj]:
+        for obj_loc, blocked_loc in state.block_list[block_obj]:
             init_cmd = ("Block", block_obj, obj_loc, blocked_loc)
             init.append(init_cmd)
             init_cmd = ("Pose", block_obj, obj_loc)
@@ -721,7 +679,6 @@ from detectron2.utils.visualizer import Visualizer
 def init_vision_utils():
 
     handlers = {}
-
     """ 6D pose estimator - DenseFusion """
     norm = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
@@ -748,7 +705,6 @@ def init_vision_utils():
         )
     )
     refiner.eval()
-
     """ Detection & Segmentation - MaskRCNN """
     cfg = get_cfg()
     cfg.merge_from_file(
@@ -763,8 +719,7 @@ def init_vision_utils():
     )
     # cfg.INPUT.MASK_FORMAT
     predictor = DefaultPredictor(cfg)
-
-    """ wrap up """
+    """Wrap up."""
     handlers["pose6d_init"] = estimator
     handlers["pose6d_refiner"] = refiner
     handlers["mask"] = predictor

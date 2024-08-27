@@ -1,37 +1,29 @@
-import os
 import copy
+import os
+
 import numpy as np
-from pybullet_tools.ikfast.utils import IKFastInfo
-from pybullet_tools.utils import (
-    FLOOR_URDF,
-    ConfSaver,
-    add_data_path,
-    get_collision_data,
-    get_joint_names,
-    get_joint_position,
-    get_link_children,
-    get_link_names,
-    get_link_pose,
-    get_moving_links,
-    get_relative_pose,
-    joint_from_name,
-    link_from_name,
-    load_pybullet,
-    set_joint_positions,
-    point_from_pose,
-    sample_directed_reachable_base
-)
-
-from robots.movo.movo_controller import MovoController
-from open_world.simulation.controller import SimulatedController
-
-from robots.movo.movo_sender import get_color_image, get_depth_image, get_pointcloud
 from open_world.planning.primitives import GroupConf
 from open_world.planning.streams import get_plan_motion_fn
+from open_world.simulation.controller import SimulatedController
 from open_world.simulation.entities import Camera, Manipulator, Robot
 from open_world.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
+from pybullet_tools.ikfast.utils import IKFastInfo
+from pybullet_tools.utils import (FLOOR_URDF, ConfSaver, add_data_path,
+                                  get_collision_data, get_joint_names,
+                                  get_joint_position, get_link_children,
+                                  get_link_names, get_link_pose,
+                                  get_moving_links, get_relative_pose,
+                                  joint_from_name, link_from_name,
+                                  load_pybullet, point_from_pose,
+                                  sample_directed_reachable_base,
+                                  set_joint_positions)
+
+from robots.movo.movo_controller import MovoController
+from robots.movo.movo_sender import (get_color_image, get_depth_image,
+                                     get_pointcloud)
 
 #######  pr2_problems  ########
+
 
 def create_floor(**kwargs):
     add_data_path()
@@ -182,7 +174,17 @@ MOVO_DISABLED_COLLISIONS = [
     (21, 24),
 ]
 
-KINECT_INTRINSICS = [528.6116160556213, 0.0, 477.68448358339145, 0.0, 531.8537610715608, 255.95470886737945, 0.0, 0.0, 1.0]
+KINECT_INTRINSICS = [
+    528.6116160556213,
+    0.0,
+    477.68448358339145,
+    0.0,
+    531.8537610715608,
+    255.95470886737945,
+    0.0,
+    0.0,
+    1.0,
+]
 BASE_LINK = "base_link"
 
 MOVO_CLOSED_CONF = {
@@ -218,7 +220,6 @@ MOVO_INFOS = {
 
 # [-1.3113831313324589, 1.9619225455538198, 0.13184053877842938, 1.8168894557491948, -0.30988063075165684, -1.753361745316172, 1.725726522158583]
 # [1.396113465626092, -1.9861489225161073, 0.02609983172656305, -1.8699706504902727, 0.2607507015409034, 1.5755063934988107, -1.4726268826923956]
-
 
 
 # Arms up
@@ -264,7 +265,6 @@ DEFAULT_JOINTS = {
     "left_wrist_spherical_1_joint": -0.30988063075165684,
     "left_wrist_spherical_2_joint": -1.753361745316172,
     "left_wrist_3_joint": 1.725726522158583,
-
     "right_shoulder_pan_joint": -1,
     "right_shoulder_lift_joint": -1.9861489225161073,
     "right_arm_half_joint": 0.02609983172656305,
@@ -286,12 +286,36 @@ DEFAULT_JOINTS = {
 }
 
 
+RIGHT_ATTACH_CONF = [
+    -0.021811289327748895,
+    -0.5591495793058756,
+    0.09515283160149757,
+    -0.9770537496674913,
+    0.22921576166484137,
+    1.059975131790689,
+    -1.6935222466767996,
+]
+LEFT_ATTACH_CONF = [
+    -0.2760957691629127,
+    0.5009078441624968,
+    0.2956304885223213,
+    1.2349056669408707,
+    -0.012336294801464476,
+    -0.3835782875974208,
+    1.7257314490066005,
+]
 
-RIGHT_ATTACH_CONF = [-0.021811289327748895, -0.5591495793058756, 0.09515283160149757, -0.9770537496674913, 0.22921576166484137, 1.059975131790689, -1.6935222466767996]
-LEFT_ATTACH_CONF = [-0.2760957691629127, 0.5009078441624968, 0.2956304885223213, 1.2349056669408707, -0.012336294801464476, -0.3835782875974208, 1.7257314490066005]
 
 class MovoRobot(Robot):
-    def __init__(self, robot_body, client=None, real_execute=False, real_camera=False, arms = ["right_arm"], **kwargs):
+    def __init__(
+        self,
+        robot_body,
+        client=None,
+        real_execute=False,
+        real_camera=False,
+        arms=["right_arm"],
+        **kwargs
+    ):
 
         self.real_execute = real_execute
         self.real_camera = real_camera
@@ -325,13 +349,12 @@ class MovoRobot(Robot):
         else:
             cameras = []
 
-
         self.command_joint_groups = COMMAND_MOVO_GROUPS
 
         if not self.real_execute:
             self.controller = SimulatedController(self.robot, client=self.client)
         else:
-            self.controller =  MovoController(self.args, self.robot, client=self.client)
+            self.controller = MovoController(self.args, self.robot, client=self.client)
 
         super(MovoRobot, self).__init__(
             robot_body,
@@ -346,20 +369,15 @@ class MovoRobot(Robot):
 
         self.intrinsics = np.asarray(KINECT_INTRINSICS).reshape(3, 3)
 
-
-
-
     def directed_pose_generator(self, gripper_pose, **kwargs):
         point = point_from_pose(gripper_pose)
         while True:
             base_values = sample_directed_reachable_base(self, point, **kwargs)
             if base_values is None:
                 break
-            yield tuple(list(base_values)+[0.1]) # Append torso values 
+            yield tuple(list(base_values) + [0.1])  # Append torso values
             # set_base_values(robot, base_values)
             # yield get_pose(robot)
-
-
 
     def base_sample_gen(self, pose):
         return self.directed_pose_generator(pose.get_pose(), reachable_range=(0.7, 0.7))
@@ -371,11 +389,17 @@ class MovoRobot(Robot):
     def read_images(self):
         rgb_data = get_color_image()
         depth_data = get_depth_image()
-        rgb_image = np.frombuffer(rgb_data['data'], dtype=np.uint8).reshape(rgb_data['height'], rgb_data['width'], -1)
-        # NOTE original encoding=16UC1 (uint16, 1channel), in mm. 
-        depth_image = np.frombuffer(depth_data['data'], dtype=np.uint16).reshape(depth_data['height'], depth_data['width']).astype(np.float32)/1000
+        rgb_image = np.frombuffer(rgb_data["data"], dtype=np.uint8).reshape(
+            rgb_data["height"], rgb_data["width"], -1
+        )
+        # NOTE original encoding=16UC1 (uint16, 1channel), in mm.
+        depth_image = (
+            np.frombuffer(depth_data["data"], dtype=np.uint16)
+            .reshape(depth_data["height"], depth_data["width"])
+            .astype(np.float32)
+            / 1000
+        )
         return rgb_image, depth_image
-
 
     @property
     def head_group(self):
@@ -384,10 +408,12 @@ class MovoRobot(Robot):
     def get_default_conf(self):
 
         default_default_joints = copy.deepcopy(DEFAULT_JOINTS)
-        get_jval = (
-            lambda j: default_default_joints[j]
+        get_jval = lambda j: (
+            default_default_joints[j]
             if j in default_default_joints.keys()
-            else get_joint_position(self, joint_from_name(self, j, client=self.client), client=self.client)
+            else get_joint_position(
+                self, joint_from_name(self, j, client=self.client), client=self.client
+            )
         )
         return {k: [get_jval(j) for j in v] for k, v in MOVO_GROUPS.items()}
 
@@ -501,9 +527,7 @@ class MovoRobot(Robot):
                     q2 = GroupConf(self, group, positions=new)
                     (traj,) = motion_gen(group, q1, q2)
                     path = traj.commands[0].path
-                    self.controller.command_group_trajectory(
-                        group, path, [], dt=0
-                    )
+                    self.controller.command_group_trajectory(group, path, [], dt=0)
                 else:
                     self.controller.command_group_dict(
                         group,
@@ -512,5 +536,3 @@ class MovoRobot(Robot):
             else:
                 # If in sim, we can just set the joint positions
                 self.set_group_positions(group, positions)
-
-

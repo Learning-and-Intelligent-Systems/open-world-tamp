@@ -1,36 +1,36 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-import numpy as np
+import argparse
 import copy
+import math
+import os
+import sys
+import time
+
 import cv2
 import h5py
+import numpy as np
 import utils.sample as sample
 import utils.utils as utils
-import math
-import sys
-import argparse
-import os
-import time
+
 # Uncomment following line for headless rendering
 os.environ["PYOPENGL_PLATFORM"] = "egl"
-import pyrender
+import multiprocessing as mp
+from multiprocessing import Manager
 
+import pyrender
 import trimesh
 import trimesh.transformations as tra
-from multiprocessing import Manager
-import multiprocessing as mp
 
 
 class OnlineObjectRenderer:
     def __init__(self, fov=np.pi / 6, caching=True):
         """
         Args:
-          fov: float, 
+          fov: float,
         """
         self._fov = fov
-        self._fy = self._fx = 1 / (0.5 / np.tan(self._fov * 0.5)
-                                   )  # aspectRatio is one.
+        self._fy = self._fx = 1 / (0.5 / np.tan(self._fov * 0.5))  # aspectRatio is one.
         self.mesh = None
         self._scene = None
         self.tmesh = None
@@ -42,14 +42,14 @@ class OnlineObjectRenderer:
     def _init_scene(self):
         self._scene = pyrender.Scene()
         camera = pyrender.PerspectiveCamera(
-            yfov=self._fov, aspectRatio=1.0,
-            znear=0.001)  # do not change aspect ratio
+            yfov=self._fov, aspectRatio=1.0, znear=0.001
+        )  # do not change aspect ratio
         camera_pose = tra.euler_matrix(np.pi, 0, 0)
 
-        self._scene.add(camera, pose=camera_pose, name='camera')
+        self._scene.add(camera, pose=camera_pose, name="camera")
 
-        #light = pyrender.SpotLight(color=np.ones(4), intensity=3., innerConeAngle=np.pi/16, outerConeAngle=np.pi/6.0)
-        #self._scene.add(light, pose=camera_pose, name='light')
+        # light = pyrender.SpotLight(color=np.ones(4), intensity=3., innerConeAngle=np.pi/16, outerConeAngle=np.pi/6.0)
+        # self._scene.add(light, pose=camera_pose, name='light')
 
         self.renderer = None
 
@@ -70,10 +70,10 @@ class OnlineObjectRenderer:
         mesh = pyrender.Mesh.from_trimesh(tmesh)
 
         context = {
-            'tmesh': copy.deepcopy(tmesh),
-            'distance': object_distance,
-            'node': pyrender.Node(mesh=mesh),
-            'mesh_mean': np.expand_dims(tmesh_mean, 0),
+            "tmesh": copy.deepcopy(tmesh),
+            "distance": object_distance,
+            "node": pyrender.Node(mesh=mesh),
+            "mesh_mean": np.expand_dims(tmesh_mean, 0),
         }
 
         self._cache[(path, scale)] = context
@@ -81,12 +81,12 @@ class OnlineObjectRenderer:
 
     def change_object(self, path, scale):
         if self._current_context is not None:
-            self._scene.remove_node(self._current_context['node'])
+            self._scene.remove_node(self._current_context["node"])
 
         if not self._caching:
             self._cache = {}
         self._current_context = self._load_object(path, scale)
-        self._scene.add_node(self._current_context['node'])
+        self._scene.add_node(self._current_context["node"])
 
     def current_context(self):
         return self._current_context
@@ -120,10 +120,10 @@ class OnlineObjectRenderer:
         if self.renderer is None:
             self.renderer = pyrender.OffscreenRenderer(400, 400)
         if self._current_context is None:
-            raise ValueError('invoke change_object first')
+            raise ValueError("invoke change_object first")
         transferred_pose = pose.copy()
-        transferred_pose[2, 3] = self._current_context['distance']
-        self._scene.set_pose(self._current_context['node'], transferred_pose)
+        transferred_pose[2, 3] = self._current_context["distance"]
+        self._scene.set_pose(self._current_context["node"], transferred_pose)
 
         color, depth = self.renderer.render(self._scene)
 

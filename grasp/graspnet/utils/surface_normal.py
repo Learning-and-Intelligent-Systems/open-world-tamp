@@ -1,12 +1,12 @@
 try:
+    import matplotlib.pyplot as plt
     import mayavi.mlab as mlab
     from visualization_utils import draw_scene
-    import matplotlib.pyplot as plt
 except:
     pass
 import numpy as np
-import trimesh.transformations as tra
 import trimesh
+import trimesh.transformations as tra
 
 
 def cov_matrix(center, points):
@@ -37,8 +37,7 @@ def propose_grasps(pc, radius, num_grasps=1, vis=False):
     for _ in range(num_grasps):
         center_index = np.random.randint(pc.shape[0])
         center_point = pc[center_index, :].copy()
-        d = np.sqrt(np.sum(np.square(pc - np.expand_dims(center_point, 0)),
-                           -1))
+        d = np.sqrt(np.sum(np.square(pc - np.expand_dims(center_point, 0)), -1))
         index = np.where(d < radius)[0]
         neighbors = pc[index, :]
 
@@ -47,11 +46,10 @@ def propose_grasps(pc, radius, num_grasps=1, vis=False):
 
         direction = choose_direction(direction, center_point)
 
-        surface_orientation = trimesh.geometry.align_vectors([0, 0, 1],
-                                                             direction)
+        surface_orientation = trimesh.geometry.align_vectors([0, 0, 1], direction)
         roll_orientation = tra.quaternion_matrix(
-            tra.quaternion_about_axis(np.random.uniform(0, 2 * np.pi),
-                                      [0, 0, 1]))
+            tra.quaternion_about_axis(np.random.uniform(0, 2 * np.pi), [0, 0, 1])
+        )
         gripper_transform = surface_orientation.dot(roll_orientation)
         gripper_transform[:3, 3] = center_point
 

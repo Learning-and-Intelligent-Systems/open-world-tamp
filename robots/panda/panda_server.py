@@ -1,17 +1,18 @@
 import zlib
+
 import numpy as np
 import pickle5
-import zmq
-import rospy
 import pyrealsense2 as rs
-from rs_util import get_serial_number, get_intrinsics
+import rospy
+import zmq
 from franka_interface import ArmInterface, GripperInterface
+from rs_util import get_intrinsics, get_serial_number
 
 rospy.init_node("panda_data_collection_node")
 
 ##### Realsense ######
 
-print('Listing available realsense devices...')
+print("Listing available realsense devices...")
 serial_numbers = []
 datas = []
 for i, device in enumerate(rs.context().devices):

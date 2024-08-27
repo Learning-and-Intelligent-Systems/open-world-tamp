@@ -1,7 +1,8 @@
-import visdom
 import os
 import sys
 import time
+
+import visdom
 
 """
     Author : Thibault Groueix 01.11.2019
@@ -9,14 +10,15 @@ import time
 
 
 def is_port_in_use(port):
-    """
-    test if a port is being used or is free to use.
+    """Test if a port is being used or is free to use.
+
     :param port:
     :return:
     """
     import socket
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(('localhost', port)) == 0
+        return s.connect_ex(("localhost", port)) == 0
 
 
 class Visualizer(object):
@@ -75,16 +77,15 @@ class Visualizer(object):
             ytickstep=0.3,
             ztickmin=-0.7,
             ztickmax=0.7,
-            ztickstep=0.3)
+            ztickstep=0.3,
+        )
 
         if Y is None:
             self.vis.scatter(X=points, win=title, opts=opts)
         else:
             if Y.min() < 1:
                 Y = Y - Y.min() + 1
-            self.vis.scatter(
-                X=points, Y=Y, win=title, opts=opts
-            )
+            self.vis.scatter(X=points, Y=Y, win=title, opts=opts)
 
     def show_pointclouds(self, points, title=None, Y=None):
         points = points.squeeze()
