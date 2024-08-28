@@ -8,41 +8,26 @@ import warnings
 import numpy as np
 import pybullet_tools
 from pybullet_tools.pr2_utils import (CLEAR_LEFT_ARM, LEFT_ARM, PR2_GROUPS,
-                                      PR2_TOOL_FRAMES, RIGHT_ARM,
-                                      arm_from_side, gripper_from_side,
-                                      open_gripper, rightarm_from_leftarm,
-                                      side_from_arm)
+                                      PR2_TOOL_FRAMES, RIGHT_ARM, open_gripper,
+                                      rightarm_from_leftarm)
 from pybullet_tools.utils import (PI, custom_limits_from_base_limits,
                                   link_from_name)
 
-from owt.simulation.entities import Robot
-from owt.simulation.lis import PR2_INFOS
-
-pybullet_tools.utils.TEMP_DIR = "temp_meshes/"  # TODO: resolve conflict with pddlstream
-
-from pybullet_tools.utils import PI, get_max_limits, link_from_name
-
-from owt.simulation.entities import Camera, Manipulator
+import owt.pb_utils as pbu
+from owt.simulation.entities import Camera, Manipulator, Robot
 from owt.simulation.lis import (CAMERA_FRAME, CAMERA_MATRIX,
-                                CAMERA_OPTICAL_FRAME, PR2_INFOS)
+                                CAMERA_OPTICAL_FRAME)
 
 DEFAULT_LEFT_ARM = CLEAR_LEFT_ARM
 
-from pybullet_tools.utils import link_from_name, user_input
-
 from owt.simulation.controller import SimulatedController
-# from run_estimator import create_parser
 from owt.simulation.environment import set_gripper_friction
-# TODO: all ROS should be the last import otherwise segfaults
 from robots.pr2.pr2_controller import PR2Controller
 
 PR2_PATH = os.path.abspath("models/ltamp/pr2_description/pr2.urdf")
 
-warnings.filterwarnings("ignore")  # , category=DeprecationWarning)
+warnings.filterwarnings("ignore")
 
-from pybullet_tools.utils import Pose, add_data_path
-
-from owt.simulation.environment import create_floor_object
 from owt.simulation.lis import CAMERA_OPTICAL_FRAME
 
 PR2_DISABLED_COLLISIONS = [
@@ -129,10 +114,10 @@ class PR2Robot(Robot):
             cameras = []
 
         manipulators = {
-            side_from_arm(arm): Manipulator(
-                arm_from_side(side_from_arm(arm)),
-                gripper_from_side(side_from_arm(arm)),
-                PR2_TOOL_FRAMES[side_from_arm(arm)],
+            arm: Manipulator(
+                arm,
+                arm.replace("arm", "gripper"),
+                PR2_TOOL_FRAMES[arm],
             )
             for arm in self.arms
         }
@@ -147,17 +132,11 @@ class PR2Robot(Robot):
             joint_groups=PR2_GROUPS,
             custom_limits=custom_limits,
             cameras=cameras,
-            ik_info=PR2_INFOS,
             manipulators=manipulators,
             disabled_collisions=PR2_DISABLED_COLLISIONS,
             client=client,
             **kwargs
         )
-
-    # def base_sample_gen(self, pose):
-    #     return directed_pose_generator(
-    #         self.robot, pose.get_pose(), reachable_range=(0.8, 0.8)
-    #     )
 
     def get_default_conf(self, torso=0.25, tilt=PI / 3):
         conf = {
@@ -168,7 +147,7 @@ class PR2Robot(Robot):
         }
         conf.update(
             {
-                gripper: get_max_limits(
+                gripper: pbu.get_max_limits(
                     self.robot, self.get_group_joints(gripper), client=self.client
                 )
                 for gripper in self.gripper_groups
