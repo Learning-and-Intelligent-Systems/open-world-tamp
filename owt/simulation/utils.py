@@ -54,7 +54,7 @@ def sample_convex(points):
             return np.average(points, weights=weights, axis=0)
 
 
-def sample_norm(mu, sigma, lower=0.0, upper=np.INF):
+def sample_norm(mu, sigma, lower=0.0, upper=np.inf):
     # scipy.stats.truncnorm
     assert lower <= upper
     if lower == upper:

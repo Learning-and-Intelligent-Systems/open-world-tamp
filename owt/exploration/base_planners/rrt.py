@@ -5,11 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import collections as mc
 from matplotlib.patches import Rectangle
-from pybullet_planning.pybullet_tools.utils import (LockRenderer, get_aabb,
-                                                    joint_from_name,
-                                                    set_joint_positions,
-                                                    wait_if_gui)
 
+import owt.pb_utils as pbu
 from owt.exploration.base_planners.planner import Planner
 
 
@@ -24,9 +21,9 @@ class RRT(Planner):
         self.RRT_ITERS = 5000
 
         self.joints = [
-            joint_from_name(self.env.robot, "x"),
-            joint_from_name(self.env.robot, "y"),
-            joint_from_name(self.env.robot, "theta"),
+            pbu.joint_from_name(self.env.robot, "x"),
+            pbu.joint_from_name(self.env.robot, "y"),
+            pbu.joint_from_name(self.env.robot, "theta"),
         ]
 
         self.movable_handles = []
@@ -41,7 +38,7 @@ class RRT(Planner):
         attached_object=None,
         moving_backwards=False,
     ):
-        with LockRenderer():
+        with pbu.LockRenderer():
             graph = self.rrt(
                 start,
                 goal,
@@ -85,11 +82,11 @@ class RRT(Planner):
                 break
             current_q, complete = self.execute_path(final_path)
 
-        wait_if_gui()
+        pbu.wait_if_gui()
 
     def execute_path(self, path, ignore_movable=False):
         for qi, q in enumerate(path):
-            set_joint_positions(self.env.robot, self.joints, q)
+            pbu.set_joint_positions(self.env.robot, self.joints, q)
 
             # Get updated occupancy grid at each step
             camera_pose, image_data = self.env.get_robot_vision()
@@ -274,7 +271,7 @@ def plot(G, env, path=None):
 
     # Draw room shape
     for wall in env.room.walls:
-        wall_aabb = get_aabb(wall)
+        wall_aabb = pbu.get_aabb(wall)
         rec = Rectangle(
             (wall_aabb.lower[0:2]),
             wall_aabb.upper[0] - wall_aabb.lower[0],
@@ -288,7 +285,7 @@ def plot(G, env, path=None):
     for obstacle in env.static_objects + env.movable_boxes:
         color = "brown"
         if isinstance(obstacle, int):
-            aabb = get_aabb(obstacle)
+            aabb = pbu.get_aabb(obstacle)
         else:
             aabb = obstacle.aabb
             color = "yellow"

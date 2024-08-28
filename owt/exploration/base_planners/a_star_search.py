@@ -2,8 +2,8 @@ import time
 from itertools import groupby
 
 import numpy as np
-from pybullet_planning.pybullet_tools.utils import joint_from_name
 
+import owt.pb_utils as pbu
 from owt.exploration.base_planners.planner import Planner
 from owt.exploration.utils import GRID_RESOLUTION, find_min_angle
 from owt.exploration.utils_graph import Graph
@@ -28,9 +28,9 @@ class AStarSearch(Planner):
 
         # Specific joints to move the robot in simulation
         self.joints = [
-            joint_from_name(self.env.robot, "x", client=self.client),
-            joint_from_name(self.env.robot, "y", client=self.client),
-            joint_from_name(self.env.robot, "theta", client=self.client),
+            pbu.joint_from_name(self.env.robot, "x", client=self.client),
+            pbu.joint_from_name(self.env.robot, "y", client=self.client),
+            pbu.joint_from_name(self.env.robot, "theta", client=self.client),
         ]
 
         # Structure used to save voxels that cannot be accessed by the robot, hence occupied

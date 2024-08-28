@@ -4,7 +4,8 @@ from itertools import product
 
 import numpy as np
 import pybullet as p
-import tampura_environments.panda_utils.pb_utils as pbu
+
+import owt.pb_utils as pbu
 
 MAX_TEXTURE_WIDTH = 418  # max square dimension
 MAX_PIXEL_VALUE = 2**8 - 1

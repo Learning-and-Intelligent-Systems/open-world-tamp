@@ -5,14 +5,8 @@ from itertools import groupby
 
 import numpy as np
 import scipy.spatial
-from pybullet_planning.pybullet_tools.utils import (Euler, Point, Pose,
-                                                    get_aabb_center,
-                                                    get_aabb_volume, get_pose,
-                                                    invert, joint_from_name,
-                                                    multiply,
-                                                    set_joint_positions,
-                                                    set_pose)
 
+import owt.pb_utils as pbu
 from owt.exploration.base_planners.planner import Planner
 from owt.exploration.utils import GRID_RESOLUTION, find_min_angle
 from owt.exploration.utils_graph import Graph
@@ -39,9 +33,9 @@ class Lamb(Planner):
 
         # Specific joints to move the robot in simulation
         self.joints = [
-            joint_from_name(self.env.robot, "x", client=client),
-            joint_from_name(self.env.robot, "y", client=client),
-            joint_from_name(self.env.robot, "theta", client=client),
+            pbu.joint_from_name(self.env.robot, "x", client=client),
+            pbu.joint_from_name(self.env.robot, "y", client=client),
+            pbu.joint_from_name(self.env.robot, "theta", client=client),
         ]
 
         # Structure used to save voxels that cannot be accessed by the robot, hence occupied
@@ -86,15 +80,11 @@ class Lamb(Planner):
         if loadfile is not None:
             self.load_state(loadfile)
 
-            # for wall in self.env.room.walls:
-            #     for voxel in self.env.occupancy_grid.voxels_from_aabb(scale_aabb(get_aabb(wall), 0.98)):
-            #         self.env.occupancy_grid.set_occupied(voxel)
-
-            set_joint_positions(
+            pbu.set_joint_positions(
                 self.env.robot, self.joints, self.current_q, client=self.client
             )
             for i, obj in enumerate(self.env.room.movable_obstacles):
-                set_pose(obj, self.object_poses[i])
+                pbu.set_pose(obj, self.object_poses[i])
             self.env.plot_grids(True, True, True)
 
         complete = False
@@ -743,7 +733,7 @@ class Lamb(Planner):
         """
         if len(voxels) == 0:
             return 0
-        voxel_vol = get_aabb_volume(grid.aabb_from_voxel(next(iter(voxels))))
+        voxel_vol = pbu.get_aabb_volume(grid.aabb_from_voxel(next(iter(voxels))))
         return voxel_vol * len(voxels)
 
     def a_star(
@@ -900,12 +890,12 @@ class Lamb(Planner):
             if attachment is None and obj is not None:
                 coll_obj = self.env.get_movable_box_from_aabb(obj_aabb)
                 # Compute the grasp transform of the attachment.
-                base_pose = Pose(
-                    point=Point(x=q[0], y=q[1]),
-                    euler=Euler(yaw=q[2]),
+                base_pose = pbu.Pose(
+                    point=pbu.Point(x=q[0], y=q[1]),
+                    euler=pbu.Euler(yaw=q[2]),
                 )
-                obj_pose = get_pose(obj)
-                current_grasp = multiply(invert(base_pose), obj_pose)
+                obj_pose = pbu.get_pose(obj)
+                current_grasp = pbu.multiply(pbu.invert(base_pose), obj_pose)
                 attachment = [coll_obj, current_grasp, obj]
                 self.env.remove_movable_object(coll_obj)
             elif attachment is not None and obj is None:
@@ -1003,12 +993,12 @@ class Lamb(Planner):
             if attachment is None and obj is not None:
                 coll_obj = self.env.get_movable_box_from_aabb(obj_aabb)
                 # Compute the grasp transform of the attachment.
-                base_pose = Pose(
-                    point=Point(x=q[0], y=q[1]),
-                    euler=Euler(yaw=q[2]),
+                base_pose = pbu.Pose(
+                    point=pbu.Point(x=q[0], y=q[1]),
+                    euler=pbu.Euler(yaw=q[2]),
                 )
-                obj_pose = Pose(point=get_aabb_center(coll_obj.aabb))
-                current_grasp = multiply(invert(base_pose), obj_pose)
+                obj_pose = pbu.Pose(point=pbu.get_aabb_center(coll_obj.aabb))
+                current_grasp = pbu.multiply(pbu.invert(base_pose), obj_pose)
                 attachment = [coll_obj, current_grasp, obj]
                 self.env.remove_movable_object(coll_obj)
 

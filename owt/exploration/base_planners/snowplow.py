@@ -4,13 +4,8 @@ import time
 from itertools import groupby
 
 import numpy as np
-from pybullet_planning.pybullet_tools.utils import (Euler, Point, Pose,
-                                                    get_aabb_center, get_pose,
-                                                    invert, joint_from_name,
-                                                    multiply,
-                                                    set_joint_positions,
-                                                    set_pose)
 
+import owt.pb_utils as pbu
 from owt.exploration.base_planners.planner import Planner
 from owt.exploration.utils import GRID_RESOLUTION, find_min_angle
 from owt.exploration.utils_graph import Graph
@@ -35,9 +30,9 @@ class Snowplow(Planner):
 
         # Specific joints to move the robot in simulation
         self.joints = [
-            joint_from_name(self.env.robot, "x"),
-            joint_from_name(self.env.robot, "y"),
-            joint_from_name(self.env.robot, "theta"),
+            pbu.joint_from_name(self.env.robot, "x"),
+            pbu.joint_from_name(self.env.robot, "y"),
+            pbu.joint_from_name(self.env.robot, "theta"),
         ]
 
         # Structure used to save voxels that cannot be accessed by the robot, hence occupied
@@ -332,13 +327,13 @@ class Snowplow(Planner):
             if attachment is None and obj is not None:
                 coll_obj = self.env.get_movable_box_from_aabb(obj_aabb)
                 # Compute the grasp transform of the attachment.
-                base_pose = Pose(
-                    point=Point(x=q[0], y=q[1]),
-                    euler=Euler(yaw=q[2]),
+                base_pose = pbu.Pose(
+                    point=pbu.Point(x=q[0], y=q[1]),
+                    euler=pbu.Euler(yaw=q[2]),
                 )
                 # obj_pose = Pose(point=get_aabb_center(coll_obj.aabb))
-                obj_pose = get_pose(obj)
-                current_grasp = multiply(invert(base_pose), obj_pose)
+                obj_pose = pbu.get_pose(obj)
+                current_grasp = pbu.multiply(pbu.invert(base_pose), obj_pose)
                 attachment = [coll_obj, current_grasp, obj]
                 self.env.remove_movable_object(coll_obj)
             elif attachment is not None and obj is None:
@@ -416,12 +411,12 @@ class Snowplow(Planner):
             if attachment is None and obj is not None:
                 coll_obj = self.env.get_movable_box_from_aabb(obj_aabb)
                 # Compute the grasp transform of the attachment.
-                base_pose = Pose(
-                    point=Point(x=q[0], y=q[1]),
-                    euler=Euler(yaw=q[2]),
+                base_pose = pbu.Pose(
+                    point=pbu.Point(x=q[0], y=q[1]),
+                    euler=pbu.Euler(yaw=q[2]),
                 )
-                obj_pose = Pose(point=get_aabb_center(coll_obj.aabb))
-                current_grasp = multiply(invert(base_pose), obj_pose)
+                obj_pose = pbu.Pose(point=pbu.get_aabb_center(coll_obj.aabb))
+                current_grasp = pbu.multiply(pbu.invert(base_pose), obj_pose)
                 attachment = [coll_obj, current_grasp, obj]
                 self.env.remove_movable_object(coll_obj)
 

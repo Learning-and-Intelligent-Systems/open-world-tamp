@@ -4,6 +4,7 @@ from collections import Counter, namedtuple
 from itertools import product
 from operator import itemgetter
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
@@ -21,8 +22,7 @@ from owt.simulation.lis import (DET_CKPT_PATH, DEVICE, DSN_CONFIG,
 DEFAULT_DEBUG = False
 FLOOR = 0
 TABLE_IDNUM = 1
-BACKGROUND = [FLOOR, TABLE_IDNUM]  # 0 - floor, 1 - table
-# TODO clean up constants
+BACKGROUND = [FLOOR, TABLE_IDNUM]
 INSTANCE_TEMPLATE = "instance_{}"
 DEFAULT_VALUE = (UNKNOWN, UNKNOWN)
 
@@ -1165,8 +1165,6 @@ class MultiSeg(object):
         return v.get_image()
 
     def vis(self, merge, rgb_image):
-        import matplotlib.pyplot as plt
-
         plt.subplot(2, 2, 4)
         plt.axis("off")
         plt.imshow(self.overlay_pred(merge, rgb_image))

@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import collections as mc
 from matplotlib.patches import Rectangle
-from pybullet_tools.utils import get_aabb
+
+from owt.pb_utils import get_aabb
 
 GRID_RESOLUTION = 0.2  # Grid resolutions
 
