@@ -1,54 +1,18 @@
 import os
 
-from pybullet_tools.ikfast.pr2.ik import (BASE_FRAME, IK_FRAME, TORSO_JOINT,
-                                          UPPER_JOINT)
-from pybullet_tools.ikfast.utils import IKFastInfo
-from pybullet_tools.utils import get_camera_matrix, list_paths
-
-try:
-    import rosgraph
-
-    USING_ROS = rosgraph.is_master_online()
-except ImportError:
-    USING_ROS = False
-print("ROS:", USING_ROS)
-
-try:
-    import torch
-
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    DEVICE = torch.device(device)  # cpu | cuda | cuda:0
-except ImportError:
-    DEVICE = None
-print("Device:", DEVICE)
+import owt.pb_utils as pbu
 
 #######################################################
 
 ROOT_DIRECTORY = os.path.abspath(
     os.path.join(__file__, os.pardir, os.pardir, os.pardir)
 )
-LIS_PR2 = True
-
-PR2_INFOS = {
-    arm: IKFastInfo(
-        module_name="pr2.ik{}".format(arm.capitalize()),
-        base_link=BASE_FRAME,
-        ee_link=IK_FRAME[arm],
-        free_joints=[TORSO_JOINT, UPPER_JOINT[arm]],
-    )
-    for arm in IK_FRAME
-}
 
 CAMERA_FRAME = "head_mount_kinect_rgb_link"
 CAMERA_OPTICAL_FRAME = "head_mount_kinect_rgb_optical_frame"
 WIDTH, HEIGHT = 640, 480
 FX, FY = 525.0, 525.0
-# CX, CY = 319.5, 239.5
-CAMERA_MATRIX = get_camera_matrix(WIDTH, HEIGHT, FX, FY)
-
-# CAMERA_FRAME = 'high_def_frame'
-# CAMERA_OPTICAL_FRAME = 'high_def_optical_frame' # HEAD_LINK_NAME
-# CAMERA_MATRIX = PR2_CAMERA_MATRIX # TODO: WIDTH, HEIGHT
+CAMERA_MATRIX = pbu.get_camera_matrix(WIDTH, HEIGHT, FX, FY)
 
 PR2_WINGSPAN = 0.75 * 1.19  # 1.19
 PR2_FINGER_DIMENSIONS = [0.02, 0.035]  # width x length
@@ -177,23 +141,18 @@ def ycb_type_from_file(path):
 def get_ycb_obj_path(ycb_type, use_concave=False):
     path_from_type = {
         ycb_type_from_file(path): path
-        for path in list_paths(YCB_PATH)
+        for path in pbu.list_paths(YCB_PATH)
         if os.path.isdir(path)
     }
-    # print(ycb_path)
-    # for name, path in sorted(path_from_type.items()):
-    #     print(name, path)
+
     if ycb_type not in path_from_type:
         return None
-    # texture_map.png textured.mtl
-    # filename = 'nontextured.ply' # invalid mesh filename extension '.ply'
-    # filename = 'nontextured.stl'
+
     if use_concave:
         filename = "decomp.obj"
     else:
         filename = "textured.obj"
-    # textured_simple.obj.mtl # TODO: where did these originate?
-    # filename = 'textured_simple.obj'
+
     return os.path.join(path_from_type[ycb_type], filename)
 
 
@@ -281,31 +240,3 @@ LIS_YCB = [
     #'070-a_colored_wood_blocks' # No segmentation
     #'077_rubiks_cube' # Missing, no segmentation
 ]
-
-#######################################################
-
-# def sample_parameters(randomize=True):
-#     # TODO: fix these values per object
-#     scale = int(randomize)
-#     return {
-#         # TODO: randomize masses here
-#         # lateral (linear) contact friction
-#         # The coefficient of friction is usually between 0 and 1 but can be greater than 1
-#         # A coefficient of friction that is more than one just means that the frictional force is stronger than the normal force
-#         'lateralFriction': sample_norm(mu=0.5, sigma=0.1 * scale, lower=0.0),
-#         # torsional friction around the contact normal
-#         'spinningFriction': sample_norm(mu=0.001, sigma=0.0005 * scale, lower=0.0),
-#         # torsional friction orthogonal to contact normal
-#         # keep this value very close to zero, otherwise the simulation can become very unrealistic
-#         'rollingFriction': sample_norm(mu=0.001, sigma=0.0005 * scale, lower=0.0),
-#         # bouncyness of contact. Keep it a bit less than 1.
-#         # restitution: 0 => inelastic collision, 1 => elastic collision
-#         'restitution': sample_norm(mu=0.7, sigma=0.1 * scale, lower=0.0, upper=1.0),
-#         # linear damping of the link (0.04 by default)
-#         'linearDamping': sample_norm(mu=0.04, sigma=0.01 * scale, lower=0.01),
-#         # angular damping of the link (0.04 by default)
-#         'angularDamping': sample_norm(mu=0.04, sigma=0.01 * scale, lower=0.01),
-#         #'contactStiffness': None,
-#         #'contactDamping': None,
-#         #'localInertiaDiagonal': (sample_norm(mu=5e-9, sigma=1e-9, lower=1e-9) * np.ones(3)).tolist(),
-#     }

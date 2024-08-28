@@ -7,6 +7,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import os
+import pickle
 
 import numpy as np
 import pybullet as p
@@ -66,13 +67,7 @@ def link_seg_from_gt(seg_image):
 
 
 def fuse_predicted_labels(
-    seg_network,
-    camera_image,
-    fuse=False,
-    use_depth=False,
-    debug=False,
-    num_segs=1,
-    **kwargs
+    seg_network, camera_image, fuse=False, use_depth=False, num_segs=1, **kwargs
 ):
     rgb, depth, bullet_seg, _, camera_matrix = camera_image
     if fuse:
@@ -90,7 +85,7 @@ def fuse_predicted_labels(
         num_segs=num_segs,
         **kwargs
     )
-    return CameraImage(rgb, depth, predicted_seg, *camera_image[3:])
+    return pbu.CameraImage(rgb, depth, predicted_seg, *camera_image[3:])
 
 
 class Policy(object):
@@ -173,7 +168,7 @@ class Policy(object):
                     camera_image.camera_pose,
                     camera_image.camera_matrix,
                 )
-                camera_image = CameraImage(
+                camera_image = pbu.CameraImage(
                     rgb, depth, seg_from_gt(predicted_seg), camera_pose, camera_matrix
                 )
 
@@ -181,13 +176,15 @@ class Policy(object):
                     save_camera_images(camera_image)
 
         else:
-            camera_link = link_from_name(self.robot, self.robot.CAMERA_OPTICAL_FRAME)
+            camera_link = pbu.link_from_name(
+                self.robot, self.robot.CAMERA_OPTICAL_FRAME
+            )
             camera_image = self.robot.controller.get_segmented_image(self.seg_network)
             rgb, depth, seg, _, matrix = camera_image
 
             self.robot.update_conf()
-            camera_pose = get_link_pose(self.robot, camera_link)
-            camera_image = CameraImage(rgb, depth, seg, camera_pose, matrix)
+            camera_pose = pbu.get_link_pose(self.robot, camera_link)
+            camera_image = pbu.CameraImage(rgb, depth, seg, camera_pose, matrix)
 
             if self.args.save:
                 save_camera_images(camera_image)
@@ -243,13 +240,17 @@ class Policy(object):
 
     def predstate_command(self, command):
         state = WorldState(client=self.client)
-        saver = WorldSaver(bodies=[body.body for body in self.belief.estimated_objects])
+        saver = pbu.WorldSaver(
+            bodies=[body.body for body in self.belief.estimated_objects]
+        )
         before_poses = {
-            obj: get_pose(obj.body) for obj in self.belief.estimated_objects
+            obj: pbu.get_pose(obj.body) for obj in self.belief.estimated_objects
         }
         belief_sim = iterate_sequence(state, command, time_step=0)
-        after_poses = {obj: get_pose(obj.body) for obj in self.belief.estimated_objects}
-        tform_from_rel_pose = lambda p1, p2: multiply(p1, invert(p2))
+        after_poses = {
+            obj: pbu.get_pose(obj.body) for obj in self.belief.estimated_objects
+        }
+        tform_from_rel_pose = lambda p1, p2: pbu.multiply(p1, pbu.invert(p2))
         tform_poses = {
             obj: tform_from_rel_pose(after_poses[obj], before_poses[obj])
             for obj in self.belief.estimated_objects
@@ -263,7 +264,6 @@ class Policy(object):
 
     def plan(self, belief, task, serialize=False, save=True):
         start_time = time.time()
-        print(SEPARATOR)
 
         # state = WorldState()
         objects = belief.estimated_objects
@@ -291,13 +291,13 @@ class Policy(object):
                 "serialize": serialize,  # TODO: flag
                 "failure": failure,
                 "plan": plan,
-                "length": INF if failure else len(sequence),
+                "length": np.inf if failure else len(sequence),
                 "cost": cost,
                 "sequence": sequence,
                 # 'goal': None,
             }
         )
-        self.runtimes.setdefault("planning", []).append(elapsed_time(start_time))
+        self.runtimes.setdefault("planning", []).append(pbu.elapsed_time(start_time))
 
         return sequence
 
@@ -345,7 +345,7 @@ class Policy(object):
             }
         )
         self.executions.append(data)
-        self.runtimes.setdefault("execution", []).append(elapsed_time(start_time))
+        self.runtimes.setdefault("execution", []).append(pbu.elapsed_time(start_time))
 
         return status, aborted
 
@@ -365,14 +365,15 @@ class Policy(object):
         }
         self.data.append(data)
 
-        write_pickle(path_name, data)
+        with open(path_name, "wb") as f:
+            pickle.dump(data, f)
 
         print("Saved data to {}".format(path_name))
 
     def run(
         self,
         task,
-        num_iterations=INF,
+        num_iterations=np.inf,
         always_save=True,
         terminate=not GRASP_EXPERIMENT,
         client=None,
@@ -380,20 +381,20 @@ class Policy(object):
     ):
         print("=" * 30)
         start_time = time.time()
-        for iteration in irange(num_iterations):  # TODO: max time?
+        for iteration in range(num_iterations):  # TODO: max time?
             self.robot.reset()
             belief = self.estimate_state(task)
             if not self.args.debug:  # Intentional
-                wait_if_gui(client=client)
+                pbu.wait_if_gui(client=client)
 
             sequence = self.plan(belief, task)
 
             self.robot.reset()
             belief.reset()
-            p.removeAllUserDebugItems()
+            pbu.remove_debug()
 
             print("Execute?")
-            wait_if_gui(client=client)
+            pbu.wait_if_gui(client=client)
             status, aborted = self.execute_command(sequence)
             if always_save or self.executed:  # Only save if the robot does something
                 self.save_data()
@@ -403,7 +404,7 @@ class Policy(object):
                 if status is SUCCESS_STATUS:
                     print(
                         "Iteration {}: Success ({:.3f} sec)!".format(
-                            iteration, elapsed_time(start_time)
+                            iteration, pbu.elapsed_time(start_time)
                         )
                     )
                     return True
@@ -411,16 +412,16 @@ class Policy(object):
             self.robot.controller.wait(duration=2.0)
         print(
             "Iteration {}: Failure ({:.3f} sec)!".format(
-                iteration, elapsed_time(start_time)
+                iteration, pbu.elapsed_time(start_time)
             )
         )
-        wait_if_gui(client=client)  # TODO: reduce PyBullet and GPU spam output
+        pbu.wait_if_gui(client=client)  # TODO: reduce PyBullet and GPU spam output
         return False
 
     def run_exploration(
         self,
         task,
-        num_iterations=INF,
+        num_iterations=np.inf,
         always_save=True,
         room=None,
         real_world=None,
@@ -459,21 +460,21 @@ class Policy(object):
         env.goal = (2.2, 1, env.goal[2])
         env.initialized = True
 
-        with LockRenderer(client=self.client):
+        with pbu.LockRenderer(client=self.client):
             env.set_defaults(self.robot.body, client=client)
             env.objects += real_world.room.movable_obstacles
-            env.camera_pose = get_link_pose(
+            env.camera_pose = pbu.get_link_pose(
                 self.robot.body,
-                link_from_name(
+                pbu.link_from_name(
                     self.robot.body, "kinect2_rgb_optical_frame", client=client
                 ),
                 client=self.client,
             )
 
             env.joints = [
-                joint_from_name(self.robot.body, "x", client=client),
-                joint_from_name(self.robot.body, "y", client=client),
-                joint_from_name(self.robot.body, "theta", client=client),
+                pbu.joint_from_name(self.robot.body, "x", client=client),
+                pbu.joint_from_name(self.robot.body, "y", client=client),
+                pbu.joint_from_name(self.robot.body, "theta", client=client),
             ]
 
             env.robot = self.robot.body
@@ -488,11 +489,11 @@ class Policy(object):
             env.display_goal(env.goal)
 
             env.joints = [
-                joint_from_name(env.robot, "x", client=client),
-                joint_from_name(env.robot, "y", client=client),
-                joint_from_name(env.robot, "theta", client=client),
+                pbu.joint_from_name(env.robot, "x", client=client),
+                pbu.joint_from_name(env.robot, "y", client=client),
+                pbu.joint_from_name(env.robot, "theta", client=client),
             ]
-            set_joint_positions(env.robot, env.joints, env.start, client=client)
+            pbu.set_joint_positions(env.robot, env.joints, env.start, client=client)
 
         planner = base_planner(env, client=client)
         plan = planner.get_plan(loadfile=None)
@@ -501,11 +502,11 @@ class Policy(object):
 
         print("=" * 30)
         start_time = time.time()
-        for iteration in irange(num_iterations):  # TODO: max time?
+        for iteration in range(num_iterations):  # TODO: max time?
             self.robot.reset()
             belief = self.estimate_state(task)
             if self.args.debug:  # Intentional
-                wait_if_gui(client=client)
+                pbu.wait_if_gui(client=client)
 
             sequence = self.plan(belief, task)
 
@@ -514,7 +515,7 @@ class Policy(object):
             p.removeAllUserDebugItems()
 
             if self.args.debug:  # Intentional
-                wait_if_gui(client=client)
+                pbu.wait_if_gui(client=client)
 
             status, aborted = self.execute_command(sequence)
             if always_save or self.executed:  # Only save if the robot does something
@@ -523,10 +524,10 @@ class Policy(object):
             self.robot.controller.wait(duration=2.0)
         print(
             "Iteration {}: Failure ({:.3f} sec)!".format(
-                iteration, elapsed_time(start_time)
+                iteration, pbu.elapsed_time(start_time)
             )
         )
-        wait_if_gui(client=client)  # TODO: reduce PyBullet and GPU spam output
+        pbu.wait_if_gui(client=client)  # TODO: reduce PyBullet and GPU spam output
         return False
 
     ##################################################

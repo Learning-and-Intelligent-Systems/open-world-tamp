@@ -36,6 +36,7 @@ MAX_GRASP_WIDTH = np.inf
 DEFAULT_SPEED_FRACTION = 0.3
 DEFAULT_MESH = ""
 _EPS = np.finfo(float).eps * 4.0
+GRAVITY = 9.8
 
 
 @dataclass
@@ -75,6 +76,18 @@ TAN = RGBA(0.824, 0.706, 0.549, 1)
 GREY = RGBA(0.5, 0.5, 0.5, 1)
 YELLOW = RGBA(1, 1, 0, 1)
 TRANSPARENT = RGBA(0, 0, 0, 0)
+
+ACHROMATIC_COLORS = {
+    "white": WHITE,
+    "grey": GREY,
+    "black": BLACK,
+}
+
+CHROMATIC_COLORS = {
+    "red": RED,
+    "green": GREEN,
+    "blue": BLUE,
+}
 
 
 @dataclass
@@ -409,6 +422,75 @@ def ramp_retime_path(
     return waypoints, time_from_starts
 
 
+def is_center_on_aabb(
+    body, bottom_aabb, above_epsilon=1e-2, below_epsilon=0.0, **kwargs
+):
+    # TODO: compute AABB in origin
+    # TODO: use center of mass?
+    assert (0 <= above_epsilon) and (0 <= below_epsilon)
+    center, extent = get_center_extent(body, **kwargs)  # TODO: approximate_as_prism
+    base_center = center - np.array([0, 0, extent[2]]) / 2
+    top_z_min = base_center[2]
+    bottom_z_max = bottom_aabb[1][2]
+    return (
+        (bottom_z_max - abs(below_epsilon))
+        <= top_z_min
+        <= (bottom_z_max + abs(above_epsilon))
+    ) and (aabb_contains_point(base_center[:2], aabb2d_from_aabb(bottom_aabb)))
+
+
+def vertices_from_data(data):
+    geometry_type = get_data_type(data)
+    if geometry_type == p.GEOM_BOX:
+        extents = np.array(get_data_extents(data))
+        aabb = aabb_from_extent_center(extents)
+        vertices = get_aabb_vertices(aabb)
+    elif geometry_type in (p.GEOM_CYLINDER, p.GEOM_CAPSULE):
+        radius, height = get_data_radius(data), get_data_height(data)
+        extents = np.array([2 * radius, 2 * radius, height])
+        aabb = aabb_from_extent_center(extents)
+        vertices = get_aabb_vertices(aabb)
+    elif geometry_type == p.GEOM_SPHERE:
+        radius = get_data_radius(data)
+        extents = 2 * radius * np.ones(3)
+        aabb = aabb_from_extent_center(extents)
+        vertices = get_aabb_vertices(aabb)
+    elif geometry_type == p.GEOM_MESH:
+        filename, scale = get_data_filename(data), get_data_scale(data)
+        if filename == UNKNOWN_FILE:
+            raise RuntimeError(filename)
+        mesh = read_obj(filename, decompose=False)
+        vertices = [scale * np.array(vertex) for vertex in mesh.vertices]
+    else:
+        raise NotImplementedError(geometry_type)
+    return vertices
+
+
+def vertices_from_link(body, link=BASE_LINK, collision=True):
+    vertices = []
+    get_data = get_collision_data if collision else get_visual_data
+    for data in get_data(body, link):
+        vertices.extend(tform_points(get_data_pose(data), vertices_from_data(data)))
+    return vertices
+
+
+def aabb_from_oobb(oobb):
+    return aabb_from_points(get_oobb_vertices(oobb))
+
+
+def joint_controller(body, joints, target, tolerance=1e-3, timeout=np.inf, **kwargs):
+    assert len(joints) == len(target)
+    dt = get_time_step()
+    time_elapsed = 0.0
+    control_joints(body, joints, target, **kwargs)
+    positions = get_joint_positions(body, joints)
+    while not all_close(positions, target, atol=tolerance) and (time_elapsed < timeout):
+        yield positions
+        time_elapsed += dt
+        positions = get_joint_positions(body, joints)
+        # TODO: return timeout (or throw error)
+
+
 def get_max_velocity(body, joint, **kwargs):
     return get_joint_info(body, joint, **kwargs).jointMaxVelocity
 
@@ -663,6 +745,11 @@ def create_obj(path, scale=1.0, mass=STATIC_MASS, color=GREY, **kwargs):
         None, path, fixed_base, scale
     )  # TODO: store geometry info instead?
     return body
+
+
+def enable_gravity(client=None):
+    client = client or DEFAULT_CLIENT
+    client.setGravity(0, 0, -GRAVITY)
 
 
 def load_pybullet(filename, fixed_base=False, scale=1.0, client=None, **kwargs):
@@ -2091,6 +2178,29 @@ def remove_body(body, client=None, **kwargs):
     if (CLIENT, body) in INFO_FROM_BODY:
         del INFO_FROM_BODY[CLIENT, body]
     return client.removeBody(int(body))
+
+
+def get_body_name(body, **kwargs):
+    return get_body_info(body, **kwargs).body_name.decode(encoding="UTF-8")
+
+
+def get_name(body, **kwargs):
+    name = get_body_name(body, **kwargs)
+    if name == "":
+        name = "body"
+    return "{}{}".format(name, int(body))
+
+
+def add_body_name(body, name=None, link=BASE_LINK, **kwargs):
+    if name is None:
+        name = get_name(body, **kwargs)
+    with PoseSaver(body, **kwargs):
+        set_pose(body, unit_pose(), **kwargs)
+        lower, upper = get_aabb(body, only_collision=False, **kwargs)
+        position = upper
+        link_pose = get_link_pose(body, link, **kwargs)
+        position = tform_point(invert(link_pose), position)
+    return add_text(name, position=position, parent=body, parent_link=link, **kwargs)
 
 
 def set_color(body, color, link=BASE_LINK, shape_index=NULL_ID, client=None, **kwargs):
@@ -3613,6 +3723,11 @@ def matrix_from_quat(quat):
 def get_pairs(sequence):
     sequence = list(sequence)
     return safe_zip(sequence[:-1], sequence[1:])
+
+
+def pose_from_pose2d(pose2d, z=0.0):
+    x, y, theta = pose2d
+    return Pose(Point(x=x, y=y, z=z), Euler(yaw=theta))
 
 
 def adjust_path(robot, joints, path, initial_conf=None, **kwargs):

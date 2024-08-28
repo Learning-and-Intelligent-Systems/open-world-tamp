@@ -2,16 +2,16 @@ from collections import Counter, OrderedDict, namedtuple
 
 import numpy as np
 import pybullet as p
-from open_world.simulation.utils import get_rigid_ancestor
 
 import owt.pb_utils as pbu
+from owt.simulation.utils import get_rigid_ancestor
 
 WORLD_BODY = None
 
 
 class ParentBody(object):  # TODO: inherit from Shape?
     def __init__(
-        self, body=WORLD_BODY, link=BASE_LINK, client=None, **kwargs
+        self, body=WORLD_BODY, link=pbu.BASE_LINK, client=None, **kwargs
     ):  # , shape=0):
         self.body = body
         self.client = client
@@ -24,8 +24,8 @@ class ParentBody(object):  # TODO: inherit from Shape?
 
     def get_pose(self):
         if self.body is WORLD_BODY:
-            return unit_pose()
-        return get_link_pose(self.body, self.link, client=self.client)
+            return pbu.unit_pose()
+        return pbu.get_link_pose(self.body, self.link, client=self.client)
 
     # TODO: hash & equals by extending tuple
     def __repr__(self):
@@ -35,7 +35,7 @@ class ParentBody(object):  # TODO: inherit from Shape?
 ##################################################
 
 # TODO: functions for taking the union of the individual surfaces
-defaults = (BASE_LINK, 0)
+defaults = (pbu.BASE_LINK, 0)
 Shape = namedtuple(
     "Shape", ["link", "index"]
 )  # , defaults=defaults) # only supports python3
@@ -52,7 +52,7 @@ class Object(object):
         name=None,
         link_names={},
         shape_names={},
-        reference_pose=Pose(),
+        reference_pose=pbu.Pose(),
         color=None,
         properties=[],
         points=[],
@@ -117,20 +117,20 @@ class Object(object):
         return self.get_link_parent(self.get_group_joints(group)[0])
 
     def get_group_subtree(self, group):
-        return get_link_subtree(
+        return pbu.get_link_subtree(
             self.body, self.get_group_parent(group), client=self.client
         )  # get_link_subtree | get_link_descendants
 
     def joint_from_name(self, name):
-        for joint in get_joints(self.body, client=self.client):
+        for joint in pbu.get_joints(self.body, client=self.client):
             if self.get_joint_name(joint) == name:
                 return joint
         raise ValueError(self.body, name)
 
     def get_joint_name(self, joint):
-        return get_joint_info(self.body, joint, client=self.client).jointName.decode(
-            "UTF-8"
-        )
+        return pbu.get_joint_info(
+            self.body, joint, client=self.client
+        ).jointName.decode("UTF-8")
 
     def joints_from_names(self, names):
         return tuple(self.joint_from_name(name) for name in names)
@@ -142,12 +142,12 @@ class Object(object):
         return self.get_joint_positions(self.get_group_joints(group))
 
     def set_group_positions(self, group, positions):
-        set_joint_positions(
+        pbu.set_joint_positions(
             self.body, self.get_group_joints(group), positions, client=self.client
         )
 
     def get_group_limits(self, group):
-        return get_custom_limits(
+        return pbu.get_custom_limits(
             self.body,
             self.get_group_joints(group),
             custom_limits=self.custom_limits,
@@ -156,10 +156,10 @@ class Object(object):
 
     @property
     def observed_pose(self):
-        return get_pose(self.body, client=self.client)
+        return pbu.get_pose(self.body, client=self.client)
 
     def is_circular(self, joint):
-        joint_info = get_joint_info(self.body, joint, client=self.client)
+        joint_info = pbu.get_joint_info(self.body, joint, client=self.client)
         if joint_info.jointType == p.JOINT_FIXED:
             return False
         return joint_info.jointUpperLimit < joint_info.jointLowerLimit
@@ -168,46 +168,41 @@ class Object(object):
         # TODO: make a version for several joints?
         if self.is_circular(joint):
             # TODO: return UNBOUNDED_LIMITS
-            return CIRCULAR_LIMITS
-        joint_info = get_joint_info(self.body, joint, client=self.client)
+            return pbu.CIRCULAR_LIMITS
+        joint_info = pbu.get_joint_info(self.body, joint, client=self.client)
         return joint_info.jointLowerLimit, joint_info.jointUpperLimit
 
     def get_link_parent(self, link):
-        if link == BASE_LINK:
+        if link == pbu.BASE_LINK:
             return None
-        return get_joint_info(self.body, link, client=self.client).parentIndex
+        return pbu.get_joint_info(self.body, link, client=self.client).parentIndex
 
     def get_local_link_pose(self, joint):
         parent_joint = self.get_link_parent(joint)
-
-        # world_child = get_link_pose(body, joint)
-        # world_parent = get_link_pose(body, parent_joint)
-        ##return multiply(invert(world_parent), world_child)
-        # return multiply(world_child, invert(world_parent))
-
-        # https://github.com/bulletphysics/bullet3/blob/9c9ac6cba8118544808889664326fd6f06d9eeba/examples/pybullet/gym/pybullet_utils/urdfEditor.py#L169
-        parent_com = get_joint_parent_frame(self.body, joint, client=self.client)
-        tmp_pose = invert(
-            multiply(
-                get_joint_inertial_pose(self.body, joint, client=self.client),
+        parent_com = pbu.get_joint_parent_frame(self.body, joint, client=self.client)
+        tmp_pose = pbu.invert(
+            pbu.multiply(
+                pbu.get_joint_inertial_pose(self.body, joint, client=self.client),
                 parent_com,
             )
         )
-        parent_inertia = get_joint_inertial_pose(
+        parent_inertia = pbu.get_joint_inertial_pose(
             self.body, parent_joint, client=self.client
         )
         # return multiply(parent_inertia, tmp_pose) # TODO: why is this wrong...
-        _, orn = multiply(parent_inertia, tmp_pose)
-        pos, _ = multiply(parent_inertia, Pose(parent_com[0]))
+        _, orn = pbu.multiply(parent_inertia, tmp_pose)
+        pos, _ = pbu.multiply(parent_inertia, pbu.Pose(parent_com[0]))
         return (pos, orn)
 
-    def get_dynamics_info(self, link=BASE_LINK):
-        return DynamicsInfo(
-            *self.client.getDynamicsInfo(self.body, link)[: len(DynamicsInfo._fields)]
+    def get_dynamics_info(self, link=pbu.BASE_LINK):
+        return pbu.DynamicsInfo(
+            *self.client.getDynamicsInfo(self.body, link)[
+                : len(pbu.DynamicsInfo._fields)
+            ]
         )
 
     def get_joint_state(self, joint):
-        return JointState(*self.client.getJointState(self.body, joint))
+        return pbu.JointState(*self.client.getJointState(self.body, joint))
 
     def get_joint_position(self, joint):
         return self.get_joint_state(joint).jointPosition
@@ -218,10 +213,10 @@ class Object(object):
     def get_moving_links(self, joints):
         moving_links = set()
         for joint in joints:
-            link = child_link_from_joint(joint)
+            link = pbu.child_link_from_joint(joint)
             if link not in moving_links:
                 moving_links.update(
-                    get_link_subtree(self.body, link, client=self.client)
+                    pbu.get_link_subtree(self.body, link, client=self.client)
                 )
         return list(moving_links)
 
@@ -232,17 +227,17 @@ class Object(object):
         return "{}{}".format(name, int(self.body))
 
     def get_base_name(self):
-        return get_body_info(self.body, client=self.client).base_name.decode(
+        return pbu.get_body_info(self.body, client=self.client).base_name.decode(
             encoding="UTF-8"
         )
 
     def get_body_name(self):
-        return get_body_info(self.body, client=self.client).body_name.decode(
+        return pbu.get_body_info(self.body, client=self.client).body_name.decode(
             encoding="UTF-8"
         )
 
     def get_base_name(self):
-        return get_body_info(self.body, client=self.client).base_name.decode(
+        return pbu.get_body_info(self.body, client=self.client).base_name.decode(
             encoding="UTF-8"
         )
 
@@ -252,18 +247,18 @@ class Object(object):
             return self.link_names[link_name]
 
         if link_name == self.get_base_name():
-            return BASE_LINK
-        for link in get_joints(self.body, client=self.client):
-            if get_link_name(self.body, link, client=self.client) == link_name:
+            return pbu.BASE_LINK
+        for link in pbu.get_joints(self.body, client=self.client):
+            if pbu.get_link_name(self.body, link, client=self.client) == link_name:
                 return link
         raise ValueError(self.body, link_name)
 
-    def can_collide(self, link=BASE_LINK, **kwargs):
-        return len(get_collision_data(self.body, link=link, **kwargs)) != 0
+    def can_collide(self, link=pbu.BASE_LINK, **kwargs):
+        return len(pbu.get_collision_data(self.body, link=link, **kwargs)) != 0
 
     def get_all_links(self):
         # TODO: deprecate get_links
-        return [BASE_LINK] + list(get_joints(self.body))
+        return [pbu.BASE_LINK] + list(pbu.get_joints(self.body))
 
     @property
     def points(self):
@@ -273,59 +268,51 @@ class Object(object):
             return [lp.point for lp in self.labeled_points]
 
     def get_movable_joints(self):
-        return self.prune_fixed_joints(get_joints(self.body))
+        return self.prune_fixed_joints(pbu.get_joints(self.body))
 
     def get_link_pose(self, link):
-        if link == BASE_LINK:
-            return get_pose(self.body, client=self.client)
-        # if set to 1 (or True), the Cartesian world position/orientation will be recomputed using forward kinematics.
-        link_state = get_link_state(
-            self.body, link, client=self.client
-        )  # , kinematics=True, velocity=False)
+        if link == pbu.BASE_LINK:
+            return pbu.get_pose(self.body, client=self.client)
+
+        link_state = pbu.get_link_state(self.body, link, client=self.client)
         return link_state.worldLinkFramePosition, link_state.worldLinkFrameOrientation
 
     def shape_from_name(self, shape_name):
         return self.shape_names[shape_name]
         # return self.shape_names.get(shape_name, None)
 
-    def get_shape_data(self, link=BASE_LINK, index=0):
-        return get_collision_data(self.body, link=link, client=self.client)[index]
+    def get_shape_data(self, link=pbu.BASE_LINK, index=0):
+        return pbu.get_collision_data(self.body, link=link, client=self.client)[index]
 
     def get_shape_oobb(self, shape_name=DEFAULT_SHAPE):
-        # TODO: get_trimesh_oobb
         if shape_name is DEFAULT_SHAPE:
-            reference_pose = unit_pose()
-            # reference_pose = get_pose(self)
-            with PoseSaver(self, client=self.client):
-                set_pose(self.body, reference_pose, client=self.client)
-                aabb = get_aabb(self.body, client=self.client)
-            return OOBB(
+            reference_pose = pbu.unit_pose()
+            with pbu.PoseSaver(self, client=self.client):
+                pbu.set_pose(self.body, reference_pose, client=self.client)
+                aabb = pbu.get_aabb(self.body, client=self.client)
+            return pbu.OOBB(
                 aabb,
-                multiply(
-                    get_pose(self.body, client=self.client), invert(reference_pose)
+                pbu.multiply(
+                    pbu.get_pose(self.body, client=self.client),
+                    pbu.invert(reference_pose),
                 ),
-            )  # TODO: double check
-            # return OOBB(aabb, Pose())
-            # return OOBB(aabb_from_extent_center(get_aabb_extent(aabb)),
-            #            Pose(get_aabb_center(aabb)))
+            )
 
         link, index = self.shape_from_name(shape_name)
         surface_data = self.get_shape_data(link, index)
-        # pose = get_pose(self)
-        pose = get_link_pose(self, link)
-        surface_oobb = tform_oobb(pose, oobb_from_data(surface_data))
-        # draw_oobb(surface_oobb, color=RED)
+        pose = pbu.get_link_pose(self, link)
+        surface_oobb = pbu.tform_oobb(pose, pbu.oobb_from_data(surface_data))
         return surface_oobb
 
     def get_shape_aabb(self, *args, **kwargs):
-        return aabb_from_oobb(self.get_shape_oobb(*args, **kwargs))
+        return pbu.aabb_from_oobb(self.get_shape_oobb(*args, **kwargs))
 
     @property
     def active(self):
         return self.body is not None
 
     def erase(self):
-        remove_handles(self.handles, client=self.client)
+        pbu.remove_handles(self.handles, client=self.client)
 
         self.handles = []
 
@@ -334,41 +321,36 @@ class Object(object):
         if self.name is not None:
             # TODO: attach to the highest link (for the robot)
             self.handles.append(
-                add_body_name(self.body, name=self.name, client=self.client)
+                pbu.add_body_name(self.body, name=self.name, client=self.client)
             )
-        # self.handles.extend(draw_pose(Pose(), parent=self.body, client=self.client))
         return self.handles
 
     def remove(self):
         self.erase()
         if self.active:
-            remove_body(self.body, client=self.client)
+            pbu.remove_body(self.body, client=self.client)
             self.body = None
 
 
 class Table(Object):  # TODO: Region
     def __init__(self, surface, *args, **kwargs):
         self.surface = surface
-        super(Table, self).__init__(*args, **kwargs)  # category='table'
-        # self.__dict__.update(kwargs)
-        # TODO: flag that indicates whether this is a physical region that should avoid collisions
+        super(Table, self).__init__(*args, **kwargs)
 
     def draw(self):
-        # TODO: other surface related behaviors (e.g. oobb, aabb)
         super(Table, self).draw()
-        # self.handles.extend(draw_surface(self.surface))
         return self.handles
 
 
 ##################################################
 
 
-def simulate_depth(depth_image, min_depth=0.0, max_depth=INF, noise=5e-3):
+def simulate_depth(depth_image, min_depth=0.0, max_depth=np.inf, noise=5e-3):
     if noise > 0:
         depth_image += np.random.normal(scale=noise, size=depth_image.shape)
     depth_image = np.maximum(depth_image, min_depth)
-    if max_depth < INF:
-        depth_image = np.minimum(depth_image, max_depth)  # TODO: np.nan
+    if max_depth < np.inf:
+        depth_image = np.minimum(depth_image, max_depth)
     return depth_image
 
 
@@ -376,7 +358,10 @@ def simulate_noise(camera_image, **kwargs):
     rgb, depth = camera_image[:2]
     # TODO: rgb noise
     depth = simulate_depth(depth, **kwargs)
-    return CameraImage(rgb, depth, *camera_image[2:])
+    return pbu.CameraImage(rgb, depth, *camera_image[2:])
+
+
+MAX_CAMERA_DIST = 2.5
 
 
 class Camera(object):  # TODO: extend Object?
@@ -386,10 +371,10 @@ class Camera(object):  # TODO: extend Object?
         link,
         optical_frame,
         camera_matrix,
-        max_depth=MAX_KINECT_DISTANCE,
+        max_depth=MAX_CAMERA_DIST,
         client=None,
         **kwargs
-    ):  # , parent=None): # TODO: remove robot dependency
+    ):
         self.robot = robot
         self.client = client
         self.link = link  # TODO: no longer need this
@@ -397,53 +382,35 @@ class Camera(object):  # TODO: extend Object?
         self.camera_matrix = camera_matrix
         self.max_depth = max_depth
         self.kwargs = dict(kwargs)
-        # self.parent = parent
-        # self.relative_pose = relative_pose
         self.handles = []
         self.draw()
 
     def get_pose(self):
-        return get_link_pose(self.robot, self.optical_frame, client=self.client)
+        return pbu.get_link_pose(self.robot, self.optical_frame, client=self.client)
 
     def get_image(self, segment=True, segment_links=False, **kwargs):
-        # TODO: apply maximum depth
-        # TODO: noise model
-        return get_image_at_pose(
+        return pbu.get_image_at_pose(
             self.get_pose(),
             self.camera_matrix,
             tiny=False,
             segment=segment,
             segment_links=segment_links,
             client=self.client,
-        )  # TODO: OpenCV
+        )
 
-    def draw(self, draw_cone=False):
-        # draw_link = self.optical_frame # No collision geometery
-        # draw_link = self.draw_link
-
+    def draw(self, **kwargs):
         draw_link = get_rigid_ancestor(
             self.robot, self.optical_frame, client=self.client
         )
         self.robot.get_relative_pose(self.optical_frame, draw_link)
-        # draw_pose(multiply(draw_from_optical, Pose()), length=1, parent=self.robot, parent_link=draw_link, client=client)
-        if draw_cone:
-            attach_viewcone(
-                self.robot,
-                depth=self.max_depth,
-                head_name=get_link_name(self.robot.body, draw_link),
-                camera_matrix=self.camera_matrix,
-                color=RED,
-            )
-        # view_cone = get_viewcone(depth=distance, camera_matrix=camera_matrix, color=apply_alpha(RED, alpha=0.1))
-        # set_pose(view_cone, camera_pose)
         return self.handles
 
     def object_visible(self, obj):
         camera_matrix = self.camera_matrix
-        obj_pose = get_pose(obj, client=self.client)
-        ray = multiply(invert(self.robot.cameras[0].get_pose()), obj_pose)[0]
-        image_pixel = pixel_from_ray(camera_matrix, ray)
-        width, height = dimensions_from_camera_matrix(self.camera_matrix)
+        obj_pose = pbu.get_pose(obj, client=self.client)
+        ray = pbu.multiply(pbu.invert(self.robot.cameras[0].get_pose()), obj_pose)[0]
+        image_pixel = pbu.pixel_from_ray(camera_matrix, ray)
+        width, height = pbu.dimensions_from_camera_matrix(self.camera_matrix)
         if (
             image_pixel[0] < width
             and image_pixel[0] >= 0
@@ -456,7 +423,8 @@ class Camera(object):  # TODO: extend Object?
 
     def __repr__(self):
         return "{}({})".format(
-            self.__class__.__name__, get_link_name(self.robot.body, self.optical_frame)
+            self.__class__.__name__,
+            pbu.get_link_name(self.robot.body, self.optical_frame),
         )
 
 
@@ -511,23 +479,17 @@ class Robot(Object):
     def update_conf(self):
         conf = dict(self.controller.joint_positions)
         for name, position in conf.items():
-            joint = joint_from_name(self, name, client=self.client)  # TODO: do in batch
-            set_joint_position(self, joint, position, client=self.client)
+            joint = pbu.joint_from_name(
+                self, name, client=self.client
+            )  # TODO: do in batch
+            pbu.set_joint_position(self, joint, position, client=self.client)
         return conf
 
-    def get_relative_pose(self, link1, link2=BASE_LINK):
+    def get_relative_pose(self, link1, link2=pbu.BASE_LINK):
         world_from_link1 = self.get_link_pose(link1)
         world_from_link2 = self.get_link_pose(link2)
-        link2_from_link1 = multiply(invert(world_from_link2), world_from_link1)
+        link2_from_link1 = pbu.multiply(pbu.invert(world_from_link2), world_from_link1)
         return link2_from_link1
-
-    @property
-    def default_mobile_base_arm(self):
-        return COMPACT_LEFT_ARM
-
-    @property
-    def default_fixed_base_arm(self):
-        return CLEAR_LEFT_ARM
 
     @property
     def robot(self):
@@ -558,22 +520,22 @@ class Robot(Object):
     @property
     def base_link(self):
         base_joint = self.get_group_joints(self.base_group)[-1]
-        return child_link_from_joint(base_joint)
+        return pbu.child_link_from_joint(base_joint)
 
     def get_gripper_width(self, gripper_joints, draw=False):
         [link1, link2] = self.get_finger_links(gripper_joints)
-        [collision_info] = get_closest_points(
-            self.body, self.body, link1, link2, max_distance=INF, client=self.client
+        [collision_info] = pbu.get_closest_points(
+            self.body, self.body, link1, link2, max_distance=np.inf, client=self.client
         )
         point1 = collision_info.positionOnA
         point2 = collision_info.positionOnB
         # distance = collision_info.contactDistance
         if draw:
-            draw_collision_info(collision_info)
-        max_width = get_distance(point1, point2)
+            pbu.draw_collision_info(collision_info)
+        max_width = pbu.get_distance(point1, point2)
         if draw:
-            add_line(point1, point2)
-            wait_if_gui()
+            pbu.add_line(point1, point2)
+            pbu.wait_if_gui()
         return max_width
 
     def get_max_limit(self, joint):
@@ -583,8 +545,8 @@ class Robot(Object):
         return [self.get_max_limit(joint) for joint in joints]
 
     def get_max_gripper_width(self, gripper_joints, **kwargs):
-        with ConfSaver(self, client=self.client):
-            set_joint_positions(
+        with pbu.ConfSaver(self, client=self.client):
+            pbu.set_joint_positions(
                 self.body,
                 gripper_joints,
                 self.get_max_limits(gripper_joints),
@@ -597,14 +559,14 @@ class Robot(Object):
         shape_links = [
             link
             for link in moving_links
-            if get_collision_data(self.body, link, client=self.client)
+            if pbu.get_collision_data(self.body, link, client=self.client)
         ]
         finger_links = [
             link
             for link in shape_links
             if not any(
-                get_collision_data(self.body, child, client=self.client)
-                for child in get_link_children(self.body, link, client=self.client)
+                pbu.get_collision_data(self.body, child, client=self.client)
+                for child in pbu.get_link_children(self.body, link, client=self.client)
             )
         ]
         # for link in finger_links:
@@ -621,25 +583,16 @@ class Robot(Object):
         tool_link = self.link_from_name(tool_name)
         return self.get_link_pose(tool_link)
 
-    def side_from_arm(self, arm):
-        return side_from_arm(arm)
-
-    def arm_from_side(self, side):
-        return arm_from_side(side)
-
-    def arm_conf(self, arm, conf):
-        return arm_conf(arm, conf)
-
     def get_component_mapping(self, group):
         # body -> component
         assert group in self.components
-        component_joints = get_movable_joints(
+        component_joints = pbu.get_movable_joints(
             self.components[group], client=self.client, draw=False
         )
-        body_joints = get_movable_joint_descendants(
+        body_joints = pbu.get_movable_joint_descendants(
             self.body, self.get_group_parent(group), client=self.client
         )
-        return OrderedDict(safe_zip(body_joints, component_joints))
+        return OrderedDict(pbu.safe_zip(body_joints, component_joints))
 
     def get_component_joints(self, group):
         mapping = self.get_component_mapping(group)
@@ -649,11 +602,8 @@ class Robot(Object):
         return fn(self.body, self.get_group_joints(group))
 
     def get_component(self, group, visual=True):
-        # TODO: ClonedGripper
-        # TODO: infinite mass & move away
-        # TODO: make a component class
         if group not in self.components:
-            component = clone_body(
+            component = pbu.clone_body(
                 self.body,
                 links=self.get_group_subtree(group),
                 visual=False,
@@ -661,13 +611,13 @@ class Robot(Object):
                 client=self.client,
             )
             if not visual:
-                set_all_color(component, TRANSPARENT)
+                pbu.set_all_color(component, pbu.TRANSPARENT)
             self.components[group] = component
         return self.components[group]
 
     def remove_components(self):
         for component in self.components.values():
-            remove_body(component, client=self.client)
+            pbu.remove_body(component, client=self.client)
         self.components = {}
 
     def get_tool_link(self, manipulator):
@@ -683,8 +633,8 @@ class Robot(Object):
     def dump(self):
         for group in self.groups:
             joints = self.get_group_joints(group)
-            print(get_link_name(self.body, self.get_group_parent(group)))
-            print(group, get_joint_names(self.body, joints))
+            print(pbu.get_link_name(self.body, self.get_group_parent(group)))
+            print(group, pbu.get_joint_names(self.body, joints))
 
 
 ##################################################
@@ -701,11 +651,11 @@ class Gripper(object):
         client=None,
     ):
         if finger_joints is None:
-            finger_joints = get_movable_joints(body)
+            finger_joints = pbu.get_movable_joints(body)
         if body is None:
             body = gripper
         if body_finger_joints is None:
-            body_finger_joints = get_movable_joints(body)
+            body_finger_joints = pbu.get_movable_joints(body)
         self.gripper = gripper
         self.finger_joints = tuple(finger_joints)
         self.body = body
@@ -715,21 +665,21 @@ class Gripper(object):
 
     @property
     def closed_conf(self):
-        return get_min_limits(self.body, self.body_finger_joints)
+        return pbu.get_min_limits(self.body, self.body_finger_joints)
 
     @property
     def open_conf(self):
-        return get_max_limits(self.body, self.body_finger_joints)
+        return pbu.get_max_limits(self.body, self.body_finger_joints)
 
     @property
     def max_velocities(self):
-        return get_max_velocities(self.body, self.body_finger_joints)
+        return pbu.get_max_velocities(self.body, self.body_finger_joints)
 
     def get_pose(self):
-        return get_pose(self.gripper)
+        return pbu.get_pose(self.gripper)
 
     def set_pose(self, pose):
-        set_pose(self.gripper, pose, client=self.client)
+        pbu.set_pose(self.gripper, pose, client=self.client)
 
     def get_finger_positions(self):
         return self.gripper.get_joint_positions(self.finger_joints)
@@ -753,14 +703,16 @@ class ClonedGripper(Gripper):
         self.robot = robot
         self.robot_root_link = robot_root_link
 
-        robot_gripper_links = get_link_subtree(robot, robot_root_link)
+        robot_gripper_links = pbu.get_link_subtree(robot, robot_root_link)
         gripper = self.clone_body(
             links=robot_gripper_links, visual=False, collision=True
         )
         if not visual:
-            set_all_color(robot, TRANSPARENT)
+            pbu.set_all_color(robot, pbu.TRANSPARENT)
 
-        robot_gripper_joints = list(map(parent_joint_from_link, robot_gripper_links))
+        robot_gripper_joints = list(
+            map(pbu.parent_joint_from_link, robot_gripper_links)
+        )
         if robot_finger_joints is None:
             robot_finger_joints = robot_gripper_joints
         robot_finger_indices = [
@@ -770,7 +722,7 @@ class ClonedGripper(Gripper):
         ]
         finger_joints = [
             joint
-            for joint in get_movable_joints(gripper)
+            for joint in pbu.get_movable_joints(gripper)
             if joint in robot_finger_indices
         ]
         super(ClonedGripper, self).__init__(
@@ -785,9 +737,9 @@ class ClonedGripper(Gripper):
 
 
 def displace_body(body, vector):
-    point = np.array(get_point(body))
+    point = np.array(pbu.get_point(body))
     new_point = point + vector
-    set_point(body, new_point)
+    pbu.set_point(body, new_point)
     return new_point
 
 
@@ -858,9 +810,9 @@ class RealWorld(object):  # Saver):
 
     def disable(self):
         if self.saver is None:
-            self.saver = WorldSaver(bodies=self.movable)
+            self.saver = pbu.WorldSaver(bodies=self.movable)
             for body in self.movable:
-                vector = self.displacement * get_unit_vector([1, 0, 0])
+                vector = self.displacement * pbu.get_unit_vector([1, 0, 0])
                 displace_body(body, vector)
         return self.saver
 
@@ -870,13 +822,7 @@ class RealWorld(object):  # Saver):
             self.saver = None
         return self.saver
 
-    # def saver(self):
-    #    return ClientSaver(self.client)
-    # def restore(self):
-    #     for body_saver in self.body_savers:
-    #         body_saver.restore()
     def label_image(self, camera_image):
-        # TODO: make a label class
         obj_from_body = {obj.body: obj for obj in self.objects}
         segmented = camera_image[2].astype(int)
         labeled = np.empty(segmented.shape[:2] + (2,), dtype=object)
@@ -896,7 +842,5 @@ class RealWorld(object):  # Saver):
                 else:
                     label = Label(UNKNOWN, UNKNOWN)
                 labeled[r, c] = label
-        # print('Ground truth:', get_label_counts(labeled))
-        # print('Labels:', get_label_counts(labeled))
         rgb, depth = camera_image[:2]
-        return CameraImage(rgb, depth, labeled, *camera_image[3:])
+        return pbu.CameraImage(rgb, depth, labeled, *camera_image[3:])

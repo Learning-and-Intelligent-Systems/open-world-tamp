@@ -10,8 +10,6 @@ import numpy as np
 
 import owt.pb_utils as pbu
 from owt.estimation.surfaces import get_plane_quat
-from owt.simulation.control import interpolate_controller
-from owt.simulation.lis import USING_ROS
 from owt.simulation.utils import X_AXIS, Z_AXIS
 
 
@@ -23,11 +21,8 @@ def sample_sphere_surface(d, uniform=True):
             return v / r
 
 
-PREGRASP_DISTANCE = 0.07  # 0.05 | 0.07
-
-# TODO: infer automatically
-# FINGER_LENGTH = PR2_FINGER_DIMENSIONS[1] / 2.
-FINGER_LENGTH = 0.01 if USING_ROS else 0.0  # 0. | 0.01 | 0.015 | 0.02
+PREGRASP_DISTANCE = 0.07
+FINGER_LENGTH = 0.0
 
 ScoredGrasp = namedtuple("ScoredGrasp", ["pose", "contact1", "contact2", "score"])
 

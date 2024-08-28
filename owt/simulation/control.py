@@ -12,9 +12,9 @@ def step_curve(body, joints, curve, time_step=2e-2, print_freq=None, **kwargs):
     time_elapsed = 0.0
     last_print = time_elapsed
     for num_steps, (time_elapsed, positions) in enumerate(
-        sample_curve(curve, time_step=time_step)
+        pbu.sample_curve(curve, time_step=time_step)
     ):
-        set_joint_positions(body, joints, positions, **kwargs)
+        pbu.set_joint_positions(body, joints, positions, **kwargs)
         # num_steps += 1
         # time_elapsed += time_step
         if (print_freq is not None) and (print_freq <= (time_elapsed - last_print)):
@@ -22,8 +22,8 @@ def step_curve(body, joints, curve, time_step=2e-2, print_freq=None, **kwargs):
                 "Step: {} | Sim secs: {:.3f} | Real secs: {:.3f} | Steps/sec {:.3f}".format(
                     num_steps,
                     time_elapsed,
-                    elapsed_time(start_time),
-                    num_steps / elapsed_time(start_time),
+                    pbu.elapsed_time(start_time),
+                    num_steps / pbu.elapsed_time(start_time),
                 )
             )
             last_print = time_elapsed
@@ -31,7 +31,7 @@ def step_curve(body, joints, curve, time_step=2e-2, print_freq=None, **kwargs):
     if print_freq is not None:
         print(
             "Simulated {} steps ({:.3f} sim seconds) in {:.3f} real seconds".format(
-                num_steps, time_elapsed, elapsed_time(start_time)
+                num_steps, time_elapsed, pbu.elapsed_time(start_time)
             )
         )
 
@@ -42,13 +42,13 @@ def step_curve(body, joints, curve, time_step=2e-2, print_freq=None, **kwargs):
 def simulate_controller(controller, real_per_sim=2.0, print_freq=0.1, hook=None):
     # TODO: multiple controllers
     start_time = time.time()
-    dt = get_time_step()
+    dt = pbu.get_time_step()
     num_steps = 0
     time_elapsed = 0.0
     last_print = time_elapsed
-    enable_gravity()
+    pbu.enable_gravity()
     for _ in controller:
-        step_simulation()
+        pbu.step_simulation()
         if not (hook is None) and num_steps % 10 == 0:
             hook()
         num_steps += 1
@@ -58,14 +58,14 @@ def simulate_controller(controller, real_per_sim=2.0, print_freq=0.1, hook=None)
                 "Step: {} | Sim secs: {:.3f} | Real secs: {:.3f} | Steps/sec {:.3f}".format(
                     num_steps,
                     time_elapsed,
-                    elapsed_time(start_time),
-                    num_steps / elapsed_time(start_time),
+                    pbu.elapsed_time(start_time),
+                    num_steps / pbu.elapsed_time(start_time),
                 )
             )
             last_print = time_elapsed
-        if has_gui():
+        if pbu.has_gui():
             if real_per_sim is None:
-                wait_if_gui()
+                pbu.wait_if_gui()
             else:
                 # TODO: adjust based on the frame rate
                 # duration = real_per_sim # real per step
@@ -75,7 +75,7 @@ def simulate_controller(controller, real_per_sim=2.0, print_freq=0.1, hook=None)
     if print_freq is not None:
         print(
             "Simulated {} steps ({:.3f} sim seconds) in {:.3f} real seconds".format(
-                num_steps, time_elapsed, elapsed_time(start_time)
+                num_steps, time_elapsed, pbu.elapsed_time(start_time)
             )
         )
     return time_elapsed
@@ -84,13 +84,9 @@ def simulate_controller(controller, real_per_sim=2.0, print_freq=0.1, hook=None)
 #######################################################
 
 
-def constant_controller(value=None):
-    return (value for _ in inf_generator())
-
-
-def timeout_controller(controller, timeout=INF, time_step=None):
+def timeout_controller(controller, timeout=np.inf, time_step=None):
     if time_step is None:
-        time_step = get_time_step()
+        time_step = pbu.get_time_step()
     time_elapsed = 0.0
     for output in controller:
         if time_elapsed > timeout:
@@ -100,7 +96,7 @@ def timeout_controller(controller, timeout=INF, time_step=None):
 
 
 def stall_for_duration(duration):
-    dt = get_time_step()
+    dt = pbu.get_time_step()
     time_elapsed = 0.0
     while time_elapsed < duration:
         yield time_elapsed
@@ -111,8 +107,8 @@ def stall_for_duration(duration):
 
 def hold_for_duration(body, duration, joints=None, **kwargs):
     if joints is None:
-        joints = get_movable_joints(body)
-    control_joints(body, joints, **kwargs)
+        joints = pbu.get_movable_joints(body)
+    pbu.control_joints(body, joints, **kwargs)
     return stall_for_duration(duration)
 
 
@@ -121,19 +117,19 @@ def pose_controller(
     target_pose,
     pos_tol=1e-3,
     ori_tol=math.radians(1),
-    max_force=100 * GRAVITY,
-    timeout=INF,
+    max_force=100 * pbu.GRAVITY,
+    timeout=np.inf,
     verbose=False,
 ):
     # TODO: with statement hold pose
-    constraint = add_pose_constraint(body, pose=target_pose, max_force=max_force)
+    constraint = pbu.add_pose_constraint(body, pose=target_pose, max_force=max_force)
     target_pos, target_quat = target_pose
-    dt = get_time_step()
+    dt = pbu.get_time_step()
     time_elapsed = 0.0
     while time_elapsed < timeout:
-        pose = get_pose(body)
-        pos_error = get_distance(point_from_pose(pose), target_pos)
-        ori_error = quat_angle_between(quat_from_pose(pose), target_quat)
+        pose = pbu.get_pose(body)
+        pos_error = pbu.get_distance(pbu.point_from_pose(pose), target_pos)
+        ori_error = pbu.quat_angle_between(pbu.quat_from_pose(pose), target_quat)
         if verbose:
             print(
                 "Position error: {:.3f} | Orientation error: {:.3f}".format(
@@ -144,20 +140,20 @@ def pose_controller(
             break
         yield pose
         time_elapsed += dt
-    remove_constraint(constraint)
+    pbu.remove_constraint(constraint)
 
 
-def interpolate_pose_controller(body, target_pose, timeout=INF, draw=True, **kwargs):
+def interpolate_pose_controller(body, target_pose, timeout=np.inf, draw=True, **kwargs):
     # TODO: interpolate using velocities instead
     pose_waypoints = list(
-        interpolate_poses(
-            get_pose(body),
+        pbu.interpolate_poses(
+            pbu.get_pose(body),
             target_pose,
             pos_step_size=0.01,
             ori_step_size=math.radians(1),
         )
     )
-    dt = get_time_step()
+    dt = pbu.get_time_step()
     time_elapsed = 0.0
     handles = []
     for num, waypoint_pose in enumerate(pose_waypoints):
@@ -166,34 +162,37 @@ def interpolate_pose_controller(body, target_pose, timeout=INF, draw=True, **kwa
         # print('Waypoint {}'.format(num))
         is_goal = num == len(pose_waypoints) - 1
         if draw:
-            handles.extend(draw_pose(waypoint_pose, length=0.05))
+            handles.extend(pbu.draw_pose(waypoint_pose, length=0.05))
         for output in pose_controller(body, waypoint_pose, **kwargs):
             yield output
             time_elapsed += dt
         # wait_if_gui()
-        remove_handles(handles)
+        pbu.remove_handles(handles)
 
 
 def interpolate_controller(
-    body, joints, target_positions, max_velocities=None, dt=1e-1, timeout=INF, **kwargs
+    body,
+    joints,
+    target_positions,
+    max_velocities=None,
+    dt=1e-1,
+    timeout=np.inf,
+    **kwargs
 ):
-    duration_fn = get_duration_fn(body, joints, velocities=max_velocities)
-    positions = get_joint_positions(body, joints)
+    duration_fn = pbu.get_duration_fn(body, joints, velocities=max_velocities)
+    positions = pbu.get_joint_positions(body, joints)
     duration = duration_fn(positions, target_positions)
     num_steps = int(np.ceil(duration / dt))
-    waypoints = list(interpolate(positions, target_positions, num_steps))
+    waypoints = list(pbu.interpolate(positions, target_positions, num_steps))
     time_elapsed = 0.0
     for num, waypoint in enumerate(waypoints):
         if time_elapsed >= timeout:
             break
-        is_goal = num == len(waypoints) - 1
-        # handles = []
-        for output in joint_controller(
+        for output in pbu.joint_controller(
             body, joints, waypoint, timeout=(timeout - time_elapsed), **kwargs
         ):
             yield output
-            time_elapsed += get_time_step()
-        # remove_handles(handles)
+            time_elapsed += pbu.get_time_step()
 
 
 #######################################################
@@ -206,22 +205,18 @@ def follow_path(
     waypoint_tol=1e-2 * np.pi,
     goal_tol=5e-3 * np.pi,
     waypoint_timeout=1.0,
-    path_timeout=INF,
+    path_timeout=np.inf,
     lead_step=0.1,
     verbose=True,
     **kwargs
 ):
     start_time = time.time()
-    dt = get_time_step()
+    dt = pbu.get_time_step()
     handles = []
     steps = 0
     duration = 0.0
-    odometry = [
-        np.array(get_joint_positions(body, joints))
-    ]  # TODO: plot the comparison with the nominal trajectory
-    control_joints(
-        body, get_movable_joints(body)
-    )  # TODO: different (infinite) gains for hold joints
+    odometry = [np.array(pbu.get_joint_positions(body, joints))]
+    pbu.control_joints(body, pbu.get_movable_joints(body))
     for num, positions in enumerate(path):
         if duration > path_timeout:
             break
@@ -232,13 +227,12 @@ def follow_path(
         if verbose:
             print(
                 "Waypoint: {} | Goal: {} | Sim steps: {} | Sim secs: {:.3f} | Steps/sec {:.3f}".format(
-                    num, is_goal, steps, duration, steps / elapsed_time(start_time)
+                    num, is_goal, steps, duration, steps / pbu.elapsed_time(start_time)
                 )
             )
 
-        # TODO: adjust waypoint_timeout based on the duration
         if lead_step is None:
-            controller = joint_controller(
+            controller = pbu.joint_controller(
                 body,
                 joints,
                 positions,
@@ -247,7 +241,7 @@ def follow_path(
                 **kwargs
             )
         else:
-            controller = waypoint_joint_controller(
+            controller = pbu.waypoint_joint_controller(
                 body,
                 joints,
                 positions,
@@ -258,15 +252,12 @@ def follow_path(
             )
         for output in controller:
             yield output
-            # step_simulation()
-            # wait_if_gui()
-            # wait_for_duration(10*dt)
             steps += 1
             duration += dt
             odometry.append(
-                odometry[-1] + dt * np.array(get_joint_velocities(body, joints))
+                odometry[-1] + dt * np.array(pbu.get_joint_velocities(body, joints))
             )
-        remove_handles(handles)
+        pbu.remove_handles(handles)
     if verbose:
         print(
             "Followed {} waypoints in {} sim steps ({:.3f} sim seconds)".format(

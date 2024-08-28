@@ -211,7 +211,7 @@ for num in NUMS:
     # Tower of num objects
     parameters = ["?o{}".format(i + 1) for i in range(num)]
     conditions = [("Graspable", param) for param in parameters] + [
-        ("On", param1, param2) for param1, param2, in get_pairs(parameters)
+        ("On", param1, param2) for param1, param2, in pbu.get_pairs(parameters)
     ]  # Graspable | Movable
     GOALS.append(
         lambda args, num=num: Task(

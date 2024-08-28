@@ -10,13 +10,13 @@ X_AXIS = np.array([1, 0, 0])  # TODO: make immutable
 Z_AXIS = np.array([0, 0, 1])
 
 
-COLORS = {"yellow": YELLOW, "green": GREEN}
-COLORS.update(CHROMATIC_COLORS)
+COLORS = {"yellow": pbu.YELLOW, "green": pbu.GREEN}
+COLORS.update(pbu.CHROMATIC_COLORS)
 
 
 def wait_until_finish(message="Press enter to finish"):
-    wait_if_gui(message=message)
-    disconnect()
+    pbu.wait_if_gui(message=message)
+    pbu.disconnect()
 
 
 def compose_fns(fn, *fns):
@@ -34,8 +34,8 @@ def interpolate_exterior(vertices, step_size=1e-3):
     # Sample points in the interior of the structure for OOBB
     interp_distances = [0.0]
     interp_points = [vertices[0]]
-    for v1, v2 in get_wrapped_pairs(vertices):
-        interp_distances.append(interp_distances[-1] + get_distance(v1, v2))
+    for v1, v2 in pbu.get_wrapped_pairs(vertices):
+        interp_distances.append(interp_distances[-1] + pbu.get_distance(v1, v2))
         interp_points.append(v2)
     f = interp1d(interp_distances, np.array(interp_points).T, kind="linear")
     return list(map(f, np.arange(interp_distances[0], interp_distances[-1], step_size)))
@@ -54,7 +54,7 @@ def sample_convex(points):
             return np.average(points, weights=weights, axis=0)
 
 
-def sample_norm(mu, sigma, lower=0.0, upper=INF):
+def sample_norm(mu, sigma, lower=0.0, upper=np.INF):
     # scipy.stats.truncnorm
     assert lower <= upper
     if lower == upper:
@@ -97,16 +97,14 @@ def partition(test, sequence):
 
 
 def get_rigid_ancestor(body, target_link, **kwargs):
-    # dump_body(body)
     for link in reversed(
-        get_link_ancestors(body, target_link, **kwargs) + [target_link]
+        pbu.get_link_ancestors(body, target_link, **kwargs) + [target_link]
     ):
-        # data = get_visual_data(body, link)
-        data = get_collision_data(body, link, **kwargs)
+        data = pbu.get_collision_data(body, link, **kwargs)
         if data:
             return link
-        if (link == BASE_LINK) or is_movable(
-            body, parent_joint_from_link(link), **kwargs
+        if (link == pbu.BASE_LINK) or pbu.is_movable(
+            body, pbu.parent_joint_from_link(link), **kwargs
         ):
             break
     return None
@@ -116,15 +114,15 @@ def get_rigid_ancestor(body, target_link, **kwargs):
 
 
 def get_hue_distance(rgb1, rgb2):
-    hsv1 = colorsys.rgb_to_hsv(*remove_alpha(rgb1))
-    hsv2 = colorsys.rgb_to_hsv(*remove_alpha(rgb2))
-    return interval_distance(hsv1[0], hsv2[0], interval=(0, 1))
+    hsv1 = colorsys.rgb_to_hsv(*pbu.remove_alpha(rgb1))
+    hsv2 = colorsys.rgb_to_hsv(*pbu.remove_alpha(rgb2))
+    return pbu.interval_distance(hsv1[0], hsv2[0], interval=(0, 1))
 
 
 def get_color_distance(rgb1, rgb2, hue_only=False):
     # TODO: threshold based on how close to grey, white, black, etc.
-    distance_fn = get_hue_distance if hue_only else get_distance
-    return distance_fn(remove_alpha(rgb1), remove_alpha(rgb2))
+    distance_fn = get_hue_distance if hue_only else pbu.get_distance
+    return distance_fn(pbu.remove_alpha(rgb1), pbu.remove_alpha(rgb2))
 
 
 def find_closest_color(color, color_from_name=COLORS, **kwargs):
@@ -155,7 +153,7 @@ def get_matplotlib_colors():
 
 
 def mean_hue(rgbs, min_sat=0.0, min_value=0.0):
-    hsvs = [colorsys.rgb_to_hsv(*remove_alpha(rgb)) for rgb in rgbs]
+    hsvs = [colorsys.rgb_to_hsv(*pbu.remove_alpha(rgb)) for rgb in rgbs]
     hues = [h for h, s, v in hsvs if (s >= min_sat) and (v >= min_value)]
     if not hues:
         return None

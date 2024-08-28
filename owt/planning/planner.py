@@ -2,25 +2,6 @@ import math
 from itertools import combinations, product
 
 import numpy as np
-from open_world.planning.pouring import get_plan_pour_fn
-from open_world.planning.primitives import (Command, GroupConf, RelativePose,
-                                            Sequence)
-from open_world.planning.pushing import get_plan_push_fn
-from open_world.planning.streams import (BASE_COST,
-                                         get_cfree_pregrasp_pose_test,
-                                         get_cfree_traj_pose_test,
-                                         get_grasp_gen_fn,
-                                         get_placement_gen_fn,
-                                         get_plan_drop_fn, get_plan_inspect_fn,
-                                         get_plan_motion_fn, get_plan_pick_fn,
-                                         get_plan_place_fn, get_pose_cost_fn,
-                                         get_reachability_test,
-                                         get_test_cfree_pose_pose)
-from open_world.simulation.control import simulate_controller
-from open_world.simulation.entities import BOWL
-from open_world.simulation.environment import BIN, set_gripper_friction
-from open_world.simulation.utils import (find_closest_color,
-                                         get_color_distance, sorted_union)
 from pddlstream.algorithms.algorithm import reset_globals
 from pddlstream.algorithms.meta import analyze_goal
 from pddlstream.algorithms.serialized import solve_all_goals, solve_next_goal
@@ -29,13 +10,26 @@ from pddlstream.language.constants import (NOT, And, Equal, Exists, Fact,
                                            Solution, get_args, get_prefix,
                                            is_head, print_solution)
 from pddlstream.language.conversion import replace_expression
-from pddlstream.language.external import never_defer
 from pddlstream.language.function import FunctionInfo
 from pddlstream.language.generator import from_fn, from_gen_fn, from_test
 from pddlstream.language.stream import PartialInputs, StreamInfo
 from pddlstream.utils import Profiler, get_file_path, lowercase, read
 
 import owt.pb_utils as pbu
+from owt.planning.primitives import Command, GroupConf, RelativePose, Sequence
+from owt.planning.pushing import get_plan_push_fn
+from owt.planning.streams import (BASE_COST, get_cfree_pregrasp_pose_test,
+                                  get_cfree_traj_pose_test, get_grasp_gen_fn,
+                                  get_placement_gen_fn, get_plan_drop_fn,
+                                  get_plan_motion_fn, get_plan_pick_fn,
+                                  get_plan_place_fn, get_pose_cost_fn,
+                                  get_reachability_test,
+                                  get_test_cfree_pose_pose)
+from owt.simulation.control import simulate_controller
+from owt.simulation.entities import BOWL
+from owt.simulation.environment import BIN, set_gripper_friction
+from owt.simulation.utils import (find_closest_color, get_color_distance,
+                                  sorted_union)
 
 MOST = "most"  # superlatives, ordinals
 LEAST = "least"
@@ -43,9 +37,9 @@ LEAST = "least"
 CONTAINERS = [BOWL, BIN]
 
 COLORS = {
-    "yellow": YELLOW,
+    "yellow": pbu.YELLOW,
 }
-COLORS.update(CHROMATIC_COLORS)
+COLORS.update(pbu.CHROMATIC_COLORS)
 
 
 #######################################################
@@ -209,8 +203,6 @@ def create_streams(
         "test-cfree-pose-pose": from_test(get_test_cfree_pose_pose(**kwargs)),
         "test-cfree-pregrasp-pose": from_test(get_cfree_pregrasp_pose_test(robot)),
         "test-cfree-traj-pose": from_test(get_cfree_traj_pose_test(robot)),
-        # 'sample-leftof': from_fn(get_cardinal_sample(robot, direction="leftof", **kwargs)),
-        # 'sample-aheadof': from_fn(get_cardinal_sample(robot, direction="aheadof", **kwargs)),
         "sample-grasp": from_gen_fn(
             get_grasp_gen_fn(robot, [table], grasp_mode=grasp_mode, **kwargs)
         ),
@@ -218,51 +210,23 @@ def create_streams(
             get_placement_gen_fn(robot, [table], environment=obstacles, **kwargs)
         ),
         "plan-push": from_fn(get_plan_push_fn(robot, environment=obstacles, **kwargs)),
-        "plan-pour": from_fn(get_plan_pour_fn(robot, environment=obstacles, **kwargs)),
         "plan-pick": from_fn(get_plan_pick_fn(robot, environment=obstacles, **kwargs)),
-        # 'plan-mobile-pick': from_gen_fn(get_plan_mobile_pick_fn(robot, environment=obstacles, **kwargs)),
         "plan-place": from_fn(
             get_plan_place_fn(robot, environment=obstacles, **kwargs)
         ),
-        # 'plan-mobile-place': from_gen_fn(get_plan_mobile_place_fn(robot, environment=obstacles, **kwargs)),
         "plan-motion": from_fn(
             get_plan_motion_fn(robot, environment=obstacles, **kwargs)
         ),
         "plan-drop": from_fn(get_plan_drop_fn(robot, environment=obstacles, **kwargs)),
-        "plan-inspect": from_fn(
-            get_plan_inspect_fn(robot, environment=obstacles, **kwargs)
-        ),
         "PoseCost": get_pose_cost_fn(robot, **kwargs),
     }
 
-    # if(mobile_base):
-    #     stream_map.update(
-    #         {"plan-mobile-pick": from_gen_fn(
-    #             get_plan_mobile_pick_fn(robot, environment=obstacles, **kwargs)
-    #          ),
-    #          "plan-mobile-place": from_gen_fn(
-    #             get_plan_mobile_place_fn(robot, environment=obstacles, **kwargs)
-    #          )})
-    # else:
-    #     stream_map.update(
-    #         {"plan-pick": from_fn(get_plan_pick_fn(robot, environment=obstacles, **kwargs)),
-    #          "plan-place": from_fn(
-    #              get_plan_place_fn(robot, environment=obstacles, **kwargs)
-    #          )})
-
-    # stream_map = DEBUG # TODO: run in debug mode first to reassign labels to objects if need be
-
-    # stream_info = {name: StreamInfo(opt_gen_fn=PartialInputs(unique=True)) for name in stream_map}
     stream_info = {
-        #'test-reachable': StreamInfo(),
         "test-cfree-pose-pose": StreamInfo(
             p_success=1e-3, eager=False, verbose=verbose
         ),
         "test-cfree-pregrasp-pose": StreamInfo(p_success=1e-2, verbose=verbose),
         "test-cfree-traj-pose": StreamInfo(p_success=1e-1, verbose=verbose),
-        # 'sample-grasp': StreamInfo(),
-        # 'sample-leftof': StreamInfo(overhead=1e1, opt_gen_fn=PartialInputs(unique=True)),
-        # 'sample-aheadof': StreamInfo(overhead=1e1, opt_gen_fn=PartialInputs(unique=True)),
         "sample-placement": StreamInfo(
             overhead=1e1, opt_gen_fn=PartialInputs(unique=True)
         ),
@@ -270,9 +234,7 @@ def create_streams(
         "plan-pour": StreamInfo(overhead=1e1),
         "plan-pick": StreamInfo(overhead=1e1),
         "plan-drop": StreamInfo(overhead=1e1),
-        #'plan-mobile-pick': StreamInfo(),
         "plan-place": StreamInfo(overhead=1e1),
-        #'plan-mobile-place': StreamInfo(),
         "plan-inspect": StreamInfo(overhead=1e1),
         "plan-motion": StreamInfo(overhead=1e2),
         "PoseCost": FunctionInfo(opt_fn=lambda *args: BASE_COST, eager=True),
@@ -293,7 +255,6 @@ def create_pddlstream(
     **kwargs
 ):
     robot = belief.robot
-    # obstacles = belief.obstacles # belief.surfaces
     arms = sorted(robot.manipulators)
     print("Num arms: " + str(arms))
 
@@ -306,7 +267,6 @@ def create_pddlstream(
     )  # TODO: objects is kwargs
     containers = {obj for obj in all_objects if obj.category in CONTAINERS}
     fixed_objects = sorted_union(belief.known_surfaces, containers)
-    # fixed_objects = belief.obstacles
     movable_objects = set(all_objects) - set(fixed_objects)
     if stack:
         surfaces = sorted_union(surfaces, objects)
@@ -344,7 +304,6 @@ def create_pddlstream(
                 ("ClosestColor", find_closest_object(region, movable_objects), region),
                 ("Region", region),
                 ("Color", region, color_name),
-                # ('ClosestColor', find_closest_object(region, containers), region),
             ]
         )
     for container in containers:
@@ -355,7 +314,6 @@ def create_pddlstream(
                     find_closest_object(container, movable_objects),
                     container,
                 ),
-                # ('ClosestColor', find_closest_object(container, regions), container),
             ]
         )
 
@@ -367,8 +325,6 @@ def create_pddlstream(
         for group in robot.groups
     }
     for group, conf in init_confs.items():
-        # if any(ty in group for ty in ['gripper', 'head', 'torso']):
-        #    continue
         if group == "body":
             group = "base"
 
@@ -470,11 +426,11 @@ def create_pddlstream(
             else:
                 place_cost += 4
             init.append(Equal(("PlaceCost", obj, surface), place_cost))
-            if is_center_on_aabb(
+            if pbu.is_center_on_aabb(
                 obj,
                 surface.get_shape_aabb(),
-                above_epsilon=INF,
-                below_epsilon=INF,
+                above_epsilon=np.inf,
+                below_epsilon=np.inf,
                 **kwargs
             ):
                 # is_placed_on_aabb | is_center_on_aabb
@@ -485,11 +441,11 @@ def create_pddlstream(
         elif pred == "Droppable":
             obj, container = get_args(fact)
             init.append(Equal(("DropCost", obj, container), BASE_COST))
-            if is_center_on_aabb(
+            if pbu.is_center_on_aabb(
                 obj,
                 container.get_shape_aabb(),
-                above_epsilon=INF,
-                below_epsilon=INF,
+                above_epsilon=np.inf,
+                below_epsilon=np.inf,
                 **kwargs
             ):
                 # TODO: add obj as an obstacle
@@ -513,7 +469,7 @@ def create_pddlstream(
         )
         rest_conf = GroupConf(robot, arm, robot.arm_conf(arm, q), **kwargs)
         joints = rest_conf.joints
-        difference = get_difference_fn(robot, joints, **kwargs)(
+        difference = pbu.get_difference_fn(robot, joints, **kwargs)(
             rest_conf.positions, init_confs[arm].positions
         )
         if np.allclose(
@@ -635,11 +591,11 @@ def plan_pddlstream(belief, task, debug=False, serialize=False, *args, **kwargs)
     reset_globals()
     problem, stream_info = create_pddlstream(belief, task, *args, **kwargs)
     if problem is None:
-        return Solution(None, INF, [])
+        return Solution(None, np.inf, [])
 
     profiler = Profiler()
     profiler.save()
-    with LockRenderer(lock=not debug, **kwargs):
+    with pbu.LockRenderer(lock=not debug, **kwargs):
         solve_fn = (
             solve_next_goal if serialize else solve_all_goals
         )  # solve_first_goal | solve_next_goal
@@ -651,13 +607,13 @@ def plan_pddlstream(belief, task, debug=False, serialize=False, *args, **kwargs)
             planner="ff-astar2",
             max_planner_time=10,
             unit_costs=False,
-            success_cost=INF,
-            max_time=INF,
-            max_memory=INF,
-            max_restarts=INF,
+            success_cost=np.inf,
+            max_time=np.inf,
+            max_memory=np.inf,
+            max_restarts=np.inf,
             iteration_time=1.5 * 60,
             unit_efforts=True,
-            max_effort=INF,
+            max_effort=np.inf,
             effort_weight=1,
             search_sample_ratio=5,
             verbose=True,
@@ -674,7 +630,7 @@ def post_process(plan):
         return None
 
     sequence = Sequence(
-        flatten(
+        pbu.flatten(
             args[-1].commands for name, args in plan if isinstance(args[-1], Command)
         )
     )
@@ -690,15 +646,15 @@ def iterate_sequence(
     for i, _ in enumerate(sequence.iterate(state, teleport=teleport, **kwargs)):
         state.propagate()
         if time_step is None:
-            wait_if_gui()
+            pbu.wait_if_gui()
         else:
-            wait_for_duration(time_step)
+            pbu.wait_for_duration(time_step)
     return state
 
 
 def simulate_sequence(robot, sequence, hook=None, **kwargs):
     # TODO: estimate duration
     assert sequence is not None
-    enable_gravity()
+    pbu.enable_gravity()
     set_gripper_friction(robot)
     simulate_controller(sequence.controller(**kwargs), hook=hook)

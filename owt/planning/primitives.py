@@ -2,22 +2,18 @@ import time
 from itertools import chain
 
 import numpy as np
-from open_world.planning.grasping import control_until_contact, get_pregrasp
-from open_world.simulation.control import (follow_path, stall_for_duration,
-                                           step_curve)
-from open_world.simulation.entities import WORLD_BODY, ParentBody
-from pybullet_tools.retime import interpolate_path, sample_curve
 
 import owt.pb_utils as pbu
+from owt.planning.grasping import control_until_contact, get_pregrasp
+from owt.simulation.control import follow_path, stall_for_duration, step_curve
+from owt.simulation.entities import WORLD_BODY, ParentBody
 
 DRAW_Z = 1e-2
 USE_CONSTRAINTS = True
 LEAD_CONTROLLER = True
 
 
-class RelativePose(object):  # TODO: BodyState, RigidAttachment
-    # Extends RelPose from SS-Replan
-    # Attachment
+class RelativePose(object):
     def __init__(
         self,
         body,
@@ -30,19 +26,17 @@ class RelativePose(object):  # TODO: BodyState, RigidAttachment
     ):
         self.body = body
         self.client = client
-        # if parent is WORLD_BODY:
-        #     parent = ParentBody()
         self.parent = parent
         self.parent_state = parent_state
         if not isinstance(self.body, int):
             self.body = int(str(self.body).split("#")[1])
         if relative_pose is None:
-            relative_pose = multiply(
-                invert(self.get_parent_pose()), get_pose(self.body, client=self.client)
+            relative_pose = pbu.multiply(
+                pbu.invert(self.get_parent_pose()),
+                pbu.get_pose(self.body, client=self.client),
             )
         self.relative_pose = tuple(relative_pose)
         self.important = important  # TODO: plan harder when true
-        # self.initial = False # TODO: initial
 
     @property
     def value(self):
@@ -53,23 +47,19 @@ class RelativePose(object):  # TODO: BodyState, RigidAttachment
             return [self.body]
         return self.parent_state.ancestors() + [self.body]
 
-    # def ancestors(self):
-    #     if self.parent_state is None:
-    #         return []
-    #     return self.parent_state.ancestors() + [self.parent_state.body]
     def get_parent_pose(self):
         if self.parent is WORLD_BODY:
-            return unit_pose()
+            return pbu.unit_pose()
         if self.parent_state is not None:
             self.parent_state.assign()
         return self.parent.get_pose()
 
     def get_pose(self):
-        return multiply(self.get_parent_pose(), self.relative_pose)
+        return pbu.multiply(self.get_parent_pose(), self.relative_pose)
 
     def assign(self):
         world_pose = self.get_pose()
-        set_pose(self.body, world_pose, client=self.client)
+        pbu.set_pose(self.body, world_pose, client=self.client)
         return world_pose
 
     def draw(self):
@@ -78,9 +68,7 @@ class RelativePose(object):  # TODO: BodyState, RigidAttachment
     def get_attachment(self):
         assert self.parent is not None
         parent_body, parent_link = self.parent
-        # self.assign()
-        # return create_attachment(parent_body, parent_link, self.body)
-        return Attachment(
+        return pbu.Attachment(
             parent_body, parent_link, self.relative_pose, self.body, client=self.client
         )
 
@@ -113,7 +101,7 @@ class Grasp(object):  # RelativePose
     def approach(self):
         return self.pregrasp
 
-    def create_relative_pose(self, robot, link=BASE_LINK):  # create_attachment
+    def create_relative_pose(self, robot, link=pbu.BASE_LINK):  # create_attachment
         parent = ParentBody(body=robot, link=link, client=self.client)
         return RelativePose(
             self.body, parent=parent, relative_pose=self.grasp, client=self.client
@@ -138,7 +126,9 @@ class Conf(object):  # TODO: parent class among Pose, Grasp, and Conf
         self.joints = joints
         self.client = client
         if positions is None:
-            positions = get_joint_positions(self.body, self.joints, client=self.client)
+            positions = pbu.get_joint_positions(
+                self.body, self.joints, client=self.client
+            )
         self.positions = tuple(positions)
         self.important = important
         # TODO: parent state?
@@ -152,7 +142,9 @@ class Conf(object):  # TODO: parent class among Pose, Grasp, and Conf
         return self.positions
 
     def assign(self):
-        set_joint_positions(self.body, self.joints, self.positions, client=self.client)
+        pbu.set_joint_positions(
+            self.body, self.joints, self.positions, client=self.client
+        )
 
     def iterate(self):
         yield self
@@ -174,12 +166,12 @@ class GroupConf(Conf):
 #######################################################
 
 
-class WorldState(State):
+class WorldState(pbu.State):
     def __init__(self, savers=[], attachments={}, client=None):
         # a part of the state separate from PyBullet
         # TODO: other fluent things
         super(WorldState, self).__init__(attachments)
-        self.world_saver = WorldSaver(client=client)
+        self.world_saver = pbu.WorldSaver(client=client)
         self.savers = tuple(savers)
         self.client = client
 
@@ -238,7 +230,7 @@ class BaseSwitch(Command):
             )
             state.attachments[self.body] = relative_pose
 
-        return empty_sequence()
+        return pbu.empty_sequence()
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, self.body)
@@ -259,7 +251,10 @@ class Switch(Command):
             robot, tool_link = self.parent
             gripper_group = None
             for _, (_, gripper_group, tool_name) in robot.manipulators.items():
-                if link_from_name(robot, tool_name, client=robot.client) == tool_link:
+                if (
+                    pbu.link_from_name(robot, tool_name, client=robot.client)
+                    == tool_link
+                ):
                     break
             else:
                 raise RuntimeError(tool_link)
@@ -267,7 +262,7 @@ class Switch(Command):
             finger_links = robot.get_finger_links(gripper_joints)
 
             movable_bodies = [
-                body for body in get_bodies(client=robot.client) if (body != robot)
+                body for body in pbu.get_bodies(client=robot.client) if (body != robot)
             ]
 
             max_distance = 5e-2
@@ -276,7 +271,7 @@ class Switch(Command):
                 for body in movable_bodies
                 if (
                     all(
-                        get_closest_points(
+                        pbu.get_closest_points(
                             robot,
                             body,
                             link1=link,
@@ -285,7 +280,7 @@ class Switch(Command):
                         )
                         for link in finger_links
                     )
-                    and get_mass(body, client=robot.client) != STATIC_MASS
+                    and pbu.get_mass(body, client=robot.client) != pbu.STATIC_MASS
                 )
             ]
 
@@ -295,15 +290,14 @@ class Switch(Command):
                 )
                 state.attachments[self.body] = relative_pose
 
-        return empty_sequence()
+        return pbu.empty_sequence()
 
     def controller(self, use_constraints=USE_CONSTRAINTS, **kwargs):
         if not use_constraints:
-            return  # empty_sequence()
+            return
         if self.parent is WORLD_BODY:
-            # TODO: record the robot and tool_link
-            for constraint in get_fixed_constraints():
-                remove_constraint(constraint)
+            for constraint in pbu.get_fixed_constraints():
+                pbu.remove_constraint(constraint)
         else:
             robot, tool_link = self.parent
             gripper_group = None
@@ -312,7 +306,7 @@ class Switch(Command):
                 gripper_group,
                 tool_name,
             ) in robot.manipulators.items():
-                if link_from_name(robot, tool_name) == tool_link:
+                if pbu.link_from_name(robot, tool_name) == tool_link:
                     break
             else:
                 raise RuntimeError(tool_link)
@@ -321,8 +315,9 @@ class Switch(Command):
 
             movable_bodies = [
                 body
-                for body in get_bodies(client=self.robot.client)
-                if (body != robot) and not is_fixed_base(body, client=self.robot.client)
+                for body in pbu.get_bodies(client=self.robot.client)
+                if (body != robot)
+                and not pbu.is_fixed_base(body, client=self.robot.client)
             ]
             # collision_bodies = [body for body in movable_bodies if any_link_pair_collision(
             #    robot, finger_links, body, max_distance=1e-2)]
@@ -333,7 +328,7 @@ class Switch(Command):
                 body
                 for body in movable_bodies
                 if all(
-                    get_closest_points(
+                    pbu.get_closest_points(
                         robot, body, link1=link, max_distance=max_distance
                     )
                     for link in finger_links
@@ -341,8 +336,7 @@ class Switch(Command):
             ]
             for body in collision_bodies:
                 # TODO: improve the PR2's gripper force
-                add_fixed_constraint(body, robot, tool_link, max_force=None)
-        # TODO: yield for longer
+                pbu.add_fixed_constraint(body, robot, tool_link, max_force=None)
         yield
 
     def __repr__(self):
@@ -354,7 +348,7 @@ class Wait(Command):
         self.duration = duration
 
     def iterate(self, state, **kwargs):
-        return empty_sequence()
+        return pbu.empty_sequence()
         # yield relative_pose
 
     def controller(self, *args, **kwargs):
@@ -373,7 +367,7 @@ class Trajectory(Command):
         path,
         velocity_scale=1.0,
         contact_links=[],
-        time_after_contact=INF,
+        time_after_contact=np.inf,
         contexts=[],
         client=None,
         **kwargs
@@ -414,20 +408,22 @@ class Trajectory(Command):
         )  # , **self.kwargs)
 
     def draw(self, only_waypoints=True, **kwargs):
-        path = waypoints_from_path(self.path) if only_waypoints else self.path
+        path = pbu.waypoints_from_path(self.path) if only_waypoints else self.path
         handles = []
         if self.group == "base":
             handles.extend(
-                draw_pose(pose_from_pose2d(base_conf, z=DRAW_Z), length=5e-2, **kwargs)
+                pbu.draw_pose(
+                    pbu.pose_from_pose2d(base_conf, z=DRAW_Z), length=5e-2, **kwargs
+                )
                 for base_conf in path
             )
         return handles
 
     def adjust_path(self):
-        current_positions = get_joint_positions(
+        current_positions = pbu.get_joint_positions(
             self.robot, self.joints, client=self.client
         )  # Important for adjust_path
-        return adjust_path(
+        return pbu.adjust_path(
             self.robot,
             self.joints,
             [current_positions] + list(self.path),
@@ -435,15 +431,13 @@ class Trajectory(Command):
         )  # Accounts for the wrap around
 
     def compute_waypoints(self):
-        return waypoints_from_path(
-            adjust_path(self.robot, self.joints, self.path, client=self.client)
+        return pbu.waypoints_from_path(
+            pbu.adjust_path(self.robot, self.joints, self.path, client=self.client)
         )
 
     def compute_curve(self, draw=False, verbose=False, **kwargs):
         path = self.adjust_path()
-        # path = self.compute_waypoints()
-        # TODO: error when fewer than 2 points
-        positions_curve = interpolate_path(
+        positions_curve = pbu.interpolate_path(
             self.robot, self.joints, path, client=self.client
         )
         if verbose:
@@ -458,24 +452,23 @@ class Trajectory(Command):
         if self.group == "base":
             # TODO: color by derivative magnitude or theta
             handles.extend(
-                add_segments(
+                pbu.add_segments(
                     np.append(q[:2], [DRAW_Z])
-                    for t, q in sample_curve(positions_curve, time_step=10.0 / 60)
+                    for t, q in pbu.sample_curve(positions_curve, time_step=10.0 / 60)
                 )
             )
-        wait_if_gui()
-        remove_handles(handles)
+        pbu.wait_if_gui()
+        pbu.remove_handles(handles)
         return positions_curve
 
     def traverse(self):
-        # TODO: traverse from an initial conf?
         for positions in self.path:
-            set_joint_positions(self.robot, self.joints, positions)
+            pbu.set_joint_positions(self.robot, self.joints, positions)
             yield positions
 
     def iterate(self, state, teleport=False, **kwargs):
         if teleport:
-            set_joint_positions(
+            pbu.set_joint_positions(
                 self.robot, self.joints, self.path[-1], client=self.client
             )
             return self.path[-1]
@@ -503,8 +496,6 @@ class Trajectory(Command):
             velocity_scale=velocity_scale,
             max_force=None,
         )  # None | 1e6
-        # **self.kwargs)
-        # return controller
         return control_until_contact(
             controller, self.robot, self.contact_links, self.time_after_contact
         )
@@ -537,7 +528,7 @@ class GroupTrajectory(Trajectory):
         positions_curve = self.compute_curve(
             velocity_fraction=velocity_fraction
         )  # TODO: assumes the PyBullet robot is up-to-date
-        times, positions = zip(*sample_curve(positions_curve, time_step=1e-1))
+        times, positions = zip(*pbu.sample_curve(positions_curve, time_step=1e-1))
         # = np.array(times) / self.velocity_scale
         print(
             "\nGroup: {} | Positions: {} | Duration: {:.3f}\nStart: {}\nEnd: {}".format(
@@ -586,7 +577,7 @@ class Sequence(Command):  # Commands, CommandSequence
 
     @property
     def context_bodies(self):
-        return set(flatten(command.context_bodies for command in self.commands))
+        return set(pbu.flatten(command.context_bodies for command in self.commands))
 
     def __len__(self):
         return len(self.commands)

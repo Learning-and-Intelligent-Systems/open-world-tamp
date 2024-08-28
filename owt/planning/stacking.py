@@ -1,19 +1,42 @@
 import traceback
+from collections import defaultdict, deque
 from itertools import combinations
 
 import numpy as np
-from open_world.estimation.surfaces import create_surface, z_plane
 from trimesh.intersections import mesh_multiplane
 from trimesh.path.exchange.misc import lines_to_path, polygon_to_path
 from trimesh.path.path import Path2D
-from trimesh.path.polygons import plot_polygon, projected
+from trimesh.path.polygons import plot, projected
 
 import owt.pb_utils as pbu
+from owt.estimation.surfaces import create_surface, z_plane
+
+
+def get_connected_components(vertices, edges):
+    undirected_edges = defaultdict(set)
+    for v1, v2 in edges:
+        undirected_edges[v1].add(v2)
+        undirected_edges[v2].add(v1)
+    clusters = []
+    processed = set()
+    for v0 in vertices:
+        if v0 in processed:
+            continue
+        processed.add(v0)
+        cluster = {v0}
+        queue = deque([v0])
+        while queue:
+            v1 = queue.popleft()
+            for v2 in undirected_edges[v1] - processed:
+                processed.add(v2)
+                cluster.add(v2)
+                queue.append(v2)
+        if cluster:  # preserves order
+            clusters.append(frozenset(cluster))
+    return clusters
 
 
 def cluster_identical(points, tolerance=1e-6):
-    # from trimesh.path.repair import fill_gaps
-    # TODO: instead fill_gaps just adds edges for nearby vertices
     indices = list(range(len(points)))
     pairs = set()
     for index1, index2 in combinations(indices, r=2):
@@ -24,10 +47,6 @@ def cluster_identical(points, tolerance=1e-6):
 
 
 def manual_slice_mesh(mesh, plane=z_plane()):
-    # segments = mesh_plane(mesh, plane_normal, plane_origin,
-    #                      return_faces=False, cached_dots=None) # (n, 2, 3)
-    # return [(segments[i, 0, :], segments[i, 1, :]) for i in range(segments.shape[0])]
-
     plane_normal, plane_origin = plane
     [lines], [tform], [faces] = mesh_multiplane(
         mesh, plane_origin, plane_normal, heights=[0.0]
@@ -54,7 +73,6 @@ def manual_slice_mesh(mesh, plane=z_plane()):
 
 def project_mesh(mesh, plane=z_plane()):
     plane_normal, plane_origin = plane
-    # mesh = slice_mesh_plane(mesh, -plane_normal, plane_origin)
     try:
         polygon_shapely = projected(
             mesh,
@@ -64,12 +82,10 @@ def project_mesh(mesh, plane=z_plane()):
             tol_dot=0.01,
             max_regions=1000,
         )
-        # polygon_shapely = projected(mesh, *z_plane(z=0.), pad=1e-05, tol_dot=0.01, max_regions=1000)
     except ValueError:
         traceback.print_exc()
         return []
-    plot_polygon(polygon_shapely)
-    # print(polygon_shapely.__dict__, dir(polygon_shapely))
+    plot(polygon_shapely)
     polygon = Path2D(
         **polygon_to_path(polygon_shapely)
     )  # TODO: AttributeError: 'MultiPolygon' object has no attribute 'exterior'
@@ -87,7 +103,6 @@ def slice_mesh(mesh, plane=z_plane()):
     if lines.shape[0] == 0:
         return []
     points = np.vstack(lines)
-    # TODO: handle shapes with hollow interiors like cups
     surface = create_surface(plane, points, origin_type="centroid")
     if surface is None:
         return []

@@ -27,10 +27,10 @@ class SimulatedController(Controller):
         self.command_group(gripper_group, closed_conf)
 
     def get_group_joints(self, group):
-        return joints_from_names(self.robot, self.robot.joint_groups[group])
+        return pbu.joints_from_names(self.robot, self.robot.joint_groups[group])
 
     def set_group_conf(self, group, positions):
-        set_joint_positions(self.robot, self.get_group_joints(group), positions)
+        pbu.set_joint_positions(self.robot, self.get_group_joints(group), positions)
 
     def set_group_positions(self, group_positions):
         for group, positions in group_positions.items():
@@ -38,9 +38,11 @@ class SimulatedController(Controller):
 
     @property
     def joint_positions(self):
-        joints = get_joints(self.robot, client=self.client)
-        joint_positions = get_joint_positions(self.robot, joints, client=self.client)
-        joint_names = get_joint_names(self.robot, joints, client=self.client)
+        joints = pbu.get_joints(self.robot, client=self.client)
+        joint_positions = pbu.get_joint_positions(
+            self.robot, joints, client=self.client
+        )
+        joint_names = pbu.get_joint_names(self.robot, joints, client=self.client)
         return {k: v for k, v in zip(joint_names, joint_positions)}
 
     def command_group(self, group, positions, **kwargs):  # TODO: default timeout

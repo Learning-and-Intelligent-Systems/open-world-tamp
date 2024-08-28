@@ -1,4 +1,5 @@
 import math
+import os
 import time
 
 import numpy as np
@@ -18,6 +19,31 @@ from owt.simulation.utils import Z_AXIS
 AUGMENT_BOWLS = True
 VISUALIZE_COLLISION = True
 OBJ_MESH_CACHE = {}
+
+
+def vertices_from_rigid(body, link=pbu.BASE_LINK):
+    try:
+        vertices = pbu.vertices_from_link(body, link)
+    except RuntimeError:
+        info = pbu.get_model_info(body)
+        assert info is not None
+        _, ext = os.path.splitext(info.path)
+        if ext == ".obj":
+            if info.path not in OBJ_MESH_CACHE:
+                OBJ_MESH_CACHE[info.path] = pbu.read_obj(info.path, decompose=False)
+            mesh = OBJ_MESH_CACHE[info.path]
+            vertices = mesh.vertices
+        else:
+            raise NotImplementedError(ext)
+    return vertices
+
+
+def approximate_as_prism(body, body_pose=None, **kwargs):
+    if body_pose is None:
+        body_pose = pbu.unit_pose()
+    vertices = pbu.tform_points(body_pose, vertices_from_rigid(body, **kwargs))
+    aabb = pbu.aabb_from_points(vertices)
+    return pbu.get_aabb_center(aabb), pbu.get_aabb_extent(aabb)
 
 
 def hull_ransac(points, min_points=10, threshold=5e-3, draw=False):
@@ -148,9 +174,6 @@ def estimate_mesh(
     min_points=30,
     **kwargs
 ):
-    # print("Estimating Mesh!")
-
-    # concave &= has_open3d()
     category, instance = labeled_points[0].label
 
     labeled_points = [
@@ -178,10 +201,7 @@ def estimate_mesh(
         print("oobb smaller than min volume")
         return None
     origin_pose = obj_oobb.pose  # TODO: adjust pose to be the base
-    color = pbu.apply_alpha(
-        aggregate_color(labeled_points), alpha=0.75
-    )  # transparency=0.75 | 1.0
-    # draw_oobb(obj_oobb, color=color)
+    color = pbu.apply_alpha(aggregate_color(labeled_points), alpha=0.75)
 
     base_vertices_2d = convex_hull_2d(points)
     if pbu.convex_area(base_vertices_2d) < min_area:
@@ -200,7 +220,6 @@ def estimate_mesh(
         )
 
     points_origin = pbu.tform_points(pbu.invert(origin_pose), points)
-    # base_points = project_base_points(points, min_z=min_z, max_z=max_z)
     base_points = project_points(points, min_z=min_z)
     base_origin = pbu.tform_points(pbu.invert(origin_pose), base_points)
     base_origin = filter_visible(base_origin + points_origin, origin_pose, camera_image)
