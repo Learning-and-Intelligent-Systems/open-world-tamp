@@ -3,15 +3,12 @@ import random
 from itertools import islice
 
 import numpy as np
-from open_world.planning.primitives import (GroupTrajectory, RelativePose,
-                                            Sequence, Switch)
-from open_world.planning.samplers import plan_workspace_motion
-from open_world.simulation.entities import WORLD_BODY, ParentBody
-from pybullet_tools.ikfast.pr2.ik import IK_FRAME as TOOL_FRAMES
-from pybullet_tools.pr2_utils import (get_arm_joints, get_gripper_joints,
-                                      side_from_arm)
 
 import owt.pb_utils as pbu
+from owt.planning.primitives import (GroupTrajectory, RelativePose, Sequence,
+                                     Switch)
+from owt.planning.samplers import plan_workspace_motion
+from owt.simulation.entities import WORLD_BODY, ParentBody
 
 PUSH_FEATURES = [
     "block_width",
@@ -72,7 +69,7 @@ def sample_push_contact(robot, body, feature, parameter, environment=[], under=F
         body, body_pose=pbu.Pose(euler=pbu.Euler(yaw=push_yaw))
     )
     max_backoff = width + 0.1  # TODO: add gripper bounding box
-    tool_link = pbu.link_from_name(robot, TOOL_FRAMES[arm.split("_")[0]])
+    tool_link = pbu.link_from_name(robot, robot.manipulators[arm.split("_")[0]])
     tool_pose = pbu.get_link_pose(robot, tool_link)
     gripper_link = pbu.link_from_name(robot, GRIPPER_LINKS[arm.split("_")[0]])
     collision_links = pbu.get_link_subtree(robot, gripper_link)
@@ -181,8 +178,6 @@ def get_plan_push_fn(
 
         pose1 = relative_pose1.get_pose()
         goals = push_goal_gen_fn(body, pose1, region)
-        get_arm_joints(robot, arm)
-        pbu.get_max_limit(robot, get_gripper_joints(robot, arm)[0])
         for (goal_pos2d,) in islice(goals, max_samples):
             if goal_pos2d is None:
                 continue
@@ -217,7 +212,6 @@ def get_plan_push_fn(
                 pbu.multiply(pose, pbu.invert(pbu.multiply(TOOL_POSE, push_contact)))
                 for pose in body_path
             ]
-            get_gripper_joints(robot, arm)
 
             push_path = plan_workspace_motion(
                 robot, side, gripper_path, attachment=None, obstacles=environment
@@ -297,9 +291,7 @@ def get_plan_push_fn(
                 # switch_off,
                 post_arm_traj,
             ]
-            sequence = Sequence(
-                commands=commands, name="push-{}-{}".format(side_from_arm(arm), body)
-            )
+            sequence = Sequence(commands=commands, name="push-{}-{}".format(arm, body))
 
             pbu.set_pose(body, pose2)
             push_pose = RelativePose(

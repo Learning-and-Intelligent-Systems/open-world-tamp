@@ -3,7 +3,6 @@ from __future__ import print_function
 import math
 import os
 import string
-import sys
 from itertools import product
 
 import numpy as np

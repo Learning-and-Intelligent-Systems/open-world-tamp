@@ -1,20 +1,20 @@
 import math
 import os
+import random
 from itertools import count
 
 import numpy as np
 import open3d
+import pybullet as p
 
 import owt.pb_utils as pbu
-from owt.simulation.lis import USING_ROS
+from owt.utils import TEMP_DIR
 
-DEFAULT_ALPHA = 0.025 if USING_ROS else 0.015  # 0.015 | 0.05 | 0.1 | 1.
+DEFAULT_ALPHA = 0.015
 VHACD_CNT = count()
 
 
 def create_vhacd(input_path, output_path=None, client=None, **kwargs):
-    import pybullet as p
-
     client = client or p
     if output_path is None:
         output_path = os.path.join(pbu.TEMP_DIR, "vhacd_{}.obj".format(next(VHACD_CNT)))
@@ -73,8 +73,8 @@ mesh_count = count()
 
 
 def create_mesh(mesh, under=True, **kwargs):
-    pbu.ensure_dir(utils.TEMP_DIR)
-    path = os.path.join(utils.TEMP_DIR, "mesh{}.obj".format(next(mesh_count)))
+    pbu.ensure_dir(TEMP_DIR)
+    path = os.path.join(TEMP_DIR, "mesh{}.obj".format(next(mesh_count)))
     pbu.write(path, obj_file_from_mesh(mesh, under=under))
     return pbu.create_obj(path, **kwargs)
 
@@ -85,11 +85,11 @@ def write(filename, string):
 
 
 def create_concave_mesh(mesh, under=False, client=None, **kwargs):
-    pbu.ensure_dir(utils.TEMP_DIR)
+    pbu.ensure_dir(TEMP_DIR)
     num = next(mesh_count)
-    path = os.path.join(utils.TEMP_DIR, "mesh{}.obj".format(num))
+    path = os.path.join(TEMP_DIR, "mesh{}.obj".format(num))
     write(path, obj_file_from_mesh(mesh, under=under))
-    vhacd_path = os.path.join(utils.TEMP_DIR, "vhacd_mesh{}.obj".format(num))
+    vhacd_path = os.path.join(TEMP_DIR, "vhacd_mesh{}.obj".format(num))
     return create_vhacd(path, output_path=vhacd_path, **kwargs)
 
 
@@ -162,6 +162,13 @@ def downsample_aidan(points, fraction=1.0 / 500):
     ds = max(3, math.ceil(fraction * points_array.shape[0]))
     downsampled_pointcloud = points_array[::ds, :]
     return downsampled_pointcloud
+
+
+def safe_sample(collection, k=1):
+    collection = list(collection)
+    if len(collection) <= k:
+        return collection
+    return random.sample(collection, k)
 
 
 def concave_mesh(points, alpha=DEFAULT_ALPHA, **kwargs):

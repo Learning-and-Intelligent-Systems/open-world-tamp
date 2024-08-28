@@ -164,8 +164,7 @@ def get_grasp_gen_fn(
         gripper_collisions = False
 
     def gen_fn(arm, obj):
-        side = robot.side_from_arm(arm)
-        arm_group, gripper_group, tool_name = robot.manipulators[side]
+        arm_group, gripper_group, tool_name = robot.manipulators[arm]
         robot.link_from_name(tool_name)
         closed_conf, open_conf = robot.get_group_limits(gripper_group)
         robot.get_group_subtree(gripper_group)

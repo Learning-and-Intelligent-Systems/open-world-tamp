@@ -3,22 +3,12 @@ import os
 from open_world.simulation.controller import SimulatedController
 from open_world.simulation.entities import Camera, Manipulator, Robot
 from open_world.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
-from pybullet_tools.ikfast.utils import IKFastInfo
 from pybullet_tools.utils import link_from_name
 
 from robots.panda.panda_controller import PandaController
 
-# from run_estimator import *
-
-
 CAMERA_FRAME = "camera_frame"
 CAMERA_OPTICAL_FRAME = "camera_frame"
-PANDA_INFO = IKFastInfo(
-    module_name="franka_panda.ikfast_panda_arm",
-    base_link="panda_link0",
-    ee_link="panda_link8",
-    free_joints=["panda_joint7"],
-)
 PANDA_PATH = os.path.abspath("models/srl/franka_description/robots/panda_arm_hand.urdf")
 
 
@@ -51,12 +41,9 @@ class PandaRobot(Robot):
         }
 
         panda_manipulators = {
-            side_from_arm(arm): Manipulator(
-                arm, gripper_from_arm(arm), PANDA_TOOL_FRAMES[arm]
-            )
+            arm: Manipulator(arm, arm.replace("arm", "gripper"), PANDA_TOOL_FRAMES[arm])
             for arm in self.arms
         }
-        panda_ik_infos = {side_from_arm(arm): PANDA_INFO for arm in self.arms}
 
         if not real_camera:
             cameras = [
@@ -80,7 +67,6 @@ class PandaRobot(Robot):
 
         super(PandaRobot, self).__init__(
             robot_body,
-            ik_info=panda_ik_infos,
             manipulators=panda_manipulators,
             cameras=cameras,
             joint_groups=PANDA_GROUPS,
@@ -107,12 +93,6 @@ class PandaRobot(Robot):
             "main_gripper": [self.MAX_PANDA_FINGER, self.MAX_PANDA_FINGER],
         }
         return conf
-
-    def arm_from_side(self, side):
-        return arm_from_side(side)
-
-    def side_from_arm(self, arm):
-        return side_from_arm(arm)
 
     def arm_conf(self, arm, config):
         return config
@@ -152,17 +132,3 @@ class PandaRobot(Robot):
                 self.controller.command_group_dict(group, group_dict)
             else:
                 self.set_group_positions(group, positions)
-
-
-def side_from_arm(arm):
-    side = arm.split("_")[0]
-    return side
-
-
-def arm_from_side(side):
-    return "{}_arm".format(side)
-
-
-def gripper_from_arm(arm):  # TODO: deprecate
-    side = side_from_arm(arm)
-    return "{}_gripper".format(side)

@@ -9,14 +9,14 @@ import torch
 
 from owt.estimation.belief import take_ml_estimate
 from owt.simulation.entities import BG, BOWL, CUP, OTHER, TABLE, UNKNOWN
-from owt.simulation.lis import (CKPT_PATH, DET_CKPT_PATH, DEVICE, DSN_CONFIG,
+from owt.simulation.lis import (DET_CKPT_PATH, DEVICE, DSN_CONFIG,
                                 FASTERRCNN_CONFIDENCE_THRESHOLD,
                                 FASTERRCNN_CONFIG,
                                 MASKRCNN_CONFIDENCE_THRESHOLD, MASKRCNN_CONFIG,
-                                RRN_CONFIG, SC_PATH, SEG_CKPT_PATH,
-                                UCN_CKPT_PATH1, UCN_CKPT_PATH2, UCN_CONFIG,
-                                UCN_PATH, UOIS3D_CONFIG, UOIS_CKPT_PATH,
-                                UOIS_PATH, YCB_MASSES, ycb_type_from_name)
+                                RRN_CONFIG, SEG_CKPT_PATH, UCN_CKPT_PATH1,
+                                UCN_CKPT_PATH2, UCN_CONFIG, UCN_PATH,
+                                UOIS3D_CONFIG, UOIS_CKPT_PATH, UOIS_PATH,
+                                YCB_MASSES, ycb_type_from_name)
 
 DEFAULT_DEBUG = False
 FLOOR = 0
@@ -956,12 +956,7 @@ class UOIS(CategoryAgnosticSeg):
             segment = str_from_int_seg(segment)
 
         if debug:
-            # # visualization
             self.vis_plot(rgb_image, instance_mask, **kwargs)
-
-            # visualization for debugging purpose(including fg, center offest, etc)
-            # self.vis(seg_masks[0].cpu().numpy(), fg_mask,
-            #          center_offsets[0].cpu().numpy().transpose(1,2,0), initial_masks[0].cpu().numpy(), batch, **kwargs)
         return segment[padding_h:-padding_h] if padding_h > 0 else segment
 
 

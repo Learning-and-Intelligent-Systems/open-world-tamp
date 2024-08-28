@@ -5,6 +5,7 @@ import numpy as np
 
 import owt.pb_utils as pbu
 from owt.simulation.entities import TABLE, UNKNOWN, Object
+from owt.utils import TEMP_DIR
 from owt.voxel_utils import MAX_PIXEL_VALUE
 
 LabeledPoint = namedtuple("LabeledPoint", ["point", "color", "label"])  # TODO: pixel

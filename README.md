@@ -31,26 +31,12 @@ Install the python dependencies. If possible, install using python3.8 as that ap
 ```
 python -m pip install -e .
 ```
-If you get errors when installing detectron, you may need to modify your paths. Make sure to switch out `11.4` for your current cuda version.
-```
-export CPATH=/usr/local/cuda-11.4/targets/x86_64-linux/include:$CPATH
-export LD_LIBRARY_PATH=/usr/local/cuda-11.4/targets/x86_64-linux/lib:$LD_LIBRARY_PATH
-export PATH=/usr/local/cuda-11.4/bin:$PATH
-```
 
 ### FastDownward
 
 Build FastDownward:
 ```
 ./tamp/downward/build.py
-```
-
-### IKFast
-
-Compile IKFast:
-```
-cd pybullet_planning/pybullet_tools/ikfast/<robot-name>
-python setup.py
 ```
 
 ### Segmentation
