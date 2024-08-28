@@ -5,17 +5,16 @@ from __future__ import print_function
 import os
 
 import numpy as np
-from open_world.estimation.clustering import cluster_points
-from open_world.estimation.dnn import DEFAULT_DEBUG, init_sc, init_seg
-from open_world.estimation.geometry import (cloud_from_depth,
-                                            estimate_surface_mesh)
-from open_world.estimation.observation import (iterate_point_cloud,
-                                               save_camera_images)
-from open_world.simulation.entities import UNKNOWN, Object, get_label_counts
-from open_world.simulation.environment import create_ycb
-from open_world.simulation.lis import Z_EPSILON
 from pybullet_tools.utils import (PI, TEMP_DIR, CameraImage, Euler, Point,
                                   Pose, ensure_dir, set_pose, stable_z)
+
+from owt.estimation.clustering import cluster_points
+from owt.estimation.dnn import DEFAULT_DEBUG, init_sc, init_seg
+from owt.estimation.geometry import cloud_from_depth, estimate_surface_mesh
+from owt.estimation.observation import iterate_point_cloud, save_camera_images
+from owt.simulation.entities import UNKNOWN, Object, get_label_counts
+from owt.simulation.environment import create_ycb
+from owt.simulation.lis import Z_EPSILON
 
 
 def test_completion(

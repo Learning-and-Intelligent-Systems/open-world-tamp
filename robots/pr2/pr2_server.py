@@ -12,8 +12,6 @@ from geometry_msgs.msg import Twist, Vector3
 from moveit_msgs.msg import DisplayRobotState  # , CollisionObject
 from moveit_msgs.msg import DisplayTrajectory, RobotState, RobotTrajectory
 from object_recognition_msgs.msg import TableArray
-from open_world.real_world.ros_utils import (create_mesh_markers,
-                                             create_table_msgs)
 from pr2_controllers_msgs.msg import (JointTrajectoryAction,
                                       JointTrajectoryGoal,
                                       Pr2GripperCommandAction,
@@ -31,6 +29,8 @@ from segment_server import CAMERA_FRAME, SegmentServer, get_date
 from sensor_msgs.msg import Image, JointState
 from trajectory_msgs.msg import JointTrajectoryPoint
 from visualization_msgs.msg import MarkerArray
+
+from owt.real_world.ros_utils import create_mesh_markers, create_table_msgs
 
 # TODO: hide moveit_msgs import
 # from soundplay_msgs.msg import SoundRequest

@@ -16,7 +16,8 @@ import time
 from collections import namedtuple
 
 import numpy as np
-from open_world.simulation.controller import Controller
+
+from owt.simulation.controller import Controller
 
 MAX_EFFORT = 100.0  # 50 | 75 | 100
 INFINITE_EFFORT = -1

@@ -18,15 +18,16 @@ sys.path.extend(
 )
 from environments import \
     create_default_env  # Must be before importing TEMP_DIR
-from open_world.estimation.belief import Belief
-from open_world.estimation.dnn import init_sc, init_seg
-from open_world.estimation.observation import image_from_labeled
-from open_world.estimation.tables import estimate_surfaces
-from open_world.simulation.entities import TABLE, get_label_counts
 from pybullet_tools.utils import (SEPARATOR, CameraImage, connect, disconnect,
                                   elapsed_time, read_pickle, remove_body,
                                   save_image, user_input)
 from run_estimator import cloud_from_depth
+
+from owt.estimation.belief import Belief
+from owt.estimation.dnn import init_sc, init_seg
+from owt.estimation.observation import image_from_labeled
+from owt.estimation.tables import estimate_surfaces
+from owt.simulation.entities import TABLE, get_label_counts
 
 SURFACE_COLORS = {
     TABLE: [0.855, 0.733, 0.612],  # 0.596

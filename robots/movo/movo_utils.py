@@ -2,60 +2,22 @@ import copy
 import os
 
 import numpy as np
-from open_world.planning.primitives import GroupConf
-from open_world.planning.streams import get_plan_motion_fn
-from open_world.simulation.controller import SimulatedController
-from open_world.simulation.entities import Camera, Manipulator, Robot
-from open_world.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
-from pybullet_tools.ikfast.utils import IKFastInfo
-from pybullet_tools.utils import (FLOOR_URDF, ConfSaver, add_data_path,
-                                  get_collision_data, get_joint_names,
-                                  get_joint_position, get_link_children,
-                                  get_link_names, get_link_pose,
-                                  get_moving_links, get_relative_pose,
-                                  joint_from_name, link_from_name,
-                                  load_pybullet, point_from_pose,
-                                  sample_directed_reachable_base,
-                                  set_joint_positions)
 
+import owt.pb_utils as pbu
+from owt.planning.primitives import GroupConf
+from owt.planning.streams import get_plan_motion_fn
+from owt.simulation.controller import SimulatedController
+from owt.simulation.entities import Camera, Manipulator, Robot
+from owt.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
 from robots.movo.movo_controller import MovoController
 from robots.movo.movo_sender import (get_color_image, get_depth_image,
                                      get_pointcloud)
 
-#######  pr2_problems  ########
-
-
-def create_floor(**kwargs):
-    add_data_path()
-    return load_pybullet(FLOOR_URDF, **kwargs)
-
-
-def side_from_arm(arm):
-    side = arm.split("_")[0]
-    return side
-
-
-def arm_from_side(side):
-    return "{}_arm".format(side)
-
-
-def gripper_from_arm(arm):  # TODO: deprecate
-    side = side_from_arm(arm)
-    return "{}_gripper".format(side)
-
-
-######  pr2 utils #########
 MOVO_URDF = "models/srl/movo_description/movo_robotiq_collision.urdf"
 MOVO_PATH = os.path.abspath(MOVO_URDF)
 
-# https://github.mit.edu/Learning-and-Intelligent-Systems/ltamp_pr2/blob/master/control_tools/ik/ik_tools/movo_ik/movo_robotiq.urdf
-# https://github.com/Learning-and-Intelligent-Systems/movo_ws/blob/master/src/kinova-movo-bare/movo_common/movo_description/urdf/movo.custom.urdf
-# https://github.mit.edu/Learning-and-Intelligent-Systems/ltamp_pr2/tree/master/control_tools/ik/ik_tools/movo_ik
-
-#####################################
-
-LEFT = "left"  # KG3
-RIGHT = "right"  # ROBOTIQ
+LEFT = "left"
+RIGHT = "right"
 
 ARMS = ["{}_arm".format(RIGHT), "{}_arm".format(LEFT)]
 SIDE = [RIGHT, LEFT]
@@ -205,55 +167,6 @@ MOVO_OPEN_CONF = {
     "right_gripper_finger2_finger_tip_joint": 0,
 }
 
-
-# From environments.py. Not sure what to do about that file yet
-MOVO_INFOS = {
-    side_from_arm(arm): IKFastInfo(
-        module_name="movo.movo_{}_ik".format(arm),
-        base_link="base_link",
-        ee_link=EE_LINK.format(side_from_arm(arm)),
-        free_joints=["linear_joint", "{}_half_joint".format(arm)],
-    )
-    for arm in ARMS
-}
-
-
-# [-1.3113831313324589, 1.9619225455538198, 0.13184053877842938, 1.8168894557491948, -0.30988063075165684, -1.753361745316172, 1.725726522158583]
-# [1.396113465626092, -1.9861489225161073, 0.02609983172656305, -1.8699706504902727, 0.2607507015409034, 1.5755063934988107, -1.4726268826923956]
-
-
-# Arms up
-# DEFAULT_JOINTS = {
-#     "pan_joint": -0.07204942405223846,
-#     "tilt_joint": -0.599216890335083,
-#     "left_shoulder_pan_joint": -1.3113831313324589,
-#     "left_shoulder_lift_joint": 1.9619225455538198,
-#     "left_arm_half_joint": 0.13184053877842938,
-#     "left_elbow_joint": 1.8168894557491948,
-#     "left_wrist_spherical_1_joint": -0.30988063075165684,
-#     "left_wrist_spherical_2_joint": -1.753361745316172,
-#     "left_wrist_3_joint": 1.725726522158583,
-
-#     "right_shoulder_pan_joint": 1.396113465626092,
-#     "right_shoulder_lift_joint": -1.9861489225161073,
-#     "right_arm_half_joint": 0.02609983172656305,
-#     "right_elbow_joint": -1.8699706504902727,
-#     "right_wrist_spherical_1_joint": 0.2607507015409034,
-#     "right_wrist_spherical_2_joint": 1.5755063934988107,
-#     "right_wrist_3_joint": -1.4726268826923956,
-#     "left_gripper_finger1_joint": -0.0008499202079690222,
-#     "left_gripper_finger2_joint": -0.0,
-#     "left_gripper_finger3_joint": 0.0,
-#     "right_gripper_finger1_joint": 0.0,
-#     "linear_joint": 0.3,
-#     "right_gripper_finger1_joint": 0,
-#     "right_gripper_finger2_joint": 0,
-#     "right_gripper_finger1_inner_knuckle_joint": 0,
-#     "right_gripper_finger2_inner_knuckle_joint": 0,
-#     "right_gripper_finger1_finger_tip_joint": 0,
-#     "right_gripper_finger2_finger_tip_joint": 0,
-# }
-
 # Arms down
 DEFAULT_JOINTS = {
     "pan_joint": -0.07204942405223846,
@@ -325,9 +238,7 @@ class MovoRobot(Robot):
         self.CAMERA_OPTICAL_FRAME = "kinect2_rgb_optical_frame"
         self.CAMERA_FRAME = "kinect2_rgb_link"
         movo_manipulators = {
-            side_from_arm(arm): Manipulator(
-                arm, gripper_from_arm(arm), MOVO_TOOL_FRAMES[arm]
-            )
+            arm: Manipulator(arm, arm.replace("arm", "gripper"), MOVO_TOOL_FRAMES[arm])
             for arm in self.arms
         }
 
@@ -335,10 +246,10 @@ class MovoRobot(Robot):
             cameras = [
                 Camera(
                     self,
-                    link=link_from_name(
+                    link=pbu.link_from_name(
                         robot_body, self.CAMERA_OPTICAL_FRAME, client=self.client
                     ),
-                    optical_frame=link_from_name(
+                    optical_frame=pbu.link_from_name(
                         robot_body, self.CAMERA_OPTICAL_FRAME, client=self.client
                     ),
                     camera_matrix=SIMULATED_CAMERA_MATRIX,
@@ -359,7 +270,6 @@ class MovoRobot(Robot):
             robot_body,
             joint_groups=MOVO_GROUPS,
             manipulators=movo_manipulators,
-            ik_info=MOVO_INFOS,
             cameras=cameras,
             disabled_collisions=MOVO_DISABLED_COLLISIONS,
             client=client,
@@ -369,14 +279,12 @@ class MovoRobot(Robot):
         self.intrinsics = np.asarray(KINECT_INTRINSICS).reshape(3, 3)
 
     def directed_pose_generator(self, gripper_pose, **kwargs):
-        point = point_from_pose(gripper_pose)
+        point = pbu.point_from_pose(gripper_pose)
         while True:
             base_values = sample_directed_reachable_base(self, point, **kwargs)
             if base_values is None:
                 break
             yield tuple(list(base_values) + [0.1])  # Append torso values
-            # set_base_values(robot, base_values)
-            # yield get_pose(robot)
 
     def base_sample_gen(self, pose):
         return self.directed_pose_generator(pose.get_pose(), reachable_range=(0.7, 0.7))
@@ -409,22 +317,18 @@ class MovoRobot(Robot):
         get_jval = lambda j: (
             default_default_joints[j]
             if j in default_default_joints.keys()
-            else get_joint_position(
-                self, joint_from_name(self, j, client=self.client), client=self.client
+            else pbu.get_joint_position(
+                self,
+                pbu.joint_from_name(self, j, client=self.client),
+                client=self.client,
             )
         )
         return {k: [get_jval(j) for j in v] for k, v in MOVO_GROUPS.items()}
 
     def get_camera_pose(self):
-        kinect2_link = link_from_name(self, "kinect2_rgb_optical_frame")
-        kinect2_pose = get_link_pose(self, kinect2_link)
+        kinect2_link = pbu.link_from_name(self, "kinect2_rgb_optical_frame")
+        kinect2_pose = pbu.get_link_pose(self, kinect2_link)
         return kinect2_pose
-
-    def arm_from_side(self, side):
-        return arm_from_side(side)
-
-    def side_from_arm(self, arm):
-        return side_from_arm(arm)
 
     def arm_conf(self, arm, config):
         return config
@@ -439,13 +343,15 @@ class MovoRobot(Robot):
         return
 
     def get_max_gripper_width(self, gripper_joints, **kwargs):
-        with ConfSaver(self, client=self.client):
-            set_joint_positions(
+        with pbu.ConfSaver(self, client=self.client):
+            pbu.set_joint_positions(
                 self,
                 gripper_joints,
                 [
                     MOVO_OPEN_CONF[j]
-                    for j in get_joint_names(self, gripper_joints, client=self.client)
+                    for j in pbu.get_joint_names(
+                        self, gripper_joints, client=self.client
+                    )
                 ],
                 client=self.client,
             )
@@ -460,20 +366,20 @@ class MovoRobot(Robot):
         return self.get_default_conf()["right_arm"]
 
     def get_finger_links(self, gripper_joints):
-        moving_links = get_moving_links(self, gripper_joints, client=self.client)
+        moving_links = pbu.get_moving_links(self, gripper_joints, client=self.client)
         shape_links = [
             link
             for link in moving_links
-            if get_collision_data(self, link, client=self.client)
+            if pbu.get_collision_data(self, link, client=self.client)
         ]
-        link_names = get_link_names(self, shape_links, client=self.client)
+        link_names = pbu.get_link_names(self, shape_links, client=self.client)
 
         finger_links = [
             link
             for (linki, link) in enumerate(shape_links)
             if not any(
-                get_collision_data(self, child, client=self.client)
-                for child in get_link_children(self, link, client=self.client)
+                pbu.get_collision_data(self, child, client=self.client)
+                for child in pbu.get_link_children(self, link, client=self.client)
             )
             and "tip" in link_names[linki]
         ]
@@ -486,11 +392,11 @@ class MovoRobot(Robot):
             group_joints = self.get_group_joints(group)
             group_joint_min = [
                 MOVO_CLOSED_CONF[j]
-                for j in get_joint_names(self, group_joints, client=self.client)
+                for j in pbu.get_joint_names(self, group_joints, client=self.client)
             ]
             group_joint_max = [
                 MOVO_OPEN_CONF[j]
-                for j in get_joint_names(self, group_joints, client=self.client)
+                for j in pbu.get_joint_names(self, group_joints, client=self.client)
             ]
             return group_joint_min, group_joint_max
         else:
@@ -502,12 +408,14 @@ class MovoRobot(Robot):
 
     def get_parent_from_tool(self, manipulator):
         tool_link = self.get_tool_link(manipulator)
-        parent_link = link_from_name(self, "right_wrist_3_link", client=self.client)
-        return get_relative_pose(self.robot, tool_link, parent_link, client=self.client)
+        parent_link = pbu.link_from_name(self, "right_wrist_3_link", client=self.client)
+        return pbu.get_relative_pose(
+            self.robot, tool_link, parent_link, client=self.client
+        )
 
     @property
     def base_link(self):
-        return link_from_name(self.robot, BASE_LINK, client=self.client)
+        return pbu.link_from_name(self.robot, BASE_LINK, client=self.client)
 
     def reset(self, **kwargs):
         conf = self.get_default_conf(**kwargs)
@@ -518,7 +426,7 @@ class MovoRobot(Robot):
                 if "arm" in group:
                     motion_gen = get_plan_motion_fn(self)
                     current = [
-                        get_joint_position(self, joint_from_name(self, j))
+                        pbu.get_joint_position(self, pbu.joint_from_name(self, j))
                         for j in MOVO_GROUPS[group]
                     ]
                     q1 = GroupConf(self, group, positions=current)

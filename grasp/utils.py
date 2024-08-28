@@ -1,10 +1,11 @@
 import time
 
-from open_world.planning.graspnet import GRASPNET_POSE, filter_identical_grasps
-from open_world.simulation.lis import USING_ROS
 from pybullet_tools.utils import (INF, Point, Pose, elapsed_time, invert,
                                   multiply, point_from_pose, pose_from_tform,
                                   tform_points)
+
+from owt.planning.graspnet import GRASPNET_POSE, filter_identical_grasps
+from owt.simulation.lis import USING_ROS
 
 GRASP_MODES = ["graspnet", "gpd"]
 

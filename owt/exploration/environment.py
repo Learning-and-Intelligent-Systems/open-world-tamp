@@ -9,13 +9,12 @@ from contextlib import contextmanager
 
 import numpy as np
 import pybullet as p
-from open_world.exploration.utils import iterate_point_cloud
-from open_world.exploration.utils_graph import Graph
-from open_world.exploration.utils_motion_planning_interface import \
-    DEFAULT_JOINTS
 from scipy.spatial.transform import Rotation as R
 
 import owt.pb_utils as pbu
+from owt.exploration.utils import iterate_point_cloud
+from owt.exploration.utils_graph import Graph
+from owt.exploration.utils_motion_planning_interface import DEFAULT_JOINTS
 from owt.voxels import VoxelGrid
 
 GRID_HEIGHT = 2  # Height of the visibility and occupancy grids

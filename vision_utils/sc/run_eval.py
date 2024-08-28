@@ -25,14 +25,6 @@ from collections import Counter
 
 import cv2
 import trimesh
-from open_world.estimation.bounding import estimate_oobb
-from open_world.estimation.dnn import init_sc, init_seg
-from open_world.estimation.geometry import (estimate_surface_mesh,
-                                            filter_visible,
-                                            project_base_points, refine_shape)
-from open_world.simulation.environment import create_ycb
-from open_world.simulation.lis import (CAMERA_MATRIX, YCB_COLORS, YCB_MASSES,
-                                       Z_EPSILON, get_ycb_obj_path)
 from pybullet_tools.pr2_problems import create_table
 from pybullet_tools.utils import (CLIENT, INF, PI, STATIC_MASS, TAN, TEMP_DIR,
                                   WHITE, CameraImage, Euler, Mesh, Point, Pose,
@@ -48,6 +40,14 @@ from pybullet_tools.utils import (CLIENT, INF, PI, STATIC_MASS, TAN, TEMP_DIR,
                                   mesh_from_points, multiply, remove_body,
                                   set_all_static, set_euler, set_point,
                                   set_pose, stable_z, tform_points)
+
+from owt.estimation.bounding import estimate_oobb
+from owt.estimation.dnn import init_sc, init_seg
+from owt.estimation.geometry import (estimate_surface_mesh, filter_visible,
+                                     project_base_points, refine_shape)
+from owt.simulation.environment import create_ycb
+from owt.simulation.lis import (CAMERA_MATRIX, YCB_COLORS, YCB_MASSES,
+                                Z_EPSILON, get_ycb_obj_path)
 
 
 def cloud_from_depth(camera_matrix, depth, max_depth=10.0):

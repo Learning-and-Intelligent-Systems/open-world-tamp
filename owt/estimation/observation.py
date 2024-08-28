@@ -144,9 +144,6 @@ SPECIAL_CATEGORIES = {None: pbu.BLACK, UNKNOWN: pbu.GREY, TABLE: pbu.WHITE}
 
 
 def image_from_labeled(seg_image, **kwargs):
-    # TODO: order special colors
-    # TODO: adjust saturation and value per category
-    # labels = sorted(set(get_bodies()) | set(seg_image[..., 0].flatten()))
     labels_instance = set(seg_image[..., 1].flatten())
     detect_obj_labels = sorted(
         label
@@ -173,7 +170,7 @@ def image_from_labeled(seg_image, **kwargs):
 
 
 def save_camera_images(
-    camera_image, directory=utils.TEMP_DIR, prefix="", predicted=True, **kwargs
+    camera_image, directory=TEMP_DIR, prefix="", predicted=True, **kwargs
 ):
     # safe_remove(directory)
     pbu.ensure_dir(directory)

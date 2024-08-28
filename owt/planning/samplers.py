@@ -7,14 +7,13 @@ import pybullet as p
 
 import owt.pb_utils as pbu
 from owt.planning.primitives import GroupConf
-from owt.simulation.lis import USING_ROS
 
 COLLISION_DISTANCE = 5e-3  # Distance from fixed obstacles
 MOVABLE_DISTANCE = COLLISION_DISTANCE
 EPSILON = 1e-3
 SELF_COLLISIONS = True  # TODO: check self collisions
-MAX_IK_TIME = 0.05 if USING_ROS else 0.01
-MAX_IK_DISTANCE = np.inf if USING_ROS else np.inf  # math.radians(30)
+MAX_IK_TIME = 0.01
+MAX_IK_DISTANCE = np.inf
 MAX_TOOL_DISTANCE = np.inf
 DISABLE_ALL_COLLISIONS = True
 
@@ -260,7 +259,7 @@ def sample_prehensive_base_confs(
     gripper_path = compute_gripper_path(pose, grasp)
     if workspace_collision(
         robot, arm, gripper_path, grasp=None, obstacles=obstacles, **kwargs
-    ):  # grasp):
+    ):
         return
 
     base_generator = pbu.uniform_pose_generator(

@@ -21,9 +21,10 @@ from movo.movo_utils import (ARMS, COMMAND_MOVO_GROUPS,
                              MOVO_DISABLED_COLLISIONS, MOVO_GROUPS, MOVO_INFOS,
                              MOVO_TOOL_FRAMES, MOVO_URDF, create_floor,
                              gripper_from_arm, side_from_arm)
-from open_world.estimation.bounding import estimate_oobb
-from open_world.simulation.entities import Manipulator
 from pybullet_tools.utils import RGBA, connect, load_pybullet
+
+from owt.estimation.bounding import estimate_oobb
+from owt.simulation.entities import Manipulator
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = BASE_DIR + "/../vision_utils/votenet"

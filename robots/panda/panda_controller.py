@@ -1,7 +1,6 @@
 import time
 
-from open_world.simulation.controller import Controller
-
+from owt.simulation.controller import Controller
 from robots.panda.panda_sender import (capture_realsense, close_gripper,
                                        command_arm, execute_position_path,
                                        get_joint_states, open_gripper)

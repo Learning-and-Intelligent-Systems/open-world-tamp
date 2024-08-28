@@ -7,8 +7,6 @@ import warnings
 
 import numpy as np
 import pybullet_tools
-from open_world.simulation.entities import Robot
-from open_world.simulation.lis import PR2_INFOS
 from pybullet_tools.pr2_utils import (CLEAR_LEFT_ARM, LEFT_ARM, PR2_GROUPS,
                                       PR2_TOOL_FRAMES, RIGHT_ARM,
                                       arm_from_side, gripper_from_side,
@@ -17,20 +15,24 @@ from pybullet_tools.pr2_utils import (CLEAR_LEFT_ARM, LEFT_ARM, PR2_GROUPS,
 from pybullet_tools.utils import (PI, custom_limits_from_base_limits,
                                   link_from_name)
 
+from owt.simulation.entities import Robot
+from owt.simulation.lis import PR2_INFOS
+
 pybullet_tools.utils.TEMP_DIR = "temp_meshes/"  # TODO: resolve conflict with pddlstream
 
-from open_world.simulation.entities import Camera, Manipulator
-from open_world.simulation.lis import (CAMERA_FRAME, CAMERA_MATRIX,
-                                       CAMERA_OPTICAL_FRAME, PR2_INFOS)
 from pybullet_tools.utils import PI, get_max_limits, link_from_name
+
+from owt.simulation.entities import Camera, Manipulator
+from owt.simulation.lis import (CAMERA_FRAME, CAMERA_MATRIX,
+                                CAMERA_OPTICAL_FRAME, PR2_INFOS)
 
 DEFAULT_LEFT_ARM = CLEAR_LEFT_ARM
 
-from open_world.simulation.controller import SimulatedController
-# from run_estimator import create_parser
-from open_world.simulation.environment import set_gripper_friction
 from pybullet_tools.utils import link_from_name, user_input
 
+from owt.simulation.controller import SimulatedController
+# from run_estimator import create_parser
+from owt.simulation.environment import set_gripper_friction
 # TODO: all ROS should be the last import otherwise segfaults
 from robots.pr2.pr2_controller import PR2Controller
 
@@ -38,9 +40,10 @@ PR2_PATH = os.path.abspath("models/ltamp/pr2_description/pr2.urdf")
 
 warnings.filterwarnings("ignore")  # , category=DeprecationWarning)
 
-from open_world.simulation.environment import create_floor_object
-from open_world.simulation.lis import CAMERA_OPTICAL_FRAME
 from pybullet_tools.utils import Pose, add_data_path
+
+from owt.simulation.environment import create_floor_object
+from owt.simulation.lis import CAMERA_OPTICAL_FRAME
 
 PR2_DISABLED_COLLISIONS = [
     (76, 3),

@@ -4,15 +4,16 @@ import time
 from itertools import groupby
 
 import numpy as np
-from open_world.exploration.base_planners.planner import Planner
-from open_world.exploration.utils import GRID_RESOLUTION, find_min_angle
-from open_world.exploration.utils_graph import Graph
 from pybullet_planning.pybullet_tools.utils import (Euler, Point, Pose,
                                                     get_aabb_center, get_pose,
                                                     invert, joint_from_name,
                                                     multiply,
                                                     set_joint_positions,
                                                     set_pose)
+
+from owt.exploration.base_planners.planner import Planner
+from owt.exploration.utils import GRID_RESOLUTION, find_min_angle
+from owt.exploration.utils_graph import Graph
 
 
 class Snowplow(Planner):

@@ -1,10 +1,10 @@
 import os
 
-from open_world.simulation.controller import SimulatedController
-from open_world.simulation.entities import Camera, Manipulator, Robot
-from open_world.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
 from pybullet_tools.utils import link_from_name
 
+from owt.simulation.controller import SimulatedController
+from owt.simulation.entities import Camera, Manipulator, Robot
+from owt.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
 from robots.panda.panda_controller import PandaController
 
 CAMERA_FRAME = "camera_frame"

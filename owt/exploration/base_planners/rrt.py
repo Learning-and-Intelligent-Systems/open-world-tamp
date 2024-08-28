@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import collections as mc
 from matplotlib.patches import Rectangle
-from open_world.exploration.base_planners.planner import Planner
 from pybullet_planning.pybullet_tools.utils import (LockRenderer, get_aabb,
                                                     joint_from_name,
                                                     set_joint_positions,
                                                     wait_if_gui)
+
+from owt.exploration.base_planners.planner import Planner
 
 
 class RRT(Planner):

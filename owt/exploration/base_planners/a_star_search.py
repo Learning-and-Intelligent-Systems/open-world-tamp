@@ -2,10 +2,11 @@ import time
 from itertools import groupby
 
 import numpy as np
-from open_world.exploration.base_planners.planner import Planner
-from open_world.exploration.utils import GRID_RESOLUTION, find_min_angle
-from open_world.exploration.utils_graph import Graph
 from pybullet_planning.pybullet_tools.utils import joint_from_name
+
+from owt.exploration.base_planners.planner import Planner
+from owt.exploration.utils import GRID_RESOLUTION, find_min_angle
+from owt.exploration.utils_graph import Graph
 
 
 class AStarSearch(Planner):

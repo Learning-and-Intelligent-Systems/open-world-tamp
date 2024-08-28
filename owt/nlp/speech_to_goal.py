@@ -1,5 +1,6 @@
 import speech_recognition as sr
-from open_world.nlp.text_to_goal import text_to_goal
+
+from owt.nlp.text_to_goal import text_to_goal
 
 
 def get_goal_audio():

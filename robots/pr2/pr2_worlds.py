@@ -3,12 +3,6 @@ import random
 
 import numpy as np
 import pybullet as p
-from open_world.simulation.entities import RealWorld
-from open_world.simulation.environment import (Pose2D, create_floor_object,
-                                               create_pillar,
-                                               create_table_object, create_ycb,
-                                               place_object, place_surface)
-from pybullet_tools.pr2_utils import ARM_NAMES
 from pybullet_tools.utils import (BLUE, COLOR_FROM_NAME, GREEN, PI, RED,
                                   TEMP_DIR, YELLOW, Euler, HideOutput, Point,
                                   Pose, add_data_path, apply_alpha,
@@ -17,6 +11,12 @@ from pybullet_tools.utils import (BLUE, COLOR_FROM_NAME, GREEN, PI, RED,
                                   pairwise_collision, pairwise_collisions,
                                   set_camera_pose, set_dynamics, set_pose,
                                   stable_z_on_aabb)
+
+from owt.simulation.entities import RealWorld
+from owt.simulation.environment import (Pose2D, create_floor_object,
+                                        create_pillar, create_table_object,
+                                        create_ycb, place_object,
+                                        place_surface)
 
 
 def create_default_env(**kwargs):

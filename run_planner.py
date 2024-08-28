@@ -14,28 +14,24 @@ warnings.filterwarnings("ignore")
 
 from itertools import product
 
-from open_world.exploration.base_planners.a_star_search import AStarSearch
-from open_world.exploration.base_planners.lamb import Lamb
-from open_world.exploration.base_planners.rrt import RRT
-from open_world.exploration.base_planners.snowplow import Snowplow
-from open_world.nlp.speech_to_goal import get_goal_audio
-from open_world.nlp.text_to_goal import text_to_goal
-from open_world.planning.streams import (GEOMETRIC_MODES, LEARNED_MODES,
-                                         MODE_ORDERS)
-from open_world.simulation.policy import Policy
-from open_world.simulation.tasks import GOALS, task_from_goal
-from pybullet_tools.utils import load_pybullet, wait_for_user, wait_if_gui
-
+import owt.pb_utils as pbu
+from owt.exploration.base_planners.a_star_search import AStarSearch
+from owt.exploration.base_planners.lamb import Lamb
+from owt.exploration.base_planners.rrt import RRT
+from owt.exploration.base_planners.snowplow import Snowplow
+from owt.nlp.speech_to_goal import get_goal_audio
+from owt.nlp.text_to_goal import text_to_goal
+from owt.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
+from owt.simulation.policy import Policy
+from owt.simulation.tasks import GOALS, task_from_goal
 from robots.movo.movo_utils import MOVO_PATH, MovoRobot
 from robots.movo.movo_worlds import movo_world_from_problem
 from robots.panda.panda_utils import PANDA_PATH, PandaRobot
 from robots.panda.panda_worlds import panda_world_from_problem
 from robots.pr2.pr2_utils import PR2_PATH, PR2Robot
 from robots.pr2.pr2_worlds import pr2_world_from_problem
-from robots.spot.spot_utils import SPOT_PATH, SpotRobot
-from robots.spot.spot_worlds import spot_world_from_problem
 
-ROBOTS = ["pr2", "panda", "movo", "spot"]
+ROBOTS = ["pr2", "panda", "movo"]
 SEG_MODELS = ["maskrcnn", "uois", "ucn", "all"]
 SHAPE_MODELS = ["msn", "atlas"]
 
@@ -43,20 +39,17 @@ robot_paths = {
     "pr2": PR2_PATH,
     "panda": PANDA_PATH,
     "movo": MOVO_PATH,
-    "spot": SPOT_PATH,
 }
 robot_entities = {
     "pr2": PR2Robot,
     "panda": PandaRobot,
     "movo": MovoRobot,
-    "spot": SpotRobot,
 }
 
 robot_simulated_worlds = {
     "pr2": pr2_world_from_problem,
     "panda": panda_world_from_problem,
     "movo": movo_world_from_problem,
-    "spot": spot_world_from_problem,
 }
 
 base_planners = {"snowplow": Snowplow, "astar": AStarSearch, "rrt": RRT, "lamb": Lamb}
