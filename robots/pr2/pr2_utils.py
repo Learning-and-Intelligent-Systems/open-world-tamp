@@ -6,7 +6,6 @@ import os
 import warnings
 
 import numpy as np
-import pybullet_tools
 from pybullet_tools.pr2_utils import (CLEAR_LEFT_ARM, LEFT_ARM, PR2_GROUPS,
                                       PR2_TOOL_FRAMES, RIGHT_ARM, open_gripper,
                                       rightarm_from_leftarm)

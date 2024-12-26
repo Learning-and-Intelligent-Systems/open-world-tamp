@@ -15,7 +15,7 @@ import owt.pb_utils as pbu
 from owt.exploration.utils import iterate_point_cloud
 from owt.exploration.utils_graph import Graph
 from owt.exploration.utils_motion_planning_interface import DEFAULT_JOINTS
-from owt.voxels import VoxelGrid
+from owt.voxel_utils import VoxelGrid
 
 GRID_HEIGHT = 2  # Height of the visibility and occupancy grids
 GRID_RESOLUTION = 0.2  # Grid resolutions

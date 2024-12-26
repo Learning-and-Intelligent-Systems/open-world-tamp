@@ -117,24 +117,7 @@ def create_parser():
         action="store_true",
         help="Execute the positions commands on a real robot",
     )
-
-    # shape completion
-    parser.add_argument(
-        "-sc",
-        "--shape-completion",
-        action="store_true",
-        help="Uses a DNN for shape completion",
-    )
-
-    parser.add_argument(
-        "-scm",
-        "--shape-completion-model",
-        type=str,
-        default="msn",
-        choices=SHAPE_MODELS,
-        help="Selects the DNN shape completion model",
-    )
-
+    
     parser.add_argument(
         "-convex",
         action="store_false",

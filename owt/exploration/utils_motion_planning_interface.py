@@ -1,7 +1,6 @@
 import os
 
 import pybullet as p
-from pybullet_planning.motion.motion_planners.rrt_connect import birrt
 
 import owt.pb_utils as pbu
 

@@ -1,11 +1,11 @@
 import os
 
-from pybullet_tools.utils import link_from_name
 
 from owt.simulation.controller import SimulatedController
 from owt.simulation.entities import Camera, Manipulator, Robot
 from owt.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
 from robots.panda.panda_controller import PandaController
+import owt.pb_utils as pbu
 
 CAMERA_FRAME = "camera_frame"
 CAMERA_OPTICAL_FRAME = "camera_frame"
@@ -120,7 +120,7 @@ class PandaRobot(Robot):
 
     @property
     def base_link(self):
-        return link_from_name(self.robot, self.BASE_LINK, client=self.client)
+        return pbu.link_from_name(self.robot, self.BASE_LINK, client=self.client)
 
     def reset(self, **kwargs):
         conf = self.get_default_conf()

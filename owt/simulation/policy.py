@@ -14,7 +14,7 @@ import pybullet as p
 
 import owt.pb_utils as pbu
 from owt.estimation.belief import GRASP_EXPERIMENT, Belief
-from owt.estimation.dnn import init_sc, init_seg
+from owt.estimation.dnn import init_seg
 from owt.estimation.geometry import cloud_from_depth
 from owt.estimation.observation import save_camera_images
 from owt.estimation.tables import estimate_surfaces
@@ -118,10 +118,6 @@ class Policy(object):
                 maskrcnn_rgbd=args.maskrcnn_rgbd,
                 post_classifier=args.fasterrcnn_detection,
             )
-
-        self.sc_network = None
-        if args.shape_completion:
-            self.sc_network = init_sc(branch=args.shape_completion_model)
 
         self.belief = Belief(
             self.robot,
