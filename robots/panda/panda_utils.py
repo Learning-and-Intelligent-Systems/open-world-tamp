@@ -1,11 +1,10 @@
 import os
 
-
+import owt.pb_utils as pbu
 from owt.simulation.controller import SimulatedController
 from owt.simulation.entities import Camera, Manipulator, Robot
 from owt.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
 from robots.panda.panda_controller import PandaController
-import owt.pb_utils as pbu
 
 CAMERA_FRAME = "camera_frame"
 CAMERA_OPTICAL_FRAME = "camera_frame"

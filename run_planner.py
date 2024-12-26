@@ -117,7 +117,7 @@ def create_parser():
         action="store_true",
         help="Execute the positions commands on a real robot",
     )
-    
+
     parser.add_argument(
         "-convex",
         action="store_false",
@@ -207,7 +207,9 @@ def setup_robot_pybullet(args):
     else:
         client = bc.BulletClient(connection_mode=p.DIRECT)
 
-    robot_body = load_pybullet(robot_paths[args.robot], fixed_base=True, client=client)
+    robot_body = pbu.load_pybullet(
+        robot_paths[args.robot], fixed_base=True, client=client
+    )
     return robot_body, client
 
 

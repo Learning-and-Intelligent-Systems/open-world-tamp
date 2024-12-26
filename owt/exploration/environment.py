@@ -367,7 +367,7 @@ class Environment(ABC):
             distance = center_camera[2]
             pixel = pbu.pixel_from_point(CAMERA_MATRIX, center_camera)
             if pixel is not None:
-                r, c = pixel
+                r, c = pixel.row, pixel.column
                 depth = camera_image.depthPixels[r, c]
                 if distance <= depth:
                     self.viewed_voxels.append(voxel)

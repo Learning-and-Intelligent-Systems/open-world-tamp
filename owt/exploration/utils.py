@@ -86,13 +86,13 @@ def get_viewcone(depth=5, camera_matrix=None, **kwargs):
         get_viewcone_base(depth=depth, camera_matrix=camera_matrix)
     )
     assert mesh is not None
-    return create_mesh(mesh, **kwargs)
+    return pbu.create_mesh(mesh, **kwargs)
 
 
 def extract_point(camera_image, pixel, world_frame=True):
     # from trimesh.scene import Camera
     rgb_image, depth_image, seg_image, camera_pose, camera_matrix = camera_image
-    r, c = pixel
+    r, c = pixel.row, pixel.column
     height, width = depth_image.shape
     assert (0 <= r < height) and (0 <= c < width)
     # body, link = seg_image[r, c, :]
@@ -116,7 +116,7 @@ def iterate_image(camera_image, step_size=3, aabb=None, **kwargs):
 
     (height, width, _) = camera_image.rgbPixels.shape
     # TODO: clip if out of range
-    (x1, y1), (x2, y2) = np.array(aabb).astype(int)
+    (x1, y1), (x2, y2) = np.array([aabb.lower, aabb.upper]).astype(int)
     for r in range(y1, height, step_size):
         for c in range(x1, width, step_size):
             yield pbu.Pixel(r, c)

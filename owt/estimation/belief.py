@@ -242,16 +242,10 @@ class SurfaceBelief(Object):
             center_world = grid.to_world(grid.center_from_voxel(voxel))
             center_camera = pbu.tform_point(pbu.invert(camera_pose), center_world)
             distance = center_camera[2]
-            # if not (0 <= distance < max_depth):
-            #    continue
             pixel = pbu.pixel_from_point(camera_matrix, center_camera)
             if pixel is not None:
-                # TODO: local filter
-                r, c = pixel
+                r, c = pixel.row, pixel.column
                 depth = camera_image.depthPixels[r, c]
-                # if distance > depth:
-                #     grid.set_occupied(voxel)
-                #     # grid.add_point(center_world) # TODO: check pixels within voxel bounding box
                 if distance <= depth:
                     grid.set_free(voxel)
 

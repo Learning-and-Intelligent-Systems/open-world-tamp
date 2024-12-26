@@ -389,7 +389,7 @@ def create_table(
     poses = [surface_pose] + leg_poses
     colors = [top_color] + len(legs) * [leg_color]
 
-    collision_id, visual_id = pbu.create_shape_array(geoms, poses, colors)
+    collision_id, visual_id = pbu.create_shape_array(geoms, poses, colors, **kwargs)
     body = pbu.create_body(collision_id, visual_id, **kwargs)
 
     return body
