@@ -65,8 +65,8 @@ class RRT(Planner):
         return final_path
 
     def get_plan(self, **kwargs):
-        camera_pose, image_data = self.env.get_robot_vision()
-        self.env.update_visibility(camera_pose, image_data)
+        _, image_data = self.env.get_robot_vision()
+        self.env.update_visibility(image_data)
         self.env.update_occupancy(image_data)
 
         self.movable_handles = self.env.plot_grids(
@@ -89,10 +89,10 @@ class RRT(Planner):
             pbu.set_joint_positions(self.env.robot, self.joints, q)
 
             # Get updated occupancy grid at each step
-            camera_pose, image_data = self.env.get_robot_vision()
+            _, image_data = self.env.get_robot_vision()
             self.env.update_occupancy(image_data)
             self.env.update_movable_boxes(image_data)
-            self.env.update_visibility(camera_pose, image_data)
+            self.env.update_visibility(image_data)
 
             # Check if remaining path is collision free under the new occupancy grid
             for next_qi in path[qi:]:

@@ -47,8 +47,8 @@ class AStarSearch(Planner):
 
         # Gathers vision from the robot's starting position and updates the
         # visibility and occupancy grids. Visualize them for convenience.
-        camera_pose, image_data = self.env.get_robot_vision()
-        self.env.update_visibility(camera_pose, image_data, q_start)
+        _, image_data = self.env.get_robot_vision()
+        self.env.update_visibility(image_data, q_start)
         self.env.update_occupancy(q_start, image_data)
         self.env.update_movable_boxes(image_data)
         self.env.plot_grids(True, True, True)

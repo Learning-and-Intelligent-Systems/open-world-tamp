@@ -235,14 +235,15 @@ class SurfaceBelief(Object):
                 # TODO: the different is really just whether we'll make a mesh or not
                 self.occupancy_grid.add_point(point)
 
-    def update_visibility(self, camera_image, **kwargs):
-        camera_pose, camera_matrix = camera_image[-2:]
+    def update_visibility(self, camera_image: pbu.CameraImage, **kwargs):
         grid = self.visibility_grid
         for voxel in grid.voxels_from_aabb(self.surface_aabb):
             center_world = grid.to_world(grid.center_from_voxel(voxel))
-            center_camera = pbu.tform_point(pbu.invert(camera_pose), center_world)
+            center_camera = pbu.tform_point(
+                pbu.invert(camera_image.camera_pose), center_world
+            )
             distance = center_camera[2]
-            pixel = pbu.pixel_from_point(camera_matrix, center_camera)
+            pixel = pbu.pixel_from_point(camera_image.camera_matrix, center_camera)
             if pixel is not None:
                 r, c = pixel.row, pixel.column
                 depth = camera_image.depthPixels[r, c]
@@ -429,7 +430,9 @@ class Belief(object):
         pixels = [
             pixel
             for pixel in iterate_image(camera_image, step_size=2)
-            if is_object_label(camera_image.segmentationMaskBuffer[pixel])
+            if is_object_label(
+                camera_image.segmentationMaskBuffer[pixel.row, pixel.column]
+            )
         ]
 
         relevant_cloud = [

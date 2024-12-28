@@ -1,5 +1,6 @@
 import colorsys
 import random
+from typing import List
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -119,15 +120,12 @@ def get_hue_distance(rgb1, rgb2):
     return pbu.interval_distance(hsv1[0], hsv2[0], interval=(0, 1))
 
 
-def get_color_distance(rgb1, rgb2, hue_only=False):
-    # TODO: threshold based on how close to grey, white, black, etc.
+def get_color_distance(rgb1: pbu.RGBA, rgb2: pbu.RGBA, hue_only=False) -> float:
     distance_fn = get_hue_distance if hue_only else pbu.get_distance
     return distance_fn(pbu.remove_alpha(rgb1), pbu.remove_alpha(rgb2))
 
 
-def find_closest_color(color, color_from_name=COLORS, **kwargs):
-    # TODO: use the hue instead
-    # from colorsys import rgb_to_hsv
+def find_closest_color(color: pbu.RGBA, color_from_name=COLORS, **kwargs):
     if color is None:
         return color
 
@@ -152,7 +150,7 @@ def get_matplotlib_colors():
     return color_from_name
 
 
-def mean_hue(rgbs, min_sat=0.0, min_value=0.0):
+def mean_hue(rgbs: List[pbu.RGBA], min_sat=0.0, min_value=0.0):
     hsvs = [colorsys.rgb_to_hsv(*pbu.remove_alpha(rgb)) for rgb in rgbs]
     hues = [h for h, s, v in hsvs if (s >= min_sat) and (v >= min_value)]
     if not hues:

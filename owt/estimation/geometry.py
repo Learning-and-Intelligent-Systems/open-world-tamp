@@ -8,7 +8,8 @@ import trimesh
 import owt.pb_utils as pbu
 from owt.estimation.bounding import convex_hull_2d, estimate_oobb, min_circle
 from owt.estimation.completion import filter_visible, refine_shape
-from owt.estimation.concave import concave_mesh, create_concave_mesh
+from owt.estimation.concave import (concave_mesh, create_concave_mesh,
+                                    create_mesh)
 from owt.estimation.observation import (aggregate_color, draw_points,
                                         tform_labeled_points)
 from owt.estimation.surfaces import Plane, point_plane_distance
@@ -201,7 +202,7 @@ def estimate_mesh(
         print("oobb smaller than min volume")
         return None
     origin_pose = obj_oobb.pose  # TODO: adjust pose to be the base
-    color = pbu.apply_alpha(aggregate_color(labeled_points), alpha=0.75)
+    color = pbu.apply_alpha(pbu.RGBA(*aggregate_color(labeled_points)), alpha=0.75)
 
     base_vertices_2d = convex_hull_2d(points)
     if pbu.convex_area(base_vertices_2d) < min_area:
@@ -274,7 +275,7 @@ def estimate_mesh(
             **kwargs
         )
     else:
-        obj_estimate = pbu.create_mesh(
+        obj_estimate = create_mesh(
             obj_mesh, under=True, color=None if VISUALIZE_COLLISION else color, **kwargs
         )
     pbu.set_pose(obj_estimate, origin_pose, **kwargs)
@@ -282,17 +283,20 @@ def estimate_mesh(
 
 
 def estimate_surface_mesh(
-    labeled_points, surface_pose=None, camera_image=None, **kwargs
+    labeled_points, surface_pose=None, camera_image: pbu.CameraImage = None, **kwargs
 ):
     # TODO: surface instead of surface_pose
     if surface_pose is None:
         min_z = min(lp.point[2] for lp in labeled_points)
         surface_pose = pbu.Pose(pbu.Point(z=min_z))
     if camera_image is not None:
-        rgb, depth, labeled, camera_pose = camera_image[:4]
-        camera_pose = pbu.multiply(pbu.invert(surface_pose), camera_pose)
+        camera_pose = pbu.multiply(pbu.invert(surface_pose), camera_image.camera_pose)
         camera_image = pbu.CameraImage(
-            rgb, depth, labeled, camera_pose, *camera_image[4:]
+            camera_image.rgbPixels,
+            camera_image.depthPixels,
+            camera_image.segmentationMaskBuffer,
+            camera_pose,
+            camera_image.camera_matrix,
         )
 
     labeled_cluster = tform_labeled_points(pbu.invert(surface_pose), labeled_points)

@@ -345,7 +345,7 @@ class Environment(ABC):
                             break
         return voxels
 
-    def update_visibility(self, camera_pose, camera_image, q):
+    def update_visibility(self, camera_image: pbu.CameraImage, q):
         """Updates the visibility grid based on a camera image.
 
         Args:
@@ -356,14 +356,15 @@ class Environment(ABC):
             set: The gained vision obtaining from the given image.
         """
         surface_aabb = self.visibility_grid.aabb
-        camera_pose, camera_matrix = camera_image[-2:]
         grid = self.visibility_grid
         self.gained_vision[q] = set()
 
         # For each voxel in the grid, check whether it was seen in the image
         for voxel in grid.voxels_from_aabb(surface_aabb):
             center_world = grid.to_world(grid.center_from_voxel(voxel))
-            center_camera = pbu.tform_point(pbu.invert(camera_pose), center_world)
+            center_camera = pbu.tform_point(
+                pbu.invert(camera_image.camera_pose), center_world
+            )
             distance = center_camera[2]
             pixel = pbu.pixel_from_point(CAMERA_MATRIX, center_camera)
             if pixel is not None:
@@ -1386,7 +1387,7 @@ class Environment(ABC):
                         pbu.draw_oobb(movable_box, color=pbu.YELLOW)
         return
 
-    def get_robot_vision(self):
+    def get_robot_vision(self) -> pbu.CameraImage:
         """Gets the rgb and depth image of the robot.
 
         Returns:
@@ -1403,7 +1404,7 @@ class Environment(ABC):
             camera_pose, CAMERA_MATRIX, far=FAR, segment=True, client=self.client
         )
 
-        return camera_pose, camera_image
+        return camera_image
 
     def get_circular_vision(self, q, G, radius=1):
         """Gets a set of voxels that form a circle around a given point.

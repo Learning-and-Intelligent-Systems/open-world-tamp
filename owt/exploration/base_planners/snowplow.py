@@ -63,9 +63,11 @@ class Snowplow(Planner):
         if loadfile is not None:
             self.load_state(loadfile)
             self.env.plot_grids(True, True, True)
-            set_joint_positions(self.env.robot, self.joints, self.current_q)
+            pbu.set_joint_positions(
+                self.env.robot, self.joints, self.current_q, client=self.client
+            )
             for i, obj in enumerate(self.env.room.movable_obstacles):
-                set_pose(obj, self.object_poses[i])
+                pbu.set_pose(obj, self.object_poses[i])
             print("State loaded")
 
         complete = False
@@ -91,7 +93,7 @@ class Snowplow(Planner):
                 if x == "Y" or x == "y":
                     self.object_poses = []
                     for obj in self.env.room.movable_obstacles:
-                        self.object_poses.append(get_pose(obj))
+                        self.object_poses.append(pbu.get_pose(obj, client=self.client))
                     self.save_state()
 
         # Search for repeated nodes in a sequence and filter them.
@@ -368,7 +370,7 @@ class Snowplow(Planner):
             camera_pose, image_data = self.env.get_robot_vision()
             self.env.update_occupancy(q, image_data)
             gained_vision.update(self.env.update_movable_boxes(image_data))
-            gained_vision.update(self.env.update_visibility(camera_pose, image_data, q))
+            gained_vision.update(self.env.update_visibility(image_data, q))
 
             # If an object is attached, do not detect it as an obstacle or a new movable object
             # TODO: Find a better method to clear the noise than the current one

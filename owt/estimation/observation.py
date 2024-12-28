@@ -12,9 +12,9 @@ LabeledPoint = namedtuple("LabeledPoint", ["point", "color", "label"])  # TODO: 
 BACKGROUND = -1
 
 
-def aggregate_color(labeled_points):
+def aggregate_color(labeled_points) -> pbu.RGBA:
     colors = [point.color for point in labeled_points]
-    return np.median(colors, axis=0)
+    return pbu.RGBA(*np.median([list(c) for c in colors], axis=0))
 
 
 def draw_points(points, **kwargs):
@@ -61,7 +61,7 @@ def extract_point(camera_image: pbu.CameraImage, pixel: pbu.Pixel, world_frame=T
     point = (
         point_world if world_frame else point_camera
     )  # TODO: specify frame wrt the robot
-    color = camera_image.rgbPixels[r, c, :] / MAX_PIXEL_VALUE
+    color = pbu.RGBA(*camera_image.rgbPixels[r, c, :] / MAX_PIXEL_VALUE)
     return LabeledPoint(point, color, label)
 
 

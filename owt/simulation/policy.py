@@ -194,7 +194,6 @@ class Policy(object):
         self.reset_belief()
 
         real_image = self.get_image()
-
         surfaces = self.estimate_surfaces(real_image, task)
         table = surfaces[0]
         objects = self.estimate_objects(real_image, table)
@@ -226,7 +225,6 @@ class Policy(object):
             use_seg=self.args.segmentation,
             surface=table.surface,
             project_base=not self.args.disable_project,
-            sc_network=self.sc_network,
             save_relabeled_img=False,
             concave=not self.args.convex,
             surfaces_movable=True,

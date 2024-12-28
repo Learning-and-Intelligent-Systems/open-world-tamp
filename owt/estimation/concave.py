@@ -52,15 +52,15 @@ def decompose_body(body):
     return new_body
 
 
-def obj_file_from_mesh(mesh, under=True):
+def obj_file_from_mesh(mesh: pbu.Mesh, under=True):
     """Creates a *.obj mesh string :param mesh: tuple of list of vertices and
     list of faces :return: *.obj mesh string."""
-    vertices, faces = mesh
+
     s = "g Mesh\n"  # TODO: string writer
-    for v in vertices:
+    for v in mesh.vertices:
         assert len(v) == 3
         s += "\nv {}".format(" ".join(map(str, v)))
-    for f in faces:
+    for f in mesh.faces:
         # assert(len(f) == 3) # Not necessarily true
         f = [i + 1 for i in f]  # Assumes mesh is indexed from zero
         s += "\nf {}".format(" ".join(map(str, f)))

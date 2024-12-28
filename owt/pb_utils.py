@@ -45,8 +45,8 @@ class RGB:
     green: int
     blue: int
 
-    def __list__(self):
-        return [self.red, self.green, self.blue]
+    def __iter__(self):
+        return iter(asdict(self).values())
 
 
 @dataclass
@@ -574,6 +574,10 @@ def add_body_name(body, name=None, **kwargs):
     return add_text(name, position=position, parent=body, **kwargs)
 
 
+def get_aabb_area(aabb):
+    return get_aabb_volume(aabb2d_from_aabb(aabb))
+
+
 def waypoints_from_path(path, difference_fn=None, tolerance=1e-3):
     if difference_fn is None:
         difference_fn = get_difference
@@ -1026,6 +1030,14 @@ def apply_alpha(color, alpha=1.0):
     if color is None:
         return None
     return RGBA(color.red, color.green, color.blue, alpha)
+
+
+def interpolate(value1, value2, num_steps=2):
+    num_steps = max(num_steps, 2)
+    yield value1
+    for w in np.linspace(0, 1, num=num_steps, endpoint=True)[1:-1]:
+        yield convex_combination(value1, value2, w=w)
+    yield value2
 
 
 def create_visual_shape(
@@ -1961,7 +1973,7 @@ def get_length(vec, norm=2):
 
 
 def get_difference(p1, p2):
-    return np.array(p2) - np.array(p1)
+    return np.array(list(p2)) - np.array(list(p1))
 
 
 def get_distance(p1, p2, **kwargs):
@@ -3101,16 +3113,19 @@ def custom_limits_from_base_limits(robot, base_limits, yaw_limit=None, **kwargs)
     return custom_limits
 
 
-def remove_alpha(color):
-    return RGB(*color[:3])
+def remove_alpha(color: RGBA) -> RGB:
+    return RGB(color.red, color.green, color.blue)
 
 
-def tform_oobb(affine, oobb: OOBB):
+def tform_oobb(affine, oobb: OOBB) -> OOBB:
     return OOBB(oobb.aabb, multiply(affine, oobb.pose))
 
 
+def aabb2d_from_aabb(aabb: AABB) -> AABB:
+    return AABB(aabb.lower[:2], aabb.upper[:2])
+
+
 def convex_centroid(vertices):
-    # TODO: also applies to non-overlapping polygons
     vertices = [np.array(v[:2]) for v in vertices]
     segments = get_wrapped_pairs(vertices)
     return sum((v1 + v2) * np.cross(v1, v2) for v1, v2 in segments) / (
@@ -3118,7 +3133,7 @@ def convex_centroid(vertices):
     )
 
 
-def aabb_empty(aabb: AABB):
+def aabb_empty(aabb: AABB) -> bool:
     return np.less(aabb.upper, aabb.lower).any()
 
 

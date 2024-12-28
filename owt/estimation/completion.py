@@ -70,15 +70,18 @@ def refine_shape(sc_network, points, use_points=True, min_z=0.0, **kwargs):
 ##################################################
 
 
-def filter_visible(points, origin_pose, camera_image, instance=None, epsilon=5e-3):
-    camera_pose, camera_matrix = camera_image[-2:]
+def filter_visible(
+    points, origin_pose, camera_image: pbu.CameraImage, instance=None, epsilon=5e-3
+):
     filtered_points = []
-    camera_from_origin = pbu.multiply(pbu.invert(camera_pose), origin_pose)
+    camera_from_origin = pbu.multiply(pbu.invert(camera_image.camera_pose), origin_pose)
     point_camera = pbu.tform_points(camera_from_origin, points)
     for idx, point_camera in enumerate(point_camera):
-        pixel = pbu.pixel_from_point(camera_matrix, point_camera)
+        pixel = pbu.pixel_from_point(camera_image.camera_matrix, point_camera)
         if pixel is not None:
-            depth = camera_image.depthPixels[pixel]  # TODO: median filter
+            depth = camera_image.depthPixels[
+                pixel.row, pixel.column
+            ]  # TODO: median filter
             if np.isnan(depth):
                 depth = np.inf
             x, y, z = point_camera

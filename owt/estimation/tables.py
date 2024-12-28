@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans
 
 import owt.pb_utils as pbu
 from owt.estimation.clustering import cluster_trimesh
+from owt.estimation.concave import create_mesh
 from owt.estimation.observation import (aggregate_color, extract_point,
                                         iterate_image, iterate_point_cloud,
                                         save_camera_images)
@@ -25,15 +26,10 @@ COLORS = {
 
 # TODO: infer from the goal statement or explicitly specify in the problem
 SURFACE_COLORS = {
-    # TABLE: [0.855, 0.733, 0.612], # 0.596
-    "red": [0.737, 0.082, 0.227],  # 0.044
-    "yellow": [0.953, 0.89, 0.169],  # 0.043
-    "green": [
-        0.592,
-        0.804,
-        0.353,
-    ],  # [0.631, 0.902, 0.463], # Green seems hard to detect?
-    "blue": [0.31, 0.431, 0.804],
+    "red": pbu.RGBA(0.737, 0.082, 0.227, 1.0),  # 0.044
+    "yellow": pbu.RGBA(0.953, 0.89, 0.169, 1.0),  # 0.043
+    "green": pbu.RGBA(0.592, 0.804, 0.353, 1.0),
+    "blue": pbu.RGBA(0.31, 0.431, 0.804, 1.0),
 }
 COLORS.update(SURFACE_COLORS)
 
@@ -164,7 +160,7 @@ def estimate_region(
         category = "{}_region".format(color_name)
 
     mesh = pbu.mesh_from_points(mesh_points)  # vertices | mesh_points
-    body = pbu.create_mesh(mesh, under=False, color=pbu.apply_alpha(color), **kwargs)
+    body = create_mesh(mesh, under=False, color=pbu.apply_alpha(color), **kwargs)
     pbu.set_pose(body, pose, **kwargs)
     return Table(
         surface, body, category=category, color=color, points=mesh_points, **kwargs
@@ -201,9 +197,10 @@ def cluster_colors(colors, max_clusters=len(COLORS)):
         return []
     # from scipy.cluster.vq import kmeans, kmeans2
     # https://scikit-learn.org/stable/modules/clustering.html
+    colors_list = [list(c)[:3] for c in COLORS.values()]
     kmeans = KMeans(
         n_clusters=max_clusters,  # init='k-means++',
-        init=np.array(list(map(pbu.remove_alpha, COLORS.values()))),
+        init=colors_list,
         n_init=10,
         max_iter=300,
         tol=0.0001,
@@ -212,8 +209,8 @@ def cluster_colors(colors, max_clusters=len(COLORS)):
         copy_x=True,
         algorithm="lloyd",
     )
-    kmeans.fit(colors)  # TODO: different color space
-    # TODO: repeatedly cluster and remove nearby colors
+    print(colors)
+    kmeans.fit(colors)
 
     indices_from_label = {}
     for index, label in enumerate(kmeans.labels_):
@@ -226,7 +223,9 @@ def cluster_colors(colors, max_clusters=len(COLORS)):
         "Colors distances:",
         {
             (c1, c2): get_color_distance(
-                kmeans.cluster_centers_[c1], kmeans.cluster_centers_[c2], hue_only=False
+                pbu.RGBA(*kmeans.cluster_centers_[c1], alpha=1.0),
+                pbu.RGBA(*kmeans.cluster_centers_[c2], alpha=1.0),
+                hue_only=False,
             )
             for c1, c2 in combinations(labels, r=2)
         },
@@ -266,13 +265,9 @@ def estimate_regions(
     table_plane, inliers = ransac_estimate_plane(
         extracted_pos_table, threshold=plane_threshold, max_error=math.radians(1)
     )
-    # table = estimate_region(table_points, **kwargs)
-    # table_plane = plane_from_pose(table.surface.pose)
-    # relabel_table(camera_image, table_plane, threshold=2*plane_threshold, min_z=min_z)
 
     if save_relabled:
         save_camera_images(camera_image, prefix="relabeled_")
-    # table_points = [table_points[index] for index in inliers] # TODO: use inliers
 
     pos_table_points = [
         pos_table_points[index]
@@ -281,7 +276,7 @@ def estimate_regions(
             [lp.point for lp in pos_table_points],
             threshold=plane_threshold,
         )
-    ]  # TODO: use inliers
+    ]
 
     table = estimate_region(
         pos_table_points, threshold=plane_threshold, category="table", **kwargs
@@ -291,23 +286,20 @@ def estimate_regions(
     if not COLORS:
         return [table]
 
-    # region_points = table_points
     region_points = [
         lp
         for lp in pos_table_points
         if get_color_distance(lp.color, table_color, hue_only=False) >= color_threshold
     ]
     region_colors = [pbu.remove_alpha(lp.color) for lp in region_points]
+    clustered_indices = cluster_colors(
+        [list(rc) for rc in region_colors], max_clusters=len(COLORS)
+    )
 
-    # TODO: remove all points close to this
-    clustered_indices = cluster_colors(region_colors, max_clusters=len(COLORS))
-
-    # clustered_indices = cluster_known(region_colors)
     regions = []
     for i, indices in enumerate(clustered_indices):
-        # color = kmeans.cluster_centers_[label]
         label_points = [region_points[index] for index in indices]
-        color = np.mean([lp.color for lp in label_points], axis=0)
+        color = pbu.RGBA(*np.mean([list(lp.color) for lp in label_points], axis=0))
         clusters = cluster_trimesh(
             label_points, noise_only=False, radius=5e-2, use_2d=False
         )
@@ -319,20 +311,17 @@ def estimate_regions(
                 "Label: {} | Size: {} | Color: {} | Distance: {:.3f} |".format(
                     i,
                     len(cluster_points),
-                    color.round(3).tolist(),
+                    list(color),
                     get_color_distance(table_color, color, hue_only=False),
                 ),
                 list(map(len, clusters)),
             )
-            # region_plane = None
             region_plane = table_plane
-            # region_plane = Plane(table_plane.normal, table_plane.origin + 1e-3*table_plane.normal)
             region = estimate_region(
                 cluster_points, plane=region_plane, threshold=plane_threshold, **kwargs
             )
             if region is not None:
                 regions.append(region)
-                # wait_if_gui()
     return [table] + regions
 
 
