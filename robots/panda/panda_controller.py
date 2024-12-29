@@ -36,9 +36,6 @@ class PandaController(Controller):
         # return self.is_closed
         return False
 
-    def wait(self, duration=0):
-        time.sleep(duration)
-
     @property
     def joint_names(self):
         return list(self.joint_positions.keys())

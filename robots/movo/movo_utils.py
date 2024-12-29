@@ -357,14 +357,6 @@ class MovoRobot(Robot):
             )
             return super().get_gripper_width(gripper_joints, **kwargs)
 
-    @property
-    def default_mobile_base_arm(self):
-        return self.get_default_conf()["right_arm"]
-
-    @property
-    def default_fixed_base_arm(self):
-        return self.get_default_conf()["right_arm"]
-
     def get_finger_links(self, gripper_joints):
         moving_links = pbu.get_moving_links(self, gripper_joints, client=self.client)
         shape_links = [

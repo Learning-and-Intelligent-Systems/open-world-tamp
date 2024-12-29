@@ -1,3 +1,4 @@
+import time
 from collections import Counter, OrderedDict, namedtuple
 
 import numpy as np
@@ -491,6 +492,12 @@ class Robot(Object):
         link2_from_link1 = pbu.multiply(pbu.invert(world_from_link2), world_from_link1)
         return link2_from_link1
 
+    def wait(self, duration):
+        time.sleep(duration)
+
+    def reset(self):
+        raise NotImplementedError
+
     @property
     def robot(self):
         return self.body
@@ -569,8 +576,6 @@ class Robot(Object):
                 for child in pbu.get_link_children(self.body, link, client=self.client)
             )
         ]
-        # for link in finger_links:
-        #     set_color(robot, BLUE, link=link)
         if len(finger_links) != 2:
             raise RuntimeError(finger_links)
         return finger_links

@@ -23,7 +23,7 @@ from owt.nlp.speech_to_goal import get_goal_audio
 from owt.nlp.text_to_goal import text_to_goal
 from owt.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
 from owt.simulation.policy import Policy
-from owt.simulation.tasks import GOALS, task_from_goal
+from owt.simulation.tasks import GOALS, Task, task_from_goal
 from robots.movo.movo_utils import MOVO_PATH, MovoRobot
 from robots.movo.movo_worlds import movo_world_from_problem
 from robots.panda.panda_utils import PANDA_PATH, PandaRobot
@@ -213,12 +213,12 @@ def setup_robot_pybullet(args):
     return robot_body, client
 
 
-def get_task(args):
+def get_task(args) -> Task:
     problem_from_name = {fn.__name__: fn for fn in GOALS}
     if args.voice_interactive:
         return task_from_goal(args, get_goal_audio())
     elif args.text_interactive:
-        goal, _ = text_to_goal(wait_for_user("Enter a command: \n"))
+        goal, _ = text_to_goal(pbu.wait_for_user("Enter a command: \n"))
         return task_from_goal(args, goal)
     else:
         if args.goal not in problem_from_name:
@@ -250,7 +250,6 @@ def main(args):
         args, robot, known=real_world.known, teleport=args.teleport, client=client
     )
 
-    # Get the task. TODO(curtisa): Remove args
     task = get_task(args)
 
     if args.exploration:

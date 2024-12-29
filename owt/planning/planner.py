@@ -16,6 +16,7 @@ from pddlstream.language.stream import PartialInputs, StreamInfo
 from pddlstream.utils import Profiler, get_file_path, lowercase, read
 
 import owt.pb_utils as pbu
+from owt.estimation.belief import Belief
 from owt.planning.primitives import Command, GroupConf, RelativePose, Sequence
 from owt.planning.pushing import get_plan_push_fn
 from owt.planning.streams import (BASE_COST, get_cfree_pregrasp_pose_test,
@@ -231,7 +232,6 @@ def create_streams(
             overhead=1e1, opt_gen_fn=PartialInputs(unique=True)
         ),
         "plan-push": StreamInfo(overhead=1e1, eager=True),
-        "plan-pour": StreamInfo(overhead=1e1),
         "plan-pick": StreamInfo(overhead=1e1),
         "plan-drop": StreamInfo(overhead=1e1),
         "plan-place": StreamInfo(overhead=1e1),
@@ -255,16 +255,15 @@ def create_pddlstream(
     **kwargs
 ):
     robot = belief.robot
-    arms = sorted(robot.manipulators)
-    print("Num arms: " + str(arms))
+    manipulator_groups = sorted(robot.manipulators)
+    print("Num arms: " + str(manipulator_groups))
 
     surfaces = belief.known_surfaces
     table = surfaces[0]
     regions = surfaces[1:]
 
-    all_objects = sorted_union(
-        belief.known_surfaces, objects
-    )  # TODO: objects is kwargs
+    all_objects = sorted_union(belief.known_surfaces, objects)
+
     containers = {obj for obj in all_objects if obj.category in CONTAINERS}
     fixed_objects = sorted_union(belief.known_surfaces, containers)
     movable_objects = set(all_objects) - set(fixed_objects)
@@ -278,7 +277,7 @@ def create_pddlstream(
     print("Regions:", regions)
 
     controllable = []
-    controllable.extend(robot.arm_from_side(side) for side in arms)
+    controllable.extend(manipulator_groups)
     if mobile_base:
         controllable.append("base")
 
@@ -337,8 +336,6 @@ def create_pddlstream(
                 Equal(("MoveCost", group), 1),
             ]
         )
-        # if 'arm' in group:
-        #     init.append(('Arm', group))
 
     init_poses = {
         obj: RelativePose(obj, important=True, **kwargs) for obj in all_objects
@@ -346,12 +343,11 @@ def create_pddlstream(
     for obj, pose in init_poses.items():
         init.extend(
             [
-                # ('Object', obj), # TODO: confirm that this doesn't interfere
                 (
                     "Category",
                     obj,
                     obj.category,
-                ),  # TODO: distinguish between category and (YCB) instance
+                ),
                 ("Localized", obj),
                 ("Pose", obj, pose),
                 ("AtPose", obj, pose),
@@ -365,25 +361,21 @@ def create_pddlstream(
         )
 
     stowed_objects = set()
-    for obj in (
-        set(objects) - stowed_objects
-    ):  # TODO: reordered so stowed_objects doesn't make sense
+    for obj in set(objects) - stowed_objects:
         if obj not in fixed_objects:
             init.extend(
                 [
                     ("Movable", obj),
                     ("Graspable", obj),
                     ("Stackable", obj, table),
-                    # ('CanPush', obj),
                     ("CanPick", obj),
-                    # ('CanContain', obj) # TODO: unused
                 ]
             )
             init.extend(
                 ("Can{}".format(skill.capitalize()), obj) for skill in task.skills
             )
 
-        if hasattr(obj, "contains"):  # TODO: otherwise error when observable
+        if hasattr(obj, "contains"):
             for material in obj.contains:
                 init.extend(
                     [
@@ -394,7 +386,6 @@ def create_pddlstream(
                 )
 
     new_init = []
-    # new_init.extend(infer_affordances(task, init, objects))
     new_init.extend(
         ("Stackable", obj, surface)
         for obj, surface in product(movable_objects, surfaces)
@@ -433,8 +424,6 @@ def create_pddlstream(
                 below_epsilon=np.inf,
                 **kwargs
             ):
-                # is_placed_on_aabb | is_center_on_aabb
-                # TODO: test stream
                 init.append(
                     ("Supported", obj, init_poses[obj], surface, init_poses[surface])
                 )
@@ -448,29 +437,20 @@ def create_pddlstream(
                 below_epsilon=np.inf,
                 **kwargs
             ):
-                # TODO: add obj as an obstacle
                 stowed_objects.add(obj)
                 init.append(("In", obj, container))
-                # TODO: update belief with history
         else:
             raise NotImplementedError(fact)
 
     ##########
 
     rest_confs = {}
-    for side in arms:
-        # TODO: combine arm and gripper
-        arm = robot.arm_from_side(side)
-
-        q = (
-            robot.default_mobile_base_arm
-            if mobile_base
-            else robot.default_fixed_base_arm
-        )
-        rest_conf = GroupConf(robot, arm, robot.arm_conf(arm, q), **kwargs)
+    for group in manipulator_groups:
+        q = robot.get_default_conf()[group]
+        rest_conf = GroupConf(robot, group, q, **kwargs)
         joints = rest_conf.joints
         difference = pbu.get_difference_fn(robot, joints, **kwargs)(
-            rest_conf.positions, init_confs[arm].positions
+            rest_conf.positions, init_confs[group].positions
         )
         if np.allclose(
             np.absolute(difference),
@@ -478,15 +458,15 @@ def create_pddlstream(
             rtol=0,
             atol=math.radians(2),
         ):
-            rest_conf = init_confs[arm]
-        rest_confs[arm] = rest_conf
+            rest_conf = init_confs[group]
+        rest_confs[group] = rest_conf
 
         init.extend(
             [
-                ("Arm", arm),
-                ("ArmEmpty", arm),
-                ("Conf", arm, rest_conf),
-                ("RestConf", arm, rest_conf),
+                ("Arm", group),
+                ("ArmEmpty", group),
+                ("Conf", group, rest_conf),
+                ("RestConf", group, rest_conf),
             ]
         )
 
@@ -494,15 +474,9 @@ def create_pddlstream(
 
     task_parts = []
     task_parts.extend(task.goal_parts)
-    # task_parts = goal_factorize(task_parts, init)
+    goal_confs = []
 
-    goal_confs = [
-        # init_confs['base'],
-        # GroupConf(robot, 'base', [-2.5, -2.5, 0]),
-        # GroupConf(robot, goal_arm, np.zeros(len(pr2.get_group_joints(goal_arm)))),
-    ]
     if task.return_init:
-        # TODO: allow both arms to move to their rest conf initially
         goal_confs.extend(
             rest_confs[group] if (group in rest_confs) else init_confs[group]
             for group in controllable
@@ -510,7 +484,7 @@ def create_pddlstream(
 
     reset_parts = []
     if task.empty_arms:
-        reset_parts.extend(("ArmEmpty", robot.arm_from_side(side)) for side in arms)
+        reset_parts.extend(("ArmEmpty", group) for group in manipulator_groups)
     for conf in goal_confs:
         group = conf.group
         init.extend(
@@ -587,7 +561,9 @@ def restrict_stackable(problem, surfaces):
 #######################################################
 
 
-def plan_pddlstream(belief, task, debug=False, serialize=False, *args, **kwargs):
+def plan_pddlstream(
+    belief: Belief, task, debug=False, serialize=False, *args, **kwargs
+):
     reset_globals()
     problem, stream_info = create_pddlstream(belief, task, *args, **kwargs)
     if problem is None:

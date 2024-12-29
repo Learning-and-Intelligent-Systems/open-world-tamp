@@ -110,10 +110,6 @@ class PandaRobot(Robot):
         return self.joint_groups
 
     @property
-    def default_mobile_base_arm(self):
-        return self.get_default_conf()["main_arm"]
-
-    @property
     def default_fixed_base_arm(self):
         return self.get_default_conf()["main_arm"]
 

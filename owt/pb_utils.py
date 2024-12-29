@@ -361,6 +361,21 @@ def compute_position(ramp_time, max_duration, acceleration, t):
     )
 
 
+def is_center_on_aabb(
+    body, bottom_aabb: AABB, above_epsilon=1e-2, below_epsilon=0.0, **kwargs
+):
+    assert (0 <= above_epsilon) and (0 <= below_epsilon)
+    center, extent = get_center_extent(body, **kwargs)  # TODO: approximate_as_prism
+    base_center = center - np.array([0, 0, extent[2]]) / 2
+    top_z_min = base_center[2]
+    bottom_z_max = bottom_aabb.upper[2]
+    return (
+        (bottom_z_max - abs(below_epsilon))
+        <= top_z_min
+        <= (bottom_z_max + abs(above_epsilon))
+    ) and (aabb_contains_point(base_center[:2], aabb2d_from_aabb(bottom_aabb)))
+
+
 def compute_ramp_duration(distance, acceleration, duration):
     discriminant = max(
         0, math.pow(duration * acceleration, 2) - 4 * distance * acceleration
@@ -373,6 +388,10 @@ def compute_ramp_duration(distance, acceleration, duration):
     ) + acceleration * math.pow(ramp_time, 2)
     assert abs(distance - predicted_distance) < 1e-6
     return ramp_time
+
+
+def aabb_from_oobb(oobb: OOBB):
+    return aabb_from_points(tform_points(oobb.pose, get_aabb_vertices(oobb.aabb)))
 
 
 def add_ramp_waypoints(
@@ -636,6 +655,11 @@ def add_fixed_constraint(
 def remove_debug(debug, client=None, **kwargs):
     client = client or DEFAULT_CLIENT
     client.removeUserDebugItem(debug)
+
+
+def remove_all_debug(client=None, **kwargs):
+    client = client or DEFAULT_CLIENT
+    client.removeAllUserDebugItems()
 
 
 def is_fixed_base(body, **kwargs):
@@ -2664,23 +2688,21 @@ def get_default_resolution(body, joint, **kwargs):
     return DEFAULT_RESOLUTION
 
 
-def wrap_interval(value, interval=UNIT_LIMITS, **kwargs):
-    lower, upper = interval
-    if (lower == -np.inf) and (np.inf == upper):
+def wrap_interval(value, interval: Interval = UNIT_LIMITS, **kwargs):
+    if (interval.lower == -np.inf) and (np.inf == interval.upper):
         return value
-    assert -np.inf < lower <= upper < np.inf
-    return (value - lower) % (upper - lower) + lower
+    assert -np.inf < interval.lower <= interval.upper < np.inf
+    return (value - interval.lower) % (interval.upper - interval.lower) + interval.lower
 
 
-def interval_difference(value2, value1, interval=UNIT_LIMITS):
+def interval_difference(value2, value1, interval: Interval = UNIT_LIMITS):
     value2 = wrap_interval(value2, interval)
     value1 = wrap_interval(value1, interval)
-    lower, upper = interval
     straight_distance = value2 - value1
     if value2 >= value1:
-        wrap_difference = (lower - value1) + (value2 - upper)
+        wrap_difference = (interval.lower - value1) + (value2 - interval.upper)
     else:
-        wrap_difference = (upper - value1) + (value2 - lower)
+        wrap_difference = (interval.upper - value1) + (value2 - interval.lower)
     # return [straight_distance, wrap_difference]
     if abs(wrap_difference) < abs(straight_distance):
         return wrap_difference

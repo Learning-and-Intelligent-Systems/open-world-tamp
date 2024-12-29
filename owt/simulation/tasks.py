@@ -46,7 +46,7 @@ class Task(object):
         return "{}{}".format(self.__class__.__name__, str_from_object(self.__dict__))
 
 
-def task_from_goal(args, goal):
+def task_from_goal(args, goal) -> Task:
     task = Task(
         goal_parts=[goal],
         skills=DEFAULT_SKILLS,
@@ -54,7 +54,7 @@ def task_from_goal(args, goal):
     return task
 
 
-def none(args):
+def none(args) -> Task:
     task = Task(
         goal_parts=[],
         skills=DEFAULT_SKILLS,
@@ -62,7 +62,7 @@ def none(args):
     return task
 
 
-def holding(args):  # For testing grasping
+def holding(args) -> Task:
     task = Task(
         goal_parts=[
             Exists(
@@ -78,7 +78,7 @@ def holding(args):  # For testing grasping
     return task
 
 
-def all_bowl(args):
+def all_bowl(args) -> Task:
     # All objects in the bowl that is closet to their color
     return Task(
         goal_parts=[

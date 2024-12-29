@@ -62,9 +62,6 @@ class SimulatedController(Controller):
             time.sleep(dt)
             yield
 
-    def wait(self, duration):
-        time.sleep(duration)
-
     def wait_for_clients(self, clients, timeout=0):
         pass
 

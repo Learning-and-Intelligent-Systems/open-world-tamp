@@ -23,7 +23,7 @@ from owt.exploration.utils import GRID_RESOLUTION
 from owt.planning.planner import (iterate_sequence, plan_pddlstream,
                                   post_process)
 from owt.planning.primitives import WorldState
-from owt.simulation.entities import get_label_counts
+from owt.simulation.entities import Robot, get_label_counts
 from owt.simulation.tasks import Task
 
 SUCCESS_STATUS = True
@@ -89,7 +89,9 @@ def fuse_predicted_labels(
 
 
 class Policy(object):
-    def __init__(self, args, robot, known=[], teleport=False, client=None, **kwargs):
+    def __init__(
+        self, args, robot: Robot, known=[], teleport=False, client=None, **kwargs
+    ):
         self.args = args
         self.robot = robot
         self.known = tuple(known)
@@ -121,9 +123,7 @@ class Policy(object):
 
         self.belief = Belief(
             self.robot,
-            surface_beliefs=[
-                # SurfaceBelief(table, resolutions=0.04 * np.ones(3), known_objects=real_world.known),
-            ],
+            surface_beliefs=[],
             client=self.client,
         )
 
@@ -366,7 +366,7 @@ class Policy(object):
 
     def run(
         self,
-        task,
+        task: Task,
         num_iterations=np.inf,
         always_save=True,
         terminate=not GRASP_EXPERIMENT,
@@ -385,7 +385,7 @@ class Policy(object):
 
             self.robot.reset()
             belief.reset()
-            pbu.remove_debug()
+            pbu.remove_all_debug(client=self.robot.client)
 
             print("Execute?")
             pbu.wait_if_gui(client=client)
@@ -403,7 +403,7 @@ class Policy(object):
                     )
                     return True
 
-            self.robot.controller.wait(duration=2.0)
+            self.robot.wait(duration=2.0)
         print(
             "Iteration {}: Failure ({:.3f} sec)!".format(
                 iteration, pbu.elapsed_time(start_time)
@@ -414,7 +414,7 @@ class Policy(object):
 
     def run_exploration(
         self,
-        task,
+        task: Task,
         num_iterations=np.inf,
         always_save=True,
         room=None,

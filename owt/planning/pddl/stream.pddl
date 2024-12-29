@@ -70,14 +70,6 @@
 
   ;--------------------------------------------------
 
-  (:stream plan-pour
-    :inputs (?a ?to ?p ?from ?g)
-    :domain (and (Arm ?a) (Pose ?to ?p) (Grasp ?a ?from ?g))
-    :outputs (?aq1 ?aq2 ?at)
-    :certified (and (Pour ?a ?to ?p ?from ?g ?aq1 ?aq2 ?at)
-            (Conf ?a ?aq1) (Conf ?a ?aq2) (Traj ?a ?at))
-  )
-
   (:stream plan-push
     :inputs (?a ?o ?p1 ?s ?sp ?bq)
     :domain (and (Arm ?a) (InitPose ?o ?p1) (Supported ?o ?p1 ?s ?sp) (CanPush ?o) (InitConf @base ?bq))

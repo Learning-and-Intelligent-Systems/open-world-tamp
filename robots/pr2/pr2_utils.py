@@ -12,8 +12,6 @@ from owt.simulation.entities import Camera, Manipulator, Robot
 from owt.simulation.lis import (CAMERA_FRAME, CAMERA_MATRIX,
                                 CAMERA_OPTICAL_FRAME)
 
-LEFT_ARM = "left"
-RIGHT_ARM = "right"
 CLEAR_LEFT_ARM = [np.pi / 2, 0.0, np.pi / 2, -np.pi / 2, np.pi / 2, -np.pi / 2, 0.0]
 DEFAULT_LEFT_ARM = CLEAR_LEFT_ARM
 
@@ -27,30 +25,28 @@ warnings.filterwarnings("ignore")
 
 from owt.simulation.lis import CAMERA_OPTICAL_FRAME
 
+LEFT_ARM = "left_arm"
+RIGHT_ARM = "right_arm"
 ARM_NAMES = (LEFT_ARM, RIGHT_ARM)
 
+LEFT_GRIPPER = "left_gripper"
+RIGHT_GRIPPER = "right_gripper"
+GRIPPER_NAMES = (LEFT_GRIPPER, RIGHT_GRIPPER)
 
-def side_from_arm(arm):
-    side = arm.split("_")[0]
-    assert side in ARM_NAMES
-    return side
+
+def side_from_arm(arm: str) -> str:
+    return arm.split("_")[0]
+
+
+def arm_from_side(side: str) -> str:
+    return "{}_arm".format(side)
 
 
 side_from_gripper = side_from_arm
 
 
-def arm_from_arm(arm):  # TODO: deprecate
+def gripper_from_arm(arm: str) -> str:
     side = side_from_arm(arm)
-    assert side in ARM_NAMES
-    return "{}_arm".format(side)
-
-
-arm_from_side = arm_from_arm
-
-
-def gripper_from_arm(arm):  # TODO: deprecate
-    side = side_from_arm(arm)
-    assert side in ARM_NAMES
     return "{}_gripper".format(side)
 
 
@@ -60,7 +56,7 @@ PR2_GROUPS = {
     "base": ["x", "y", "theta"],
     "torso": ["torso_lift_joint"],
     "head": ["head_pan_joint", "head_tilt_joint"],
-    arm_from_arm(LEFT_ARM): [
+    LEFT_ARM: [
         "l_shoulder_pan_joint",
         "l_shoulder_lift_joint",
         "l_upper_arm_roll_joint",
@@ -69,7 +65,7 @@ PR2_GROUPS = {
         "l_wrist_flex_joint",
         "l_wrist_roll_joint",
     ],
-    arm_from_arm(RIGHT_ARM): [
+    RIGHT_ARM: [
         "r_shoulder_pan_joint",
         "r_shoulder_lift_joint",
         "r_upper_arm_roll_joint",
@@ -78,19 +74,18 @@ PR2_GROUPS = {
         "r_wrist_flex_joint",
         "r_wrist_roll_joint",
     ],
-    gripper_from_arm(LEFT_ARM): [
+    LEFT_GRIPPER: [
         "l_gripper_l_finger_joint",
         "l_gripper_r_finger_joint",
         "l_gripper_l_finger_tip_joint",
         "l_gripper_r_finger_tip_joint",
     ],
-    gripper_from_arm(RIGHT_ARM): [
+    RIGHT_GRIPPER: [
         "r_gripper_l_finger_joint",
         "r_gripper_r_finger_joint",
         "r_gripper_l_finger_tip_joint",
         "r_gripper_r_finger_tip_joint",
     ],
-    # r_gripper_joint & l_gripper_joint are not mimicked
 }
 
 
@@ -140,16 +135,8 @@ PR2_DISABLED_COLLISIONS = [
 
 class PR2Robot(Robot):
     def __init__(
-        self,
-        robot_body,
-        client=None,
-        real_camera=False,
-        real_execute=False,
-        arms=[LEFT_ARM],
-        **kwargs
+        self, robot_body, client=None, real_camera=False, real_execute=False, **kwargs
     ):
-        self.arms = arms
-
         self.real_execute = real_execute
         self.real_camera = real_camera
 
@@ -186,10 +173,10 @@ class PR2Robot(Robot):
         manipulators = {
             arm: Manipulator(
                 arm,
-                arm.replace("arm", "gripper"),
+                gripper_from_side(side_from_arm(arm)),
                 PR2_TOOL_FRAMES[arm],
             )
-            for arm in self.arms
+            for arm in ARM_NAMES
         }
 
         if not real_execute:
@@ -208,6 +195,10 @@ class PR2Robot(Robot):
             **kwargs
         )
 
+    @property
+    def default_fixed_base_arm(self):
+        return self.get_default_conf()["right_arm"]
+
     def get_gripper_joints(self, arm):
         return self.get_group_joints(gripper_from_arm(arm))
 
@@ -217,7 +208,15 @@ class PR2Robot(Robot):
             self.robot, gripper_joints, [position] * len(gripper_joints)
         )
 
-    def open_arm(self, arm):  # These are mirrored on the pr2
+    def arm_conf(self, arm, left_config):
+        side = side_from_arm(arm)
+        if side == LEFT_ARM:
+            return left_config
+        elif side == RIGHT_ARM:
+            return rightarm_from_leftarm(left_config)
+        raise ValueError(side)
+
+    def open_arm(self, arm):
         for joint in self.get_gripper_joints(arm):
             pbu.set_joint_position(
                 self.robot,
