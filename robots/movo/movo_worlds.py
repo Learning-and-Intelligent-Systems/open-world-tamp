@@ -2,10 +2,8 @@ import math
 import random
 
 import numpy as np
-import pybullet as p
 
 import owt.pb_utils as pbu
-from owt.exploration.utils import GRID_HEIGHT, LIGHT_GREY, Room
 from owt.simulation.entities import Object, RealWorld
 from owt.simulation.environment import (Pose2D, create_floor_object,
                                         create_pillar, create_table_object,
@@ -68,7 +66,7 @@ def problem0(args, robot, **kwargs):
     region = place_surface(
         create_pillar(width=0.3, length=0.3, color=pbu.GREEN, **kwargs),
         table,
-        yaw=PI / 4,
+        yaw=np.pi / 4,
         **kwargs
     )
 
@@ -276,11 +274,10 @@ def vanamo_m0m(args, robot, has_blocking_chair=False, **kwargs):
     region = place_surface(
         create_pillar(width=0.3, length=0.3, color=pbu.GREEN, **kwargs),
         table,
-        yaw=PI / 4,
+        yaw=np.pi / 4,
         **kwargs
     )
 
-    # cracker_box | tomato_soup_can | potted_meat_can | bowl
     obj1 = place_object(
         create_ycb("potted_meat_can", **kwargs), table, Pose2D(yaw=np.pi / 4), **kwargs
     )
@@ -299,12 +296,10 @@ def vanamo_m0m(args, robot, has_blocking_chair=False, **kwargs):
 
 def namo(args, robot, random_widths=False, **kwargs):
     def movability_prior(box_width, mean_width):
-        # return np.random.choice([0, 1], p=[0.7, 0.3])
         return int(box_width < mean_width)
 
     floor_size = 6
     floor = create_pillar(width=floor_size, length=floor_size, color=pbu.TAN, **kwargs)
-    # cracker_box | tomato_soup_can | potted_meat_can | bowl
     side = 0.05
     box_mass = 0.2
     height = side * 16

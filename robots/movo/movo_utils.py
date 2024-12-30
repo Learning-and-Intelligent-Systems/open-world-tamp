@@ -19,7 +19,9 @@ MOVO_PATH = os.path.abspath(MOVO_URDF)
 LEFT = "left"
 RIGHT = "right"
 
-ARMS = ["{}_arm".format(RIGHT), "{}_arm".format(LEFT)]
+# ARMS = ["{}_arm".format(RIGHT), "{}_arm".format(LEFT)]
+ARMS = ["{}_arm".format(RIGHT)]
+
 SIDE = [RIGHT, LEFT]
 
 BASE_JOINTS = ["x", "y", "theta"]

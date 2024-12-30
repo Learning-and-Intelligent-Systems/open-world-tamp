@@ -77,19 +77,6 @@ python run_planner.py --robot=pr2 --goal=all_green --world=problem0 -v
 
 This is only a subset of the available segmentation flags. See code for more.
 
-### Exploration
-Combine mobile-base exploration with fixed-based manipulation by calling the planner with the following flags
-
-`--exploration` Toggles exploration
-
-`--base_planner` Selects the planner to use for exploration. Default is VA*, but more advanced planners can also be used.
-
-
-<p align="center">
-  <img src="https://github.com/Learning-and-Intelligent-Systems/open-world-tamp/blob/master/figs/mb.gif" alt="animated"  width="1024px"  />
-</p>
-
-
 ## Development
 
 ### Tests/Coverage

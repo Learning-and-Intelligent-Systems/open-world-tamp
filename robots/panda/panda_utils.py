@@ -8,7 +8,7 @@ from robots.panda.panda_controller import PandaController
 
 CAMERA_FRAME = "camera_frame"
 CAMERA_OPTICAL_FRAME = "camera_frame"
-PANDA_PATH = os.path.abspath("models/srl/franka_description/robots/panda_arm_hand.urdf")
+PANDA_PATH = os.path.abspath("models/srl/franka_panda/panda.urdf")
 
 
 class PandaRobot(Robot):
@@ -48,8 +48,8 @@ class PandaRobot(Robot):
             cameras = [
                 Camera(
                     self,
-                    link=link_from_name(self.body, CAMERA_FRAME, client=client),
-                    optical_frame=link_from_name(
+                    link=pbu.link_from_name(self.body, CAMERA_FRAME, client=client),
+                    optical_frame=pbu.link_from_name(
                         self.body, CAMERA_OPTICAL_FRAME, client=client
                     ),
                     camera_matrix=SIMULATED_CAMERA_MATRIX,

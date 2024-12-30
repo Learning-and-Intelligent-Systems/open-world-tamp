@@ -449,7 +449,6 @@ class Trajectory(Command):
             return positions_curve
         handles = []
         if self.group == "base":
-            # TODO: color by derivative magnitude or theta
             handles.extend(
                 pbu.add_segments(
                     np.append(q[:2], [DRAW_Z])

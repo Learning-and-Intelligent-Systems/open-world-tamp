@@ -10,7 +10,6 @@ import os
 import pickle
 
 import numpy as np
-import pybullet as p
 
 import owt.pb_utils as pbu
 from owt.estimation.belief import GRASP_EXPERIMENT, Belief
@@ -18,8 +17,6 @@ from owt.estimation.dnn import init_seg
 from owt.estimation.geometry import cloud_from_depth
 from owt.estimation.observation import save_camera_images
 from owt.estimation.tables import estimate_surfaces
-from owt.exploration.environment import Environment
-from owt.exploration.utils import GRID_RESOLUTION
 from owt.planning.planner import (iterate_sequence, plan_pddlstream,
                                   post_process)
 from owt.planning.primitives import WorldState
@@ -411,117 +408,3 @@ class Policy(object):
         )
         pbu.wait_if_gui(client=client)  # TODO: reduce PyBullet and GPU spam output
         return False
-
-    def run_exploration(
-        self,
-        task: Task,
-        num_iterations=np.inf,
-        always_save=True,
-        room=None,
-        real_world=None,
-        client=None,
-        base_planner=None,
-        **kwargs
-    ):
-        env = Environment(client=self.client)
-        # From init of simple navigation
-        env.start = (0, 0, 0)
-        env.goal = (
-            0,
-            0,
-            np.pi * 2.0 - np.pi / 2.0,
-        )  # TODO: Create separate class for configuration space
-        env.objects = []
-        env.viewed_voxels = []
-
-        # Properties represented as a list of width, length, height, mass
-        env.objects_prop = dict()
-
-        i = np.random.randint(-1, 4, size=2)
-        env.start = (
-            round(env.start[0] + i[0] * GRID_RESOLUTION, 2),
-            round(env.start[1] + i[1] * GRID_RESOLUTION, 2),
-            round(env.start[2] + np.random.randint(16) * np.pi / 8, 3),
-        )
-
-        i = np.random.randint(-1, 5)
-        env.goal = (
-            env.goal[0],
-            round(env.goal[1] + i * GRID_RESOLUTION, 2),
-            env.goal[2],
-        )
-
-        env.goal = (2.2, 1, env.goal[2])
-        env.initialized = True
-
-        with pbu.LockRenderer(client=self.client):
-            env.set_defaults(self.robot.body, client=client)
-            env.objects += real_world.room.movable_obstacles
-            env.camera_pose = pbu.get_link_pose(
-                self.robot.body,
-                pbu.link_from_name(
-                    self.robot.body, "kinect2_rgb_optical_frame", client=client
-                ),
-                client=self.client,
-            )
-
-            env.joints = [
-                pbu.joint_from_name(self.robot.body, "x", client=client),
-                pbu.joint_from_name(self.robot.body, "y", client=client),
-                pbu.joint_from_name(self.robot.body, "theta", client=client),
-            ]
-
-            env.robot = self.robot.body
-            env.room = room
-            env.static_objects = []
-            env.setup_grids()
-            env.centered_aabb = env.get_centered_aabb()
-            env.centered_oobb = env.get_centered_oobb()
-
-            if not env.initialized:
-                env.randomize_env()
-            env.display_goal(env.goal)
-
-            env.joints = [
-                pbu.joint_from_name(env.robot, "x", client=client),
-                pbu.joint_from_name(env.robot, "y", client=client),
-                pbu.joint_from_name(env.robot, "theta", client=client),
-            ]
-            pbu.set_joint_positions(env.robot, env.joints, env.start, client=client)
-
-        planner = base_planner(env, client=client)
-        plan = planner.get_plan(loadfile=None)
-
-        p.removeAllUserDebugItems()
-
-        print("=" * 30)
-        start_time = time.time()
-        for iteration in range(num_iterations):  # TODO: max time?
-            self.robot.reset()
-            belief = self.estimate_state(task)
-            if self.args.debug:  # Intentional
-                pbu.wait_if_gui(client=client)
-
-            sequence = self.plan(belief, task)
-
-            self.robot.reset()
-            belief.reset()
-            p.removeAllUserDebugItems()
-
-            if self.args.debug:  # Intentional
-                pbu.wait_if_gui(client=client)
-
-            status, aborted = self.execute_command(sequence)
-            if always_save or self.executed:  # Only save if the robot does something
-                self.save_data()
-
-            self.robot.controller.wait(duration=2.0)
-        print(
-            "Iteration {}: Failure ({:.3f} sec)!".format(
-                iteration, pbu.elapsed_time(start_time)
-            )
-        )
-        pbu.wait_if_gui(client=client)  # TODO: reduce PyBullet and GPU spam output
-        return False
-
-    ##################################################

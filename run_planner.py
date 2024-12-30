@@ -15,10 +15,6 @@ warnings.filterwarnings("ignore")
 from itertools import product
 
 import owt.pb_utils as pbu
-from owt.exploration.base_planners.a_star_search import AStarSearch
-from owt.exploration.base_planners.lamb import Lamb
-from owt.exploration.base_planners.rrt import RRT
-from owt.exploration.base_planners.snowplow import Snowplow
 from owt.nlp.speech_to_goal import get_goal_audio
 from owt.nlp.text_to_goal import text_to_goal
 from owt.planning.streams import GEOMETRIC_MODES, LEARNED_MODES, MODE_ORDERS
@@ -52,7 +48,6 @@ robot_simulated_worlds = {
     "movo": movo_world_from_problem,
 }
 
-base_planners = {"snowplow": Snowplow, "astar": AStarSearch, "rrt": RRT, "lamb": Lamb}
 
 GRASP_MODES = GEOMETRIC_MODES + [
     mode + order for mode, order in product(LEARNED_MODES, MODE_ORDERS)
@@ -167,20 +162,6 @@ def create_parser():
     parser.add_argument("-p", "--goal", default="all_green", help="Specifies the task.")
     parser.add_argument("-w", "--world", default="problem0", help="Specifies the task.")
 
-    # exploration
-    parser.add_argument(
-        "-exp",
-        "--exploration",
-        action="store_true",
-        help="Use exploration prior to running m0m",
-    )
-    parser.add_argument(
-        "-bp",
-        "--base-planner",
-        default="lamb",
-        help="Specifies the planner to use for base navigation",
-    )
-
     # robot
     parser.add_argument("-r", "--robot", default="pr2", help="Specifies the robot.")
 
@@ -251,20 +232,9 @@ def main(args):
     )
 
     task = get_task(args)
-
-    if args.exploration:
-        policy.run_exploration(
-            task,
-            real_world=real_world,
-            room=real_world.room,
-            base_planner=base_planners[args.base_planner],
-            num_iterations=args.max_iters,
-            client=client,
-        )
-    else:
-        policy.run(
-            task, real_world=real_world, num_iterations=args.max_iters, client=client
-        )
+    policy.run(
+        task, real_world=real_world, num_iterations=args.max_iters, client=client
+    )
 
 
 if __name__ == "__main__":

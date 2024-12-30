@@ -1475,6 +1475,10 @@ def link_from_name(body, name, **kwargs):
     raise ValueError(body, name)
 
 
+def get_link_names(body, links, **kwargs):
+    return [get_link_name(body, link, **kwargs) for link in links]
+
+
 def parse_body(body, link=None):
     return body if isinstance(body, CollisionPair) else CollisionPair(body, link)
 
