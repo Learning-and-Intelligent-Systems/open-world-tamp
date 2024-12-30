@@ -8,7 +8,7 @@ import owt.pb_utils as pbu
 from owt.planning.primitives import (GroupTrajectory, RelativePose, Sequence,
                                      Switch)
 from owt.planning.samplers import plan_workspace_motion
-from owt.simulation.entities import WORLD_BODY, ParentBody
+from owt.simulation.entities import WORLD_BODY, ParentBody, Robot
 
 PUSH_FEATURES = [
     "block_width",
@@ -57,8 +57,10 @@ PUSH_PARAMETER = {
 }
 
 
-def sample_push_contact(robot, body, feature, parameter, environment=[], under=False):
-    arm = feature["arm_name"]
+def sample_push_contact(
+    robot: Robot, body, feature, parameter, environment=[], under=False
+):
+    manipulator = feature["manipulator"]
     push_yaw = feature["push_yaw"]
     GRIPPER_LINKS = {
         "left": "l_gripper_palm_link",
@@ -69,9 +71,9 @@ def sample_push_contact(robot, body, feature, parameter, environment=[], under=F
         body, body_pose=pbu.Pose(euler=pbu.Euler(yaw=push_yaw))
     )
     max_backoff = width + 0.1  # TODO: add gripper bounding box
-    tool_link = pbu.link_from_name(robot, robot.manipulators[arm.split("_")[0]])
+    tool_link = pbu.link_from_name(robot, robot.get_manipulator_parts(manipulator))
     tool_pose = pbu.get_link_pose(robot, tool_link)
-    gripper_link = pbu.link_from_name(robot, GRIPPER_LINKS[arm.split("_")[0]])
+    gripper_link = pbu.link_from_name(robot, GRIPPER_LINKS[manipulator])
     collision_links = pbu.get_link_subtree(robot, gripper_link)
 
     urdf_from_center = pbu.Pose(point=center)
@@ -149,7 +151,7 @@ def cartesian_path_collision(body, path, obstacles, **kwargs):
 
 
 def get_plan_push_fn(
-    robot,
+    robot: Robot,
     environment=[],
     max_samples=1,
     max_attempts=5,

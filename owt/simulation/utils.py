@@ -2,6 +2,7 @@ import colorsys
 import random
 from typing import List
 
+import matplotlib.colors as mcolors
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -76,13 +77,10 @@ class AttrDict(dict):
 
 
 def sorted_union(*collections):
-    # TODO: stable versus sorted
-    # TODO: OrderedDict
     return sorted(set.union(*map(set, collections)))
 
 
 def sorted_intersection(*collections):
-    # TODO: OrderedDict
     return sorted(set.intersection(*map(set, collections)))
 
 
@@ -117,7 +115,7 @@ def get_rigid_ancestor(body, target_link, **kwargs):
 def get_hue_distance(rgb1, rgb2):
     hsv1 = colorsys.rgb_to_hsv(*pbu.remove_alpha(rgb1))
     hsv2 = colorsys.rgb_to_hsv(*pbu.remove_alpha(rgb2))
-    return pbu.interval_distance(hsv1[0], hsv2[0], interval=(0, 1))
+    return pbu.interval_distance(hsv1[0], hsv2[0], interval=pbu.Interval(0, 1))
 
 
 def get_color_distance(rgb1: pbu.RGBA, rgb2: pbu.RGBA, hue_only=False) -> float:
@@ -137,8 +135,6 @@ def find_closest_color(color: pbu.RGBA, color_from_name=COLORS, **kwargs):
 
 
 def get_matplotlib_colors():
-    import matplotlib.colors as mcolors
-
     color_from_name = {}
     for d in [
         mcolors.BASE_COLORS,

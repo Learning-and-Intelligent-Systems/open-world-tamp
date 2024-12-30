@@ -1,3 +1,4 @@
+import itertools
 import time
 from collections import namedtuple
 
@@ -62,11 +63,7 @@ class EstimatedObject(Object):
 
         # TODO: store OOBB
         if (color is None) and self.labeled_points:
-            # hue = mean_hue(self.colors, min_sat=0.5, min_value=0.5)
-            # if hue is None:
             color = aggregate_color(self.labeled_points)
-            # else:
-            #    color = apply_alpha(np.array(colorsys.hsv_to_rgb(h=hue, s=1., v=1.)))
             pbu.set_all_color(
                 self.body, pbu.apply_alpha(color, alpha=1.0), client=self.client
             )
@@ -76,7 +73,6 @@ class EstimatedObject(Object):
         tformed_points = tform_labeled_points(
             pbu.pose_from_tform(tform), self.labeled_points
         )
-        # TODO take closest point?
         label = self.labeled_points[0].label  # TODO asso
         get_color = lambda pt: camera_image[0][
             tuple(
@@ -88,7 +84,6 @@ class EstimatedObject(Object):
                 )[::-1].astype(int)
             )
         ]
-        # import pdb;pdb.set_trace()
         new_pt = [
             LabeledPoint(point, get_color(point), label) for point in newcloud
         ]  # TODO asso
@@ -99,10 +94,7 @@ class EstimatedObject(Object):
         random_shuffle_pt = [
             lp for lp in random_shuffle_pt if lp.point[2] - 1e-2 >= maxz
         ]
-        # relevant_cloud = surface_point_filter(surface, random_shuffle_pt)
         clusters = relabel_clusters(random_shuffle_pt)
-        # TODO: relative to the robot
-        # TODO loop over all clusters?
         cluster = sorted(clusters, key=lambda c: len(c), reverse=True)[0]
         if len(cluster) < min_points:
             import pdb
@@ -126,10 +118,6 @@ class EstimatedObject(Object):
     @property
     def colors(self):
         return [lp.color for lp in self.labeled_points]
-
-    # @property
-    # def color(self):
-    #    return aggregate_color(self.labeled_points)
 
 
 ################################################################################
@@ -213,7 +201,7 @@ class SurfaceBelief(Object):
             if is_object_label(lp.label)
             and pbu.aabb_contains_point(lp.point, self.surface_aabb)
         ]  # TODO replace with matrix operation
-        relevant_cloud = list(pbu.flatten(relabel_clusters(relevant_cloud)))
+        relevant_cloud = list(itertools.chain(*relabel_clusters(relevant_cloud)))
         for labeled_point in relevant_cloud:
             point = labeled_point.point
             category, instance = labeled_point.label
@@ -266,11 +254,9 @@ class SurfaceBelief(Object):
             for i, cluster in enumerate(grid.get_clusters()):
                 if len(cluster) < min_voxels:
                     continue
-                # name = '~{}#{}'.format(class_name, i+1)
                 name = instance_name
-                # name = None
                 labeled_points = list(
-                    pbu.flatten(grid.get_value(voxel) for voxel in cluster)
+                    itertools.chain(*[grid.get_value(voxel) for voxel in cluster])
                 )
                 if len(labeled_points) < min_points:
                     continue
@@ -286,7 +272,7 @@ class SurfaceBelief(Object):
                     continue
 
                 adjacent = set(
-                    pbu.flatten(grid.get_neighbors(voxel) for voxel in cluster)
+                    itertools.chain(*[grid.get_neighbors(voxel) for voxel in cluster])
                 ) - set(cluster)
                 unknown = {
                     voxel for voxel in adjacent if self.visibility_grid.contains(voxel)
@@ -303,9 +289,6 @@ class SurfaceBelief(Object):
                         unknown=unknown,
                     )
                 )
-                # grid.draw_voxel_boxes(cluster)
-                # wait_if_gui()
-        # TODO: convex hull of occupied vertices
         return self.estimated_objects
 
     def fuse_occupancy(self):  # Belief consistency / revision
@@ -317,7 +300,6 @@ class SurfaceBelief(Object):
     def fuse_visibility(self):  # Belief consistency / revision
         estimated_bodies = [obj.body for obj in self.estimated_objects]
         filtered_visibility = self.visibility_grid.copy()
-        # for voxel in self.occupancy_grid:
         for voxel in self.fuse_occupancy():
             filtered_visibility.set_free(voxel)
         filtered_visibility.remove_bodies(estimated_bodies)
@@ -326,15 +308,14 @@ class SurfaceBelief(Object):
     def fuse(self):
         SurfaceBelief(self.surface, self.height, self.resolutions, self.known_objects)
         raise NotImplementedError()
-        # return filtered_belief
 
     def draw(self, **kwargs):
         start_time = time.time()
         self.erase()
 
         self.handles = list(
-            pbu.flatten(
-                [
+            itertools.chain(
+                *[
                     pbu.draw_pose(self.surface_origin),
                     pbu.draw_aabb(self.surface_aabb, **kwargs),
                     self.fuse_occupancy().draw_intervals(),  # draw_voxel_boxes
@@ -342,8 +323,6 @@ class SurfaceBelief(Object):
                 ]
             )
         )
-        # for grid in self.class_grids.values():
-        #    self.handles.extend(grid.draw_voxel_boxes())
 
         print("Draw time: {:.3f}".format(pbu.elapsed_time(start_time)))
         return self.handles

@@ -221,25 +221,18 @@ LEFT_ATTACH_CONF = [
 
 class MovoRobot(Robot):
     def __init__(
-        self,
-        robot_body,
-        client=None,
-        real_execute=False,
-        real_camera=False,
-        arms=["right_arm"],
-        **kwargs
+        self, robot_body, client=None, real_execute=False, real_camera=False, **kwargs
     ):
         self.real_execute = real_execute
         self.real_camera = real_camera
         self.body = robot_body
-        self.arms = arms
         self.client = client
 
         self.CAMERA_OPTICAL_FRAME = "kinect2_rgb_optical_frame"
         self.CAMERA_FRAME = "kinect2_rgb_link"
         movo_manipulators = {
             arm: Manipulator(arm, arm.replace("arm", "gripper"), MOVO_TOOL_FRAMES[arm])
-            for arm in self.arms
+            for arm in ARMS
         }
 
         if not real_camera:
@@ -278,17 +271,6 @@ class MovoRobot(Robot):
 
         self.intrinsics = np.asarray(KINECT_INTRINSICS).reshape(3, 3)
 
-    def directed_pose_generator(self, gripper_pose, **kwargs):
-        point = pbu.point_from_pose(gripper_pose)
-        while True:
-            base_values = sample_directed_reachable_base(self, point, **kwargs)
-            if base_values is None:
-                break
-            yield tuple(list(base_values) + [0.1])  # Append torso values
-
-    def base_sample_gen(self, pose):
-        return self.directed_pose_generator(pose.get_pose(), reachable_range=(0.7, 0.7))
-
     @property
     def base_group(self):
         return "base"
@@ -299,7 +281,6 @@ class MovoRobot(Robot):
         rgb_image = np.frombuffer(rgb_data["data"], dtype=np.uint8).reshape(
             rgb_data["height"], rgb_data["width"], -1
         )
-        # NOTE original encoding=16UC1 (uint16, 1channel), in mm.
         depth_image = (
             np.frombuffer(depth_data["data"], dtype=np.uint16)
             .reshape(depth_data["height"], depth_data["width"])

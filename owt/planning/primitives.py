@@ -1,5 +1,4 @@
-import time
-from itertools import chain
+import itertools
 
 import numpy as np
 
@@ -577,7 +576,9 @@ class Sequence(Command):  # Commands, CommandSequence
 
     @property
     def context_bodies(self):
-        return set(pbu.flatten(command.context_bodies for command in self.commands))
+        return set(
+            itertools.chain(*[command.context_bodies for command in self.commands])
+        )
 
     def __len__(self):
         return len(self.commands)
@@ -589,7 +590,7 @@ class Sequence(Command):  # Commands, CommandSequence
                 yield output
 
     def controller(self, *args, **kwargs):
-        return chain.from_iterable(
+        return itertools.chain.from_iterable(
             command.controller(*args, **kwargs) for command in self.commands
         )
 

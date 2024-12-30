@@ -10,15 +10,11 @@ from owt.simulation.utils import get_rigid_ancestor
 WORLD_BODY = None
 
 
-class ParentBody(object):  # TODO: inherit from Shape?
-    def __init__(
-        self, body=WORLD_BODY, link=pbu.BASE_LINK, client=None, **kwargs
-    ):  # , shape=0):
+class ParentBody(object):
+    def __init__(self, body=WORLD_BODY, link=pbu.BASE_LINK, client=None, **kwargs):
         self.body = body
         self.client = client
         self.link = link
-        # self.shape = shape # shape | index | collision
-        # TODO: support surface
 
     def __iter__(self):
         return iter([self.body, self.link])
@@ -35,11 +31,8 @@ class ParentBody(object):  # TODO: inherit from Shape?
 
 ##################################################
 
-# TODO: functions for taking the union of the individual surfaces
 defaults = (pbu.BASE_LINK, 0)
-Shape = namedtuple(
-    "Shape", ["link", "index"]
-)  # , defaults=defaults) # only supports python3
+Shape = namedtuple("Shape", ["link", "index"])
 Shape.__new__.__defaults__ = defaults
 
 DEFAULT_SHAPE = None
@@ -69,19 +62,12 @@ class Object(object):
         self.category = category
         if name is None:
             name = "{}#{}".format(self.category, self.body)
-        # TODO: could include color & size in name
         self.name = name
-        self.link_names = dict(
-            link_names
-        )  # TODO: only because programmatic creation does not give names
+        self.link_names = dict(link_names)
         self.shape_names = dict(shape_names)
         self.reference_pose = tuple(reference_pose)  # TODO: store placement surfaces
-        # if color is None:
-        #     color = get_color(body)
         self.color = color
-        self.properties = list(
-            properties
-        )  # (Predicate, self, *args) # TODO: could just use self
+        self.properties = list(properties)
         self.handles = []
         if draw:
             self.draw()
@@ -94,8 +80,6 @@ class Object(object):
             else self.body
         )
 
-    # def __call__(self, *args, **kwargs):
-    #    return self.body
     def __eq__(self, other):
         # TODO: try/except
         return int(self) == int(other)
@@ -110,17 +94,15 @@ class Object(object):
         return hash(self.body)
 
     def __repr__(self):
-        # return repr(int(self))
         return self.name
 
     def get_group_parent(self, group):
-        # TODO: handle unordered joints
         return self.get_link_parent(self.get_group_joints(group)[0])
 
     def get_group_subtree(self, group):
         return pbu.get_link_subtree(
             self.body, self.get_group_parent(group), client=self.client
-        )  # get_link_subtree | get_link_descendants
+        )
 
     def joint_from_name(self, name):
         for joint in pbu.get_joints(self.body, client=self.client):
@@ -166,7 +148,6 @@ class Object(object):
         return joint_info.jointUpperLimit < joint_info.jointLowerLimit
 
     def get_joint_limits(self, joint):
-        # TODO: make a version for several joints?
         if self.is_circular(joint):
             # TODO: return UNBOUNDED_LIMITS
             return pbu.CIRCULAR_LIMITS
@@ -190,7 +171,6 @@ class Object(object):
         parent_inertia = pbu.get_joint_inertial_pose(
             self.body, parent_joint, client=self.client
         )
-        # return multiply(parent_inertia, tmp_pose) # TODO: why is this wrong...
         _, orn = pbu.multiply(parent_inertia, tmp_pose)
         pos, _ = pbu.multiply(parent_inertia, pbu.Pose(parent_com[0]))
         return (pos, orn)
@@ -243,7 +223,6 @@ class Object(object):
         )
 
     def link_from_name(self, link_name):
-        # return self.link_names.get(link_name, None)
         if link_name in self.link_names:
             return self.link_names[link_name]
 
@@ -258,7 +237,6 @@ class Object(object):
         return len(pbu.get_collision_data(self.body, link=link, **kwargs)) != 0
 
     def get_all_links(self):
-        # TODO: deprecate get_links
         return [pbu.BASE_LINK] + list(pbu.get_joints(self.body))
 
     @property
@@ -280,7 +258,6 @@ class Object(object):
 
     def shape_from_name(self, shape_name):
         return self.shape_names[shape_name]
-        # return self.shape_names.get(shape_name, None)
 
     def get_shape_data(self, link=pbu.BASE_LINK, index=0):
         return pbu.get_collision_data(self.body, link=link, client=self.client)[index]
@@ -320,7 +297,6 @@ class Object(object):
     def draw(self):
         self.erase()
         if self.name is not None:
-            # TODO: attach to the highest link (for the robot)
             self.handles.append(
                 pbu.add_body_name(self.body, name=self.name, client=self.client)
             )
@@ -333,7 +309,7 @@ class Object(object):
             self.body = None
 
 
-class Table(Object):  # TODO: Region
+class Table(Object):
     def __init__(self, surface, *args, **kwargs):
         self.surface = surface
         super(Table, self).__init__(*args, **kwargs)
@@ -498,6 +474,9 @@ class Robot(Object):
     def reset(self):
         raise NotImplementedError
 
+    def get_manipulator_parts(self, manipulator: str):
+        return self.manipulators[manipulator]
+
     @property
     def robot(self):
         return self.body
@@ -529,6 +508,9 @@ class Robot(Object):
         base_joint = self.get_group_joints(self.base_group)[-1]
         return pbu.child_link_from_joint(base_joint)
 
+    def get_tool_link_pose(self, manipulator):
+        raise NotImplementedError
+
     def get_gripper_width(self, gripper_joints, draw=False):
         [link1, link2] = self.get_finger_links(gripper_joints)
         [collision_info] = pbu.get_closest_points(
@@ -536,7 +518,6 @@ class Robot(Object):
         )
         point1 = collision_info.positionOnA
         point2 = collision_info.positionOnB
-        # distance = collision_info.contactDistance
         if draw:
             pbu.draw_collision_info(collision_info)
         max_width = pbu.get_distance(point1, point2)
@@ -583,13 +564,12 @@ class Robot(Object):
     def get_arbitrary_side(self):
         return sorted(self.manipulators)[0]
 
-    def get_tool_link_pose(self, side):
-        arm_group, gripper_group, tool_name = self.manipulators[side]
+    def get_tool_link_pose(self, manipulator):
+        _, _, tool_name = self.get_manipulator_parts(manipulator)
         tool_link = self.link_from_name(tool_name)
         return self.get_link_pose(tool_link)
 
     def get_component_mapping(self, group):
-        # body -> component
         assert group in self.components
         component_joints = pbu.get_movable_joints(
             self.components[group], client=self.client, draw=False
@@ -646,7 +626,6 @@ class Robot(Object):
 
 
 class Gripper(object):
-    # TODO: update to have the same group structure as Robot
     def __init__(
         self,
         gripper,
@@ -665,8 +644,6 @@ class Gripper(object):
         self.finger_joints = tuple(finger_joints)
         self.body = body
         self.body_finger_joints = tuple(body_finger_joints)
-        # TODO: gripper_from_tool
-        # TODO: gripper width
 
     @property
     def closed_conf(self):
@@ -750,7 +727,7 @@ def displace_body(body, vector):
 
 Label = namedtuple("Label", ["category", "instance"])  # TODO: apply to labels
 
-NO_BODY = 256**3 - 1  # TODO: segmented is [16777215.       -2.] when no object is hit
+NO_BODY = 256**3 - 1
 UNKNOWN = "unknown"
 TABLE = "table"
 BG = "bg"
@@ -781,22 +758,19 @@ class RealWorld(object):  # Saver):
         room=None,
         **kwargs
     ):
-        # TODO: surface class
         self.robot = robot
         self.attachable = attachable
         self.materials = materials
         self.movable = tuple(movable)
-        self.fixed = tuple(fixed)  # TODO: infer from is_fixed_base
+        self.fixed = tuple(fixed)
         self.detectable = tuple(detectable)
         self.concave = concave
         self.known = tuple(known) + (robot,)
-        self.surfaces = tuple(surfaces)  # TODO: not used yet
+        self.surfaces = tuple(surfaces)
         self.client = client or p
         self.displacement = displacement
         self.saver = None
         self.room = room
-        # self.body_savers = [BodySaver(body) for body in get_bodies()]
-        # TODO: add/remove new bodies
 
     @property
     def known_region(self):

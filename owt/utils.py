@@ -1,6 +1,6 @@
 import random
 
-TEMP_DIR = "temp/"
+TEMP_DIR = "temp_meshes/"
 
 
 def safe_sample(collection, k=1):

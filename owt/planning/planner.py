@@ -1,5 +1,5 @@
+import itertools
 import math
-from itertools import combinations, product
 
 import numpy as np
 from pddlstream.algorithms.algorithm import reset_globals
@@ -125,7 +125,7 @@ def replace_params(condition, values_dict):
 
 def ExistTuple(condition, num=1):
     objects = ["{}{}".format(PARAM, i + 1) for i in range(num)]
-    conditions = [Not(Equal(o1, o2)) for o1, o2 in combinations(objects, r=2)]
+    conditions = [Not(Equal(o1, o2)) for o1, o2 in itertools.combinations(objects, r=2)]
     conditions.extend(replace_param(condition, obj) for obj in objects)
     return Exists(objects, And(*conditions))
 
@@ -388,19 +388,19 @@ def create_pddlstream(
     new_init = []
     new_init.extend(
         ("Stackable", obj, surface)
-        for obj, surface in product(movable_objects, surfaces)
+        for obj, surface in itertools.product(movable_objects, surfaces)
         if obj != surface
     )
 
     new_init.extend(
         ("Stackable", obj, surface)
-        for obj, surface in product(movable_objects, movable_objects)
+        for obj, surface in itertools.product(movable_objects, movable_objects)
         if obj != surface
     )
 
     new_init.extend(
         ("Droppable", obj, container)
-        for obj, container in product(movable_objects, containers)
+        for obj, container in itertools.product(movable_objects, containers)
         if obj != container
     )
 
@@ -606,8 +606,8 @@ def post_process(plan):
         return None
 
     sequence = Sequence(
-        pbu.flatten(
-            args[-1].commands for name, args in plan if isinstance(args[-1], Command)
+        itertools.chain(
+            *[args[-1].commands for name, args in plan if isinstance(args[-1], Command)]
         )
     )
     sequence.dump()

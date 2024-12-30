@@ -15,8 +15,6 @@ def step_curve(body, joints, curve, time_step=2e-2, print_freq=None, **kwargs):
         pbu.sample_curve(curve, time_step=time_step)
     ):
         pbu.set_joint_positions(body, joints, positions, **kwargs)
-        # num_steps += 1
-        # time_elapsed += time_step
         if (print_freq is not None) and (print_freq <= (time_elapsed - last_print)):
             print(
                 "Step: {} | Sim secs: {:.3f} | Real secs: {:.3f} | Steps/sec {:.3f}".format(
@@ -40,7 +38,6 @@ def step_curve(body, joints, curve, time_step=2e-2, print_freq=None, **kwargs):
 
 
 def simulate_controller(controller, real_per_sim=2.0, print_freq=0.1, hook=None):
-    # TODO: multiple controllers
     start_time = time.time()
     dt = pbu.get_time_step()
     num_steps = 0
@@ -67,11 +64,8 @@ def simulate_controller(controller, real_per_sim=2.0, print_freq=0.1, hook=None)
             if real_per_sim is None:
                 pbu.wait_if_gui()
             else:
-                # TODO: adjust based on the frame rate
-                # duration = real_per_sim # real per step
-                duration = real_per_sim * dt  # real per second
+                duration = real_per_sim * dt
                 time.sleep(duration)
-                # wait_for_duration(duration)
     if print_freq is not None:
         print(
             "Simulated {} steps ({:.3f} sim seconds) in {:.3f} real seconds".format(
@@ -100,9 +94,7 @@ def stall_for_duration(duration):
     time_elapsed = 0.0
     while time_elapsed < duration:
         yield time_elapsed
-        # step_simulation()
         time_elapsed += dt
-    # return time_elapsed
 
 
 def hold_for_duration(body, duration, joints=None, **kwargs):
@@ -144,7 +136,6 @@ def pose_controller(
 
 
 def interpolate_pose_controller(body, target_pose, timeout=np.inf, draw=True, **kwargs):
-    # TODO: interpolate using velocities instead
     pose_waypoints = list(
         pbu.interpolate_poses(
             pbu.get_pose(body),
@@ -159,14 +150,12 @@ def interpolate_pose_controller(body, target_pose, timeout=np.inf, draw=True, **
     for num, waypoint_pose in enumerate(pose_waypoints):
         if time_elapsed >= timeout:
             break
-        # print('Waypoint {}'.format(num))
         is_goal = num == len(pose_waypoints) - 1
         if draw:
             handles.extend(pbu.draw_pose(waypoint_pose, length=0.05))
         for output in pose_controller(body, waypoint_pose, **kwargs):
             yield output
             time_elapsed += dt
-        # wait_if_gui()
         pbu.remove_handles(handles)
 
 

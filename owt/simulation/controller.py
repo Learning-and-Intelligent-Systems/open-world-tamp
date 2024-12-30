@@ -13,16 +13,13 @@ class SimulatedController(Controller):
         self.client = client
         self.robot = robot
 
-    def side_from_arm(self, arm):
-        return arm.replace("_arm", "")
-
-    def open_gripper(self, arm):  # These are mirrored on the pr2
-        _, gripper_group, _ = self.robot.manipulators[self.side_from_arm(arm)]
+    def open_gripper(self, manipulator):  # These are mirrored on the pr2
+        _, gripper_group, _ = self.robot.manipulators[manipulator]
         _, open_conf = self.robot.get_group_limits(gripper_group)
         self.command_group(gripper_group, open_conf)
 
-    def close_gripper(self, arm):  # These are mirrored on the pr2
-        _, gripper_group, _ = self.robot.manipulators[self.side_from_arm(arm)]
+    def close_gripper(self, manipulator):  # These are mirrored on the pr2
+        _, gripper_group, _ = self.robot.manipulators[manipulator]
         closed_conf, _ = self.robot.get_group_limits(gripper_group)
         self.command_group(gripper_group, closed_conf)
 

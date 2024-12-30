@@ -1,12 +1,13 @@
 from __future__ import print_function
 
+import itertools
 import random
 import time
 from collections import namedtuple
 from heapq import heapify, heappop, heappush
-from itertools import islice
 
 import numpy as np
+from trimesh.ray.ray_triangle import RayMeshIntersector
 
 import owt.pb_utils as pbu
 from owt.estimation.surfaces import get_plane_quat
@@ -176,7 +177,7 @@ def sample_grasp(
             quat,
             pbu.quat_from_euler(pbu.Euler(roll=np.pi / 2)),
             pbu.quat_from_euler(
-                pbu.Euler(pitch=pbu.pi + pitch)
+                pbu.Euler(pitch=np.pi + pitch)
             ),  # TODO: local pitch or world pitch?
             pbu.quat_from_euler(pbu.Euler(roll=roll)),  # Switches fingers
         )
@@ -190,8 +191,8 @@ def sample_grasp(
             # set_pose(gripper, multiply(grasp_pose, tool_from_root))
             draw_length = 0.05
             handles.extend(
-                pbu.flatten(
-                    [
+                itertools.chain(
+                    *[
                         # draw_point(grasp_point),
                         pbu.draw_point(point1, parent=obj),
                         pbu.draw_point(point2, parent=obj),
@@ -277,19 +278,13 @@ def score_overlap(
 
     origins = []
     for _ in range(num_samples):
-        # TODO: could return the set of surface points within a certain distance of the center
-        # sample_sphere | sample_sphere_surface
-        # from trimesh.sample import sample_surface_sphere
-        other_direction = radius * sample_sphere_surface(
-            d=3
-        )  # TODO: sample rectangle for the PR2's fingers
+        other_direction = radius * sample_sphere_surface(d=3)
         orthogonal_direction = np.cross(
             pbu.get_unit_vector(direction1), other_direction
-        )  # TODO: deterministic
+        )
         orthogonal_direction = radius * pbu.get_unit_vector(orthogonal_direction)
         origin = midpoint + orthogonal_direction
         origins.append(origin)
-        # print(get_distance(midpoint, origin))
         if draw:
             handles.append(pbu.add_line(midpoint, origin, color=pbu.RED))
     rays = list(range(len(origins)))
@@ -298,8 +293,6 @@ def score_overlap(
     for direction in [direction1, direction2]:
         point = midpoint + direction / 2.0
         contact_distance = pbu.get_distance(midpoint, point)
-
-        # section, slice_plane
         results = intersector.intersects_id(
             origins,
             len(origins) * [direction],  # face_indices, ray_indices, location
@@ -319,34 +312,28 @@ def score_overlap(
                 )
                 distance = pbu.get_distance(origins[ray], location)
                 difference = abs(contact_distance - distance)
-                # normal = extract_normal(mesh, face) # TODO: use the normal for lexiographic scoring
             else:
                 difference = np.nan  # INF
             differences.append(difference)
-            # TODO: extract_normal(mesh, index) for the rays
         direction_differences.append(differences)
 
     differences1, differences2 = direction_differences
     combined = differences1 + differences2
     percent = np.count_nonzero(~np.isnan(combined)) / (len(combined))
     np.nanmean(combined)
-
-    # return np.array([percent, -average])
     score = percent
-    # score = 1e3*percent + (-average) # TODO: true lexiographic sorting
-    # score = (percent, -average)
 
     if verbose:
         print(
             "Score: {} | Percent1: {} | Average1: {:.3f} | Percent2: {} | Average2: {:.3f} | Time: {:.3f}".format(
                 score,
                 np.mean(~np.isnan(differences1)),
-                np.nanmean(differences1),  # nanmedian
+                np.nanmean(differences1),
                 np.mean(~np.isnan(differences2)),
                 np.nanmean(differences2),
                 pbu.elapsed_time(start_time),
             )
-        )  # 0.032 sec
+        )
     if draw:
         pbu.wait_if_gui()
         pbu.remove_handles(handles, **kwargs)
@@ -373,16 +360,13 @@ def generate_mesh_grasps(
     import trimesh
 
     print(obj)
-    vertices, faces = mesh_from_obj(obj, **kwargs)
-    mesh = trimesh.Trimesh(vertices, faces)
+    mesh = mesh_from_obj(obj, **kwargs)
+    mesh = trimesh.Trimesh(mesh.vertices, mesh.faces)
     mesh.fix_normals()
 
-    lower, upper = pbu.AABB(*mesh.bounds)
-    surface_z = lower[2]
+    aabb = pbu.AABB(*mesh.bounds)
+    surface_z = aabb.lower[2]
     min_z = surface_z + z_threshold
-
-    from trimesh.ray.ray_triangle import RayMeshIntersector
-
     intersector = RayMeshIntersector(mesh)
 
     last_time = time.time()
@@ -472,7 +456,7 @@ def sorted_grasps(generator, max_candidates=10, p_random=0.0, **kwargs):
     selected = []
     while True:
         start_time = time.time()
-        for grasp in islice(generator, max_candidates - len(candidates)):
+        for grasp in itertools.islice(generator, max_candidates - len(candidates)):
             if grasp is None:
                 return
             else:
