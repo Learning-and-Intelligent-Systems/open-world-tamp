@@ -49,6 +49,10 @@ If you're looking to use the segmentation network with the `--segmentation` flag
 Command line arguments are used to specify the robot, goal, and simulated world.
 ```
 python run_planner.py --robot=pr2 --goal=all_green --world=problem0 -v
+
+python run_planner.py --robot=movo --goal=all_green --world=problem0 -v
+
+python run_planner.py --robot=panda --goal=all_green --world=problem0 -v
 ```
 
 

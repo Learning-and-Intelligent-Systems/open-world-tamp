@@ -3218,29 +3218,24 @@ def all_between(lower_limits, values, upper_limits):
 
 
 def inverse_kinematics_helper(
-    robot, link, target_pose, null_space=None, client=None, **kwargs
+    robot,
+    link,
+    target_pose,
+    client=None,
+    lower_limits=None,
+    upper_limits=None,
+    **kwargs,
 ):
     (target_point, target_quat) = target_pose
     assert target_point is not None
-    if null_space is not None:
-        assert target_quat is not None
-        lower, upper, ranges, rest = null_space
+
+    if target_quat is None:
         kinematic_conf = client.calculateInverseKinematics(
-            int(robot),
-            link,
-            target_point,
-            lowerLimits=lower,
-            upperLimits=upper,
-            jointRanges=ranges,
-            restPoses=rest,
-        )
-    elif target_quat is None:
-        kinematic_conf = client.calculateInverseKinematics(
-            int(robot), link, target_point
+            int(robot), link, target_point, maxNumIterations=1000
         )
     else:
         kinematic_conf = client.calculateInverseKinematics(
-            int(robot), link, target_point, target_quat
+            int(robot), link, target_point, target_quat, maxNumIterations=1000
         )
     if (kinematic_conf is None) or any(map(math.isnan, kinematic_conf)):
         return None
@@ -3281,7 +3276,7 @@ def inverse_kinematics(
     link,
     target_pose,
     joints,
-    max_iterations=200,
+    max_iterations=20,
     max_time=np.inf,
     custom_limits={},
     **kwargs,
@@ -3301,17 +3296,18 @@ def inverse_kinematics(
     else:
         return None
 
-    lower_limits, upper_limits = get_custom_limits(
-        robot, movable_joints, custom_limits, **kwargs
-    )
-    if not all_between(lower_limits, kinematic_conf, upper_limits):
-        return None
-
     conf = [
         q
         for q, j in zip(kinematic_conf, get_movable_joints(robot, **kwargs))
         if j in joints
     ]
+
+    lower_limits, upper_limits = get_custom_limits(
+        robot, joints, custom_limits, **kwargs
+    )
+    if not all_between(lower_limits, conf, upper_limits):
+        return None
+
     return conf
 
 

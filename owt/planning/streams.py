@@ -95,7 +95,7 @@ def get_grasp_candidates(
         pitches = [-np.pi, np.pi]  # if REORIENT else [-PI / 2, 0, PI / 2]
         target_tolerance = np.inf if REORIENT else np.pi / 4  # PI / 4 | INF
         z_threshold = 1e-2  # if REORIENT else 1e-2 # -INF
-        antipodal_tolerance = np.pi / 6  # PI / 8 | PI / 6
+        antipodal_tolerance = np.pi / 16  # PI / 8 | PI / 6
         generated_grasps = generate_mesh_grasps(
             obj,
             pitches=pitches,
@@ -584,6 +584,7 @@ def get_plan_pick_fn(robot: Robot, environment=[], **kwargs):
         arm_path = plan_prehensile(robot, manipulator, pose, grasp, **kwargs)
 
         if arm_path is None:
+            print("arm path none!")
             return None
 
         arm_group, gripper_group, tool_name = robot.get_manipulator_parts(manipulator)

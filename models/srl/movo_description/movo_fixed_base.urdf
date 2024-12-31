@@ -144,10 +144,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   <gazebo reference="linear_actuator_fixed_link">
     <laserRetro>0</laserRetro>
   </gazebo>
-  <joint name="linear_joint" type="prismatic">
+  <joint name="linear_joint" type="fixed">
     <parent link="linear_actuator_fixed_link"/>
     <child link="linear_actuator_link"/>
-    <origin rpy="0 0 0" xyz="0.0771402 0 0.3938763"/>
+    <origin rpy="0 0 0" xyz="0.0771402 0 0.6938763"/>
     <axis xyz="0 0 1"/>
     <limit effort="1000" lower="0.0" upper="0.472" velocity="0.20"/>
     <dynamics damping="0.0" friction="0.0"/>

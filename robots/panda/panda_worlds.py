@@ -47,11 +47,13 @@ def create_default_env(client=None, **kwargs):
 def problem0(args, robot, client=None):
     floor, obstacles = create_default_env(client=client)
     region = create_pillar(width=0.3, length=0.3, color=pbu.GREEN, client=client)
-    pbu.set_pose(region, pbu.Pose(point=pbu.Point(x=0.5, y=0, z=-0.02)), client=client)
+    pbu.set_pose(
+        region, pbu.Pose(point=pbu.Point(x=0.5, y=0.2, z=-0.02)), client=client
+    )
 
     # cracker_box | tomato_soup_can | potted_meat_can | bowl
     obj1 = create_ycb("potted_meat_can", client=client)
-    pbu.set_pose(obj1, pbu.Pose(point=pbu.Point(x=0.5, y=-0.5, z=0.03)), client=client)
+    pbu.set_pose(obj1, pbu.Pose(point=pbu.Point(x=0.4, y=-0.2, z=0.03)), client=client)
 
     real_world = create_world(
         robot, movable=[obj1], fixed=obstacles, surfaces=[floor, region], client=client

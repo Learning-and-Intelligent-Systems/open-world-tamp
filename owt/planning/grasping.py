@@ -185,7 +185,6 @@ def sample_grasp(
 
         handles = []
         if draw:
-            # set_pose(gripper, multiply(grasp_pose, tool_from_root))
             draw_length = 0.05
             handles.extend(
                 itertools.chain(
@@ -211,8 +210,6 @@ def sample_grasp(
                     ]
                 )
             )
-            # wait_if_gui() # TODO: wait_if_unlocked
-            # remove_handles(handles)
         yield pbu.invert(
             grasp_pose
         ), handles  # TODO: tool_from_grasp or grasp_from_tool convention?

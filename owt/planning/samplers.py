@@ -62,7 +62,7 @@ def plan_workspace_motion(
     tool_waypoints,
     attachment=None,
     obstacles=[],
-    max_attempts=10,
+    max_attempts=20,
     **kwargs
 ):
     assert tool_waypoints
@@ -86,17 +86,24 @@ def plan_workspace_motion(
 
     for attempts in range(max_attempts):
         if attempts > 0:
+            shrink = 0.2
             ranges = [
                 pbu.get_joint_limits(robot, joint, **kwargs) for joint in arm_joints
             ]
-            initialization_sample = [random.uniform(r.lower, r.upper) for r in ranges]
+            initialization_sample = []
+            for r in ranges:
+                mid = (r.lower + r.upper) / 2.0
+                shrink_lower = mid - (shrink * (r.upper - r.lower) / 2)
+                shrink_upper = mid + (shrink * (r.upper - r.lower) / 2)
+                initialization_sample.append(random.uniform(shrink_lower, shrink_upper))
             pbu.set_joint_positions(robot, arm_joints, initialization_sample, **kwargs)
 
         arm_conf = pbu.inverse_kinematics(
-            robot, tool_link, tool_waypoints[0], arm_joints, max_iterations=10, **kwargs
+            robot, tool_link, tool_waypoints[0], arm_joints, max_iterations=1, **kwargs
         )
+
         if arm_conf is None:
-            break
+            continue
 
         if collision_fn(arm_conf):
             continue
@@ -105,14 +112,14 @@ def plan_workspace_motion(
 
         for tool_pose in tool_waypoints[1:]:
             arm_conf = pbu.inverse_kinematics(
-                robot, tool_link, tool_pose, arm_joints, max_iterations=10, **kwargs
+                robot, tool_link, tool_pose, arm_joints, max_iterations=1, **kwargs
             )
 
             if arm_conf is None:
                 break
 
             if collision_fn(arm_conf):
-                continue
+                break
 
             arm_waypoints.append(arm_conf)
 
@@ -213,6 +220,7 @@ def plan_prehensile(
     if workspace_collision(
         robot, manipulator, gripper_path, grasp=None, obstacles=[], **kwargs
     ):
+        print("workspace collision")
         return None
     create_grasp_attachment(robot, manipulator, grasp, **kwargs)
     arm_path = plan_workspace_motion(

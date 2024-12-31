@@ -26,7 +26,6 @@ ARMS = ["{}_arm".format(RIGHT)]
 SIDE = [RIGHT, LEFT]
 
 BASE_JOINTS = ["x", "y", "theta"]
-TORSO_JOINTS = ["linear_joint"]
 HEAD_JOINTS = ["pan_joint", "tilt_joint"]
 
 ARM_JOINTS = [
@@ -88,7 +87,6 @@ COMMAND_MOVO_GROUPS = {
 }
 
 MOVO_GROUPS = {
-    "base": ["x", "y", "theta", "linear_joint"],
     "left_arm": [
         "left_shoulder_pan_joint",
         "left_shoulder_lift_joint",
@@ -192,7 +190,6 @@ DEFAULT_JOINTS = {
     "left_gripper_finger2_joint": -0.0,
     "left_gripper_finger3_joint": 0.0,
     "right_gripper_finger1_joint": 0.0,
-    "linear_joint": 0.3,
     "right_gripper_finger1_joint": 0,
     "right_gripper_finger2_joint": 0,
     "right_gripper_finger1_inner_knuckle_joint": 0,

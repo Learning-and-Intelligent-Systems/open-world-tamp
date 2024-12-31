@@ -504,7 +504,6 @@ def create_pddlstream(
 
     ##########
 
-    # TODO: better function in utils
     domain_pddl = read(get_file_path(__file__, "pddl/domain.pddl"))
     constant_map = {"@{}".format(group): group for group in ["base", "head", "torso"]}
     stream_pddl = read(get_file_path(__file__, "pddl/stream.pddl"))
