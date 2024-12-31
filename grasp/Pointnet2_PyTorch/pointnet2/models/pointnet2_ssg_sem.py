@@ -1,11 +1,10 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from pointnet2_ops.pointnet2_modules import PointnetFPModule, PointnetSAModule
-from torch.utils.data import DataLoader
-
 from pointnet2.data import Indoor3DSemSeg
 from pointnet2.models.pointnet2_ssg_cls import PointNet2ClassificationSSG
+from pointnet2_ops.pointnet2_modules import PointnetFPModule, PointnetSAModule
+from torch.utils.data import DataLoader
 
 
 class PointNet2SemSegSSG(PointNet2ClassificationSSG):
@@ -63,16 +62,15 @@ class PointNet2SemSegSSG(PointNet2ClassificationSSG):
         )
 
     def forward(self, pointcloud):
-        r"""
-            Forward pass of the network
+        r"""Forward pass of the network.
 
-            Parameters
-            ----------
-            pointcloud: Variable(torch.cuda.FloatTensor)
-                (B, N, 3 + input_channels) tensor
-                Point cloud to run predicts on
-                Each point in the point-cloud MUST
-                be formated as (x, y, z, features...)
+        Parameters
+        ----------
+        pointcloud: Variable(torch.cuda.FloatTensor)
+            (B, N, 3 + input_channels) tensor
+            Point cloud to run predicts on
+            Each point in the point-cloud MUST
+            be formated as (x, y, z, features...)
         """
         xyz, features = self._break_up_pc(pointcloud)
 

@@ -1,14 +1,13 @@
+import pointnet2.data.data_utils as d_utils
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim.lr_scheduler as lr_sched
+from pointnet2.data.ModelNet40Loader import ModelNet40Cls
 from pointnet2_ops.pointnet2_modules import PointnetFPModule, PointnetSAModule
 from torch.utils.data import DataLoader, DistributedSampler
 from torchvision import transforms
-
-import pointnet2.data.data_utils as d_utils
-from pointnet2.data.ModelNet40Loader import ModelNet40Cls
 
 
 def set_bn_momentum_default(bn_momentum):
@@ -104,16 +103,15 @@ class PointNet2ClassificationSSG(pl.LightningModule):
         return xyz, features
 
     def forward(self, pointcloud):
-        r"""
-            Forward pass of the network
+        r"""Forward pass of the network.
 
-            Parameters
-            ----------
-            pointcloud: Variable(torch.cuda.FloatTensor)
-                (B, N, 3 + input_channels) tensor
-                Point cloud to run predicts on
-                Each point in the point-cloud MUST
-                be formated as (x, y, z, features...)
+        Parameters
+        ----------
+        pointcloud: Variable(torch.cuda.FloatTensor)
+            (B, N, 3 + input_channels) tensor
+            Point cloud to run predicts on
+            Each point in the point-cloud MUST
+            be formated as (x, y, z, features...)
         """
         xyz, features = self._break_up_pc(pointcloud)
 

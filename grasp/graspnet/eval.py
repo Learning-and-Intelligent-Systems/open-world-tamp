@@ -7,27 +7,28 @@
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 from __future__ import print_function
 
-import numpy as np
-import yaml
 import argparse
-import numpy
-import grasp_estimator
 import copy
-import sys
-import os
-import grasp_data_reader
-import torch
-import glob
-import sample
-import json
-import subprocess
-import time
 import datetime
+import glob
+import json
 import os
-from sklearn.metrics import precision_recall_curve, average_precision_score
-from scipy import spatial
 import shutil
+import subprocess
+import sys
+import time
+
+import grasp_data_reader
+import grasp_estimator
+import numpy
+import numpy as np
+import sample
+import torch
+import yaml
+from scipy import spatial
+from sklearn.metrics import average_precision_score, precision_recall_curve
 from utils import utils
+
 RADIUS = 0.02
 
 
@@ -158,8 +159,8 @@ class Evaluator():
             s, neg_grasps), 0)
         
 if visualize:
-            from visualization_utils import draw_scene
             import mayavi.mlab as mlab
+            from visualization_utils import draw_scene
 
             pos_mask = np.logical_and(grasp_labels == 1, np.random.rand(*grasp_labels.shape) < 0.1)
             neg_mask = np.logical_and(
@@ -237,8 +238,8 @@ if visualize:
             generated_grasps_canonical[:, :3, 3] += mesh_mean
             
 if visualize:
-                from visualization_utils import draw_scene
                 import mayavi.mlab as mlab
+                from visualization_utils import draw_scene
 
                 draw_scene(canonical_pc, grasps=gt_pos_grasps_canonical, mesh=mesh)
                 mlab.show()

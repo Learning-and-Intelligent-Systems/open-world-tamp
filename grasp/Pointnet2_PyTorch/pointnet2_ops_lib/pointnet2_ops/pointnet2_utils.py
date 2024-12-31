@@ -1,16 +1,18 @@
+import warnings
+from typing import *
+
 import torch
 import torch.nn as nn
-import warnings
 from torch.autograd import Function
-from typing import *
 
 try:
     import pointnet2_ops._ext as _ext
 except ImportError:
-    from torch.utils.cpp_extension import load
     import glob
-    import os.path as osp
     import os
+    import os.path as osp
+
+    from torch.utils.cpp_extension import load
 
     warnings.warn("Unable to load pointnet2_ops cpp extension. JIT Compiling.")
 
@@ -35,9 +37,8 @@ class FurthestPointSampling(Function):
     @staticmethod
     def forward(ctx, xyz, npoint):
         # type: (Any, torch.Tensor, int) -> torch.Tensor
-        r"""
-        Uses iterative furthest point sampling to select a set of npoint features that have the largest
-        minimum distance
+        r"""Uses iterative furthest point sampling to select a set of npoint
+        features that have the largest minimum distance.
 
         Parameters
         ----------
@@ -105,8 +106,8 @@ class ThreeNN(Function):
     @staticmethod
     def forward(ctx, unknown, known):
         # type: (Any, torch.Tensor, torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]
-        r"""
-            Find the three nearest neighbors of unknown in known
+        r"""Find the three nearest neighbors of unknown in known.
+
         Parameters
         ----------
         unknown : torch.Tensor
@@ -140,8 +141,8 @@ class ThreeInterpolate(Function):
     @staticmethod
     def forward(ctx, features, idx, weight):
         # type(Any, torch.Tensor, torch.Tensor, torch.Tensor) -> Torch.Tensor
-        r"""
-            Performs weight linear interpolation on 3 features
+        r"""Performs weight linear interpolation on 3 features.
+
         Parameters
         ----------
         features : torch.Tensor
@@ -277,8 +278,7 @@ ball_query = BallQuery.apply
 
 
 class QueryAndGroup(nn.Module):
-    r"""
-    Groups with a ball query of radius
+    r"""Groups with a ball query of radius.
 
     Parameters
     ---------
@@ -334,8 +334,7 @@ class QueryAndGroup(nn.Module):
 
 
 class GroupAll(nn.Module):
-    r"""
-    Groups all features
+    r"""Groups all features.
 
     Parameters
     ---------

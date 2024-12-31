@@ -2,8 +2,8 @@
 # This work is licensed under the NVIDIA Source Code License - Non-commercial. Full
 # text can be found in LICENSE.md
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 # data to plot
 n_groups = 4
@@ -35,47 +35,40 @@ index = np.arange(n_groups)
 bar_width = 0.2
 opacity = 0.8
 
-rects1 = plt.bar(index, F1_overlap, bar_width,
-alpha=opacity,
-color='b',
-label='F1_overlap')
+rects1 = plt.bar(
+    index, F1_overlap, bar_width, alpha=opacity, color="b", label="F1_overlap"
+)
 
-rects2 = plt.bar(index + bar_width, F1_boundary, bar_width,
-alpha=opacity,
-color='g',
-label='F1_boundary')
+rects2 = plt.bar(
+    index + bar_width,
+    F1_boundary,
+    bar_width,
+    alpha=opacity,
+    color="g",
+    label="F1_boundary",
+)
 
-rects3 = plt.bar(index + 2 * bar_width, percentage, bar_width,
-alpha=opacity,
-color='r',
-label='%75')
+rects3 = plt.bar(
+    index + 2 * bar_width, percentage, bar_width, alpha=opacity, color="r", label="%75"
+)
 
-plt.xlabel('Methods')
+plt.xlabel("Methods")
 # plt.ylabel('F1 boundary')
-plt.title('OSD (111 images)')
-plt.xticks(index + bar_width, ('MRCNN Depth', 'UOIS-2D', 'UOIS-3D', 'Ours'))
-plt.legend(loc='lower left')
+plt.title("OSD (111 images)")
+plt.xticks(index + bar_width, ("MRCNN Depth", "UOIS-2D", "UOIS-3D", "Ours"))
+plt.legend(loc="lower left")
 
 labels = F1_overlap
 for i, v in enumerate(labels):
-    ax.text(i-.2, v+1, 
-              labels[i], 
-              fontsize=12, 
-              color='k')
+    ax.text(i - 0.2, v + 1, labels[i], fontsize=12, color="k")
 
 labels = F1_boundary
 for i, v in enumerate(labels):
-    ax.text(i+.1, v+1, 
-              labels[i], 
-              fontsize=12, 
-              color='k')
+    ax.text(i + 0.1, v + 1, labels[i], fontsize=12, color="k")
 
 labels = percentage
 for i, v in enumerate(labels):
-    ax.text(i+.35, v+1, 
-              labels[i], 
-              fontsize=12, 
-              color='k')
+    ax.text(i + 0.35, v + 1, labels[i], fontsize=12, color="k")
 
 plt.tight_layout()
 plt.show()

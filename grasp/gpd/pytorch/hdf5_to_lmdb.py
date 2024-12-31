@@ -1,7 +1,8 @@
+import sys
+
 import h5py
 import lmdb
 import numpy as np
-import sys
 
 h5_file = h5py.File(sys.argv[1])
 data = h5_file.get('images')

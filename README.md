@@ -29,13 +29,7 @@ git submodule update --init --recursive
 
 Install the python dependencies. If possible, install using python3.8 as that appears to be the only python version that supports all of the perceptual dependencies:
 ```
-$ python -m pip install -r requirements.txt
-```
-If you get errors when installing detectron, you may need to modify your paths. Make sure to switch out `11.4` for your current cuda version.
-```
-export CPATH=/usr/local/cuda-11.4/targets/x86_64-linux/include:$CPATH
-export LD_LIBRARY_PATH=/usr/local/cuda-11.4/targets/x86_64-linux/lib:$LD_LIBRARY_PATH
-export PATH=/usr/local/cuda-11.4/bin:$PATH
+python -m pip install -e .
 ```
 
 ### FastDownward
@@ -45,24 +39,20 @@ Build FastDownward:
 ./tamp/downward/build.py
 ```
 
-### IKFast
-
-Compile IKFast:
-```
-cd pybullet_planning/pybullet_tools/ikfast/<robot-name>
-python setup.py
-```
-
 ### Segmentation
 
 If you're looking to use the segmentation network with the `--segmentation` flag, you will need to download the pretrained UCN checkpoint from
-[here](https://drive.google.com/file/d/1O-ymMGD_qDEtYxRU19zSv17Lgg6fSinQ/view) and place the checkpoints folder in `vision_utils/ucn/data`
+[here](https://github.com/IRVLUTD/UnseenObjectClustering) and place the checkpoints folder in `vision_utils/ucn/data`
 
 
 ## Estimator, Planner, Controller, and Simulation:
 Command line arguments are used to specify the robot, goal, and simulated world.
 ```
 python run_planner.py --robot=pr2 --goal=all_green --world=problem0 -v
+
+python run_planner.py --robot=movo --goal=all_green --world=problem0 -v
+
+python run_planner.py --robot=panda --goal=all_green --world=problem0 -v
 ```
 
 
@@ -90,19 +80,6 @@ python run_planner.py --robot=pr2 --goal=all_green --world=problem0 -v
 `--base_planner` Is a flag that specifies the algorithm to use for mobile-base exploration
 
 This is only a subset of the available segmentation flags. See code for more.
-
-### Exploration
-Combine mobile-base exploration with fixed-based manipulation by calling the planner with the following flags
-
-`--exploration` Toggles exploration
-
-`--base_planner` Selects the planner to use for exploration. Default is VA*, but more advanced planners can also be used.
-
-
-<p align="center">
-  <img src="https://github.com/Learning-and-Intelligent-Systems/open-world-tamp/blob/master/figs/mb.gif" alt="animated"  width="1024px"  />
-</p>
-
 
 ## Development
 

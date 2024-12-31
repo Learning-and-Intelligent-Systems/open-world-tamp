@@ -4,7 +4,6 @@ import pickle
 import numpy as np
 import open3d as o3d
 from PIL import Image
-
 from run_estimator import cloud_from_depth
 
 # import rospy
@@ -31,7 +30,6 @@ sns = list(camera_lookup.keys())
 
 
 def generate_pointcloud(data, depth_scale=1):
-
     # width, height = map(int, dimensions_from_camera_matrix(data['intrinsics'][0]))
     width, height = data["depth"].shape[1], data["depth"].shape[0]
     new_depth = (data["depth"] * 255.0) / np.max(data["depth"])

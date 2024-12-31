@@ -4,6 +4,7 @@
 
 import torch
 
+
 def log_softmax_high_dimension(input):
     num_classes = input.size()[1]
     m = torch.max(input, dim=1, keepdim=True)[0]
@@ -36,18 +37,20 @@ def softmax_high_dimension(input):
 
 
 def concatenate_spatial_coordinates(feature_map):
-    """ Adds x,y coordinates as channels to feature map
+    """Adds x,y coordinates as channels to feature map.
 
-        @param feature_map: a [T x C x H x W] torch tensor
+    @param feature_map: a [T x C x H x W] torch tensor
     """
     T, C, H, W = feature_map.shape
 
     # build matrix of indices. then replicated it T times
-    MoI = build_matrix_of_indices(H, W) # Shape: [H, W, 2]
-    MoI = np.tile(MoI, (T, 1, 1, 1)) # Shape: [T, H, W, 2]
-    MoI[..., 0] = MoI[..., 0] / (H-1) * 2 - 1 # in [-1, 1]
-    MoI[..., 1] = MoI[..., 1] / (W-1) * 2 - 1
-    MoI = torch.from_numpy(MoI).permute(0,3,1,2).to(feature_map.device) # Shape: [T, 2, H, W]
+    MoI = build_matrix_of_indices(H, W)  # Shape: [H, W, 2]
+    MoI = np.tile(MoI, (T, 1, 1, 1))  # Shape: [T, H, W, 2]
+    MoI[..., 0] = MoI[..., 0] / (H - 1) * 2 - 1  # in [-1, 1]
+    MoI[..., 1] = MoI[..., 1] / (W - 1) * 2 - 1
+    MoI = (
+        torch.from_numpy(MoI).permute(0, 3, 1, 2).to(feature_map.device)
+    )  # Shape: [T, 2, H, W]
 
     # Concatenate on the channels dimension
     feature_map = torch.cat([feature_map, MoI], dim=1)

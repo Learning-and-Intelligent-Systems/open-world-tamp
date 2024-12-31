@@ -1,7 +1,6 @@
 # Copyright (c) 2020 NVIDIA Corporation. All rights reserved.
 # This work is licensed under the NVIDIA Source Code License - Non-commercial. Full
 # text can be found in LICENSE.md
-
 """UCN config system.
 
 This file specifies default config options for Fast R-CNN. You should not
@@ -13,13 +12,14 @@ Most tools in $ROOT/tools take a --cfg option to specify an override file.
     - See experiments/cfgs/*.yml for example YAML config override files
 """
 
+import math
 import os
 import os.path as osp
+
 import numpy as np
-import math
 # `pip install easydict` if you don't have it
 from easydict import EasyDict as edict
-
+from yaml import FullLoader
 
 __C = edict()
 # Consumers can get config by:
@@ -27,25 +27,25 @@ __C = edict()
 cfg = __C
 
 __C.FLIP_X = False
-__C.INPUT = 'RGBD'
-__C.NETWORK = 'VGG16'
-__C.RIG = ''
-__C.CAD = ''
-__C.POSE = ''
-__C.BACKGROUND = ''
+__C.INPUT = "RGBD"
+__C.NETWORK = "VGG16"
+__C.RIG = ""
+__C.CAD = ""
+__C.POSE = ""
+__C.BACKGROUND = ""
 __C.USE_GPU_NMS = True
-__C.MODE = 'TRAIN'
+__C.MODE = "TRAIN"
 __C.INTRINSICS = ()
-__C.DATA_PATH = ''
+__C.DATA_PATH = ""
 
 __C.FLOW_HEIGHT = 512
 __C.FLOW_WIDTH = 640
 
 # Anchor scales for RPN
-__C.ANCHOR_SCALES = (8,16,32)
+__C.ANCHOR_SCALES = (8, 16, 32)
 
 # Anchor ratios for RPN
-__C.ANCHOR_RATIOS = (0.5,1,2)
+__C.ANCHOR_RATIOS = (0.5, 1, 2)
 
 __C.FEATURE_STRIDE = 16
 __C.gpu_id = 0
@@ -63,8 +63,8 @@ __C.TRAIN.SEGMENTATION = True
 __C.TRAIN.ITERNUM = 4
 __C.TRAIN.HEATUP = 4
 __C.TRAIN.GPUNUM = 1
-__C.TRAIN.CLASSES = (0,1,2,3)
-__C.TRAIN.SYMMETRY = (0,0,0,0)
+__C.TRAIN.CLASSES = (0, 1, 2, 3)
+__C.TRAIN.SYMMETRY = (0, 0, 0, 0)
 
 __C.TRAIN.SLIM = False
 __C.TRAIN.SINGLE_FRAME = False
@@ -89,7 +89,7 @@ __C.TRAIN.MAX_ITERS_PER_EPOCH = 1000000
 __C.TRAIN.UNIFORM_POSE_INTERVAL = 15
 __C.TRAIN.AFFINE = False
 __C.TRAIN.CHANGE_BACKGROUND = False
-__C.TRAIN.FUSION_TYPE = 'add'
+__C.TRAIN.FUSION_TYPE = "add"
 
 # Hough voting
 __C.TRAIN.HOUGH_LABEL_THRESHOLD = 100
@@ -102,9 +102,9 @@ __C.TRAIN.SYNTHESIZE = False
 __C.TRAIN.SYN_ONLINE = False
 __C.TRAIN.SYN_WIDTH = 640
 __C.TRAIN.SYN_HEIGHT = 480
-__C.TRAIN.SYNROOT = '/var/Projects/Deep_Pose/data/LOV/data_syn/'
+__C.TRAIN.SYNROOT = "/var/Projects/Deep_Pose/data/LOV/data_syn/"
 if not os.path.exists(__C.TRAIN.SYNROOT):
-    __C.TRAIN.SYNROOT = '/home/yuxiang/Projects/Deep_Pose/data/LOV/data_syn/'
+    __C.TRAIN.SYNROOT = "/home/yuxiang/Projects/Deep_Pose/data/LOV/data_syn/"
 __C.TRAIN.SYNITER = 0
 __C.TRAIN.SYNNUM = 80000
 __C.TRAIN.SYN_RATIO = 1
@@ -134,13 +134,13 @@ __C.TRAIN.BOOSTRAP_PIXELS = 20
 
 # domain adaptation
 __C.TRAIN.ADAPT = False
-__C.TRAIN.ADAPT_ROOT = ''
+__C.TRAIN.ADAPT_ROOT = ""
 __C.TRAIN.ADAPT_NUM = 400
 __C.TRAIN.ADAPT_RATIO = 1
 __C.TRAIN.ADAPT_WEIGHT = 0.1
 
 # learning rate
-__C.TRAIN.OPTIMIZER = 'MOMENTUM'
+__C.TRAIN.OPTIMIZER = "MOMENTUM"
 __C.TRAIN.LEARNING_RATE = 0.0001
 __C.TRAIN.MILESTONES = (100, 150, 200)
 __C.TRAIN.MOMENTUM = 0.9
@@ -172,8 +172,8 @@ __C.TRAIN.SNAPSHOT_EPOCHS = 1
 
 # solver.prototxt specifies the snapshot path prefix, this adds an optional
 # infix to yield the path: <prefix>[_<infix>]_iters_XYZ.caffemodel
-__C.TRAIN.SNAPSHOT_PREFIX = 'caffenet_fast_rcnn'
-__C.TRAIN.SNAPSHOT_INFIX = ''
+__C.TRAIN.SNAPSHOT_PREFIX = "caffenet_fast_rcnn"
+__C.TRAIN.SNAPSHOT_INFIX = ""
 
 __C.TRAIN.DISPLAY = 20
 __C.TRAIN.ITERS = 0
@@ -258,7 +258,7 @@ __C.TRAIN.EMBEDDING_LAMBDA_INTER = 1.0
 __C.TRAIN.EMBEDDING_CONTRASTIVE = False
 __C.TRAIN.EMBEDDING_PIXELWISE = False
 __C.TRAIN.EMBEDDING_PROTOTYPE = False
-__C.TRAIN.EMBEDDING_METRIC = 'euclidean'
+__C.TRAIN.EMBEDDING_METRIC = "euclidean"
 __C.TRAIN.EMBEDDING_NORMALIZATION = True
 __C.TRAIN.EMBEDDING_LOSS_WEIGHT_MATCH = 1.0
 __C.TRAIN.EMBEDDING_LOSS_WEIGHT_NONMATCH = 1.0
@@ -324,7 +324,7 @@ __C.TEST.POSE_REFINE = False
 __C.TEST.POSE_SDF = True
 __C.TEST.POSE_CODEBOOK = False
 __C.TEST.SYNTHESIZE = False
-__C.TEST.ROS_CAMERA = 'camera'
+__C.TEST.ROS_CAMERA = "camera"
 __C.TEST.DET_THRESHOLD = 0.5
 __C.TEST.BUILD_CODEBOOK = False
 __C.TEST.IMS_PER_BATCH = 1
@@ -343,8 +343,8 @@ __C.TEST.HOUGH_LABEL_THRESHOLD = 100
 __C.TEST.HOUGH_VOTING_THRESHOLD = -1
 __C.TEST.HOUGH_SKIP_PIXELS = -1
 __C.TEST.HOUGH_INLIER_THRESHOLD = 0.9
-__C.TEST.CLASSES = (0,1,2,3)
-__C.TEST.SYMMETRY = (0,0,0,0)
+__C.TEST.CLASSES = (0, 1, 2, 3)
+__C.TEST.SYMMETRY = (0, 0, 0, 0)
 
 
 __C.TEST.ITERNUM = 4
@@ -382,14 +382,13 @@ __C.RNG_SEED = 3
 __C.EPS = 1e-14
 
 # Root directory of project
-__C.ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
+__C.ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), "..", ".."))
 
 # Place outputs under an experiments directory
-__C.EXP_DIR = 'default'
+__C.EXP_DIR = "default"
 
 # Default GPU device id
 __C.GPU_ID = 0
-
 
 
 def get_output_dir(imdb, net):
@@ -398,45 +397,49 @@ def get_output_dir(imdb, net):
     A canonical path is built using the name from an imdb and a network
     (if not None).
     """
-    path = osp.abspath(osp.join(__C.ROOT_DIR, 'output', __C.EXP_DIR, imdb.name))
+    path = osp.abspath(osp.join(__C.ROOT_DIR, "output", __C.EXP_DIR, imdb.name))
     if net is None:
         return path
     else:
         return osp.join(path, net)
 
+
 def _merge_a_into_b(a, b):
     """Merge config dictionary a into config dictionary b, clobbering the
-    options in b whenever they are also specified in a.
-    """
+    options in b whenever they are also specified in a."""
     if type(a) is not edict:
         return
 
     for k, v in a.items():
         # a must specify keys that are in b
         if k not in b:
-            raise KeyError('{} is not a valid config key'.format(k))
+            raise KeyError("{} is not a valid config key".format(k))
 
         # the types must match, too
         if type(b[k]) is not type(v):
-            raise ValueError(('Type mismatch ({} vs. {}) '
-                              'for config key: {}').format(type(b[k]),
-                                                           type(v), k))
+            raise ValueError(
+                ("Type mismatch ({} vs. {}) " "for config key: {}").format(
+                    type(b[k]), type(v), k
+                )
+            )
 
         # recursively merge dicts
         if type(v) is edict:
             try:
                 _merge_a_into_b(a[k], b[k])
             except:
-                print('Error under config key: {}'.format(k))
+                print("Error under config key: {}".format(k))
                 raise
         else:
             b[k] = v
 
+
 def cfg_from_file(filename):
     """Load a config file and merge it into the default options."""
     import yaml
-    with open(filename, 'r') as f:
-        yaml_cfg = edict(yaml.load(f))
+
+    with open(filename, "r") as f:
+        yaml_cfg = edict(yaml.load(f, Loader=FullLoader))
 
     _merge_a_into_b(yaml_cfg, __C)
 
@@ -444,6 +447,7 @@ def cfg_from_file(filename):
 def yaml_from_file(filename):
     """Load a config file and merge it into the default options."""
     import yaml
-    with open(filename, 'r') as f:
-        yaml_cfg = edict(yaml.load(f))
+
+    with open(filename, "r") as f:
+        yaml_cfg = edict(yaml.load(f, Loader=FullLoader))
     return yaml_cfg

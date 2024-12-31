@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "owt"
+version = "1.0.0"
+dependencies = [
+    "numpy==1.26.4",
+    "torch==2.0.0",
+    "shapely>=2.0.6",
+    "isort",
+    "black",
+    "docformatter",
+    "scipy",
+    "pybullet",
+    "trimesh",
+    "torchvision",
+    "easydict",
+    "transforms3d",
+    "imageio",
+    "opencv-python",
+    "rtree",
+    "zmq",
+    "matplotlib",
+    "open3d",
+    "plyfile",
+    "prefetch_generator",
+    "SpeechRecognition",
+    "scikit-learn",
+    "openai",
+    "pyyaml",
+    "pytest",
+    "pytest-cov"
+]
+
+[tool.setuptools.packages]
+find = { where = ["owt"] }

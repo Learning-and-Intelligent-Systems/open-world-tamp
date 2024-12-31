@@ -1,29 +1,27 @@
 import os
 
-# from run_estimator import *
-
-from pybullet_tools.ikfast.utils import IKFastInfo
-from pybullet_tools.utils import link_from_name
-from open_world.simulation.entities import Camera, Manipulator, Robot
-from open_world.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
+import owt.pb_utils as pbu
+from owt.simulation.controller import SimulatedController
+from owt.simulation.entities import Camera, Manipulator, Robot
+from owt.simulation.lis import CAMERA_MATRIX as SIMULATED_CAMERA_MATRIX
 from robots.panda.panda_controller import PandaController
-from open_world.simulation.controller import SimulatedController
-
 
 CAMERA_FRAME = "camera_frame"
 CAMERA_OPTICAL_FRAME = "camera_frame"
-PANDA_INFO = IKFastInfo(
-    module_name="franka_panda.ikfast_panda_arm",
-    base_link="panda_link0",
-    ee_link="panda_link8",
-    free_joints=["panda_joint7"],
-)
-PANDA_PATH = os.path.abspath("models/srl/franka_description/robots/panda_arm_hand.urdf")
+PANDA_PATH = os.path.abspath("models/srl/franka_panda/panda.urdf")
 
 
 class PandaRobot(Robot):
-    def __init__(self, robot_body, link_names={}, client=None, real_camera=False, real_execute=False, arms = ["main_arm"], **kwargs):
-
+    def __init__(
+        self,
+        robot_body,
+        link_names={},
+        client=None,
+        real_camera=False,
+        real_execute=False,
+        arms=["main_arm"],
+        **kwargs
+    ):
         self.link_names = link_names
         self.body = robot_body
         self.client = client
@@ -38,23 +36,20 @@ class PandaRobot(Robot):
         }
 
         PANDA_TOOL_FRAMES = {
-            "main_arm": "panda_tool_tip", 
+            "main_arm": "panda_tool_tip",
         }
 
         panda_manipulators = {
-            side_from_arm(arm): Manipulator(
-                arm, gripper_from_arm(arm), PANDA_TOOL_FRAMES[arm]
-            )
+            arm: Manipulator(arm, arm.replace("arm", "gripper"), PANDA_TOOL_FRAMES[arm])
             for arm in self.arms
         }
-        panda_ik_infos = {side_from_arm(arm): PANDA_INFO for arm in self.arms}
 
         if not real_camera:
             cameras = [
                 Camera(
                     self,
-                    link=link_from_name(self.body, CAMERA_FRAME, client=client),
-                    optical_frame=link_from_name(
+                    link=pbu.link_from_name(self.body, CAMERA_FRAME, client=client),
+                    optical_frame=pbu.link_from_name(
                         self.body, CAMERA_OPTICAL_FRAME, client=client
                     ),
                     camera_matrix=SIMULATED_CAMERA_MATRIX,
@@ -71,7 +66,6 @@ class PandaRobot(Robot):
 
         super(PandaRobot, self).__init__(
             robot_body,
-            ik_info=panda_ik_infos,
             manipulators=panda_manipulators,
             cameras=cameras,
             joint_groups=PANDA_GROUPS,
@@ -83,7 +77,6 @@ class PandaRobot(Robot):
         self.min_z = 0.0
         self.BASE_LINK = "panda_link0"
         self.MAX_PANDA_FINGER = 0.045
-        
 
     def get_default_conf(self):
         conf = {
@@ -99,12 +92,6 @@ class PandaRobot(Robot):
             "main_gripper": [self.MAX_PANDA_FINGER, self.MAX_PANDA_FINGER],
         }
         return conf
-
-    def arm_from_side(self, side):
-        return arm_from_side(side)
-
-    def side_from_arm(self, arm):
-        return side_from_arm(arm)
 
     def arm_conf(self, arm, config):
         return config
@@ -123,39 +110,20 @@ class PandaRobot(Robot):
         return self.joint_groups
 
     @property
-    def default_mobile_base_arm(self):
-        return self.get_default_conf()["main_arm"]
-
-    @property
     def default_fixed_base_arm(self):
         return self.get_default_conf()["main_arm"]
 
     @property
     def base_link(self):
-        return link_from_name(self.robot, self.BASE_LINK, client=self.client)
+        return pbu.link_from_name(self.robot, self.BASE_LINK, client=self.client)
 
     def reset(self, **kwargs):
         conf = self.get_default_conf()
         for group, positions in conf.items():
             if self.real_execute:
                 group_dict = {
-                    name: pos
-                    for pos, name in zip(positions, self.joint_groups[group])
+                    name: pos for pos, name in zip(positions, self.joint_groups[group])
                 }
                 self.controller.command_group_dict(group, group_dict)
             else:
                 self.set_group_positions(group, positions)
-
-
-def side_from_arm(arm):
-    side = arm.split("_")[0]
-    return side
-
-
-def arm_from_side(side):
-    return "{}_arm".format(side)
-
-
-def gripper_from_arm(arm):  # TODO: deprecate
-    side = side_from_arm(arm)
-    return "{}_gripper".format(side)

@@ -122,6 +122,7 @@ def command_gripper(group, timeout, position):
     message = pickle.loads(zlib.decompress(socket.recv()))
     return message
 
+
 def command_base(timeout, position):
     socket.send(
         zlib.compress(
@@ -129,7 +130,7 @@ def command_base(timeout, position):
                 {
                     "message_name": "command_base",
                     "timeout": timeout,
-                    "position": position
+                    "position": position,
                 }
             )
         )
@@ -137,4 +138,3 @@ def command_base(timeout, position):
     message = pickle.loads(zlib.decompress(socket.recv()))
     print("Command base get position")
     return message
-

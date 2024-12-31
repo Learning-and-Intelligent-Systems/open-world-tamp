@@ -4,16 +4,15 @@
 from __future__ import print_function
 
 import argparse
-from collections import OrderedDict
 import errno
 import json
 import os
+from collections import OrderedDict
+
 import numpy as np
-
-from tqdm import tqdm
-
 import trimesh
 import trimesh.transformations as tra
+from tqdm import tqdm
 
 
 class Object(object):
@@ -37,7 +36,7 @@ class Object(object):
             self.mesh = trimesh.util.concatenate(self.mesh)
 
         self.collision_manager = trimesh.collision.CollisionManager()
-        self.collision_manager.add_object('object', self.mesh)
+        self.collision_manager.add_object("object", self.mesh)
 
     def rescale(self, scale=1.0):
         """Set scale of object mesh.
@@ -68,7 +67,7 @@ class Object(object):
 class PandaGripper(object):
     """An object representing a Franka Panda gripper."""
 
-    def __init__(self, q=None, num_contact_points_per_finger=10, root_folder=''):
+    def __init__(self, q=None, num_contact_points_per_finger=10, root_folder=""):
         """Create a Franka Panda parallel-yaw gripper object.
 
         Keyword Arguments:
@@ -83,8 +82,8 @@ class PandaGripper(object):
             q = self.default_pregrasp_configuration
 
         self.q = q
-        fn_base = root_folder + 'gripper_models/panda_gripper/hand.stl'
-        fn_finger = root_folder + 'gripper_models/panda_gripper/finger.stl'
+        fn_base = root_folder + "gripper_models/panda_gripper/hand.stl"
+        fn_finger = root_folder + "gripper_models/panda_gripper/finger.stl"
         self.base = trimesh.load(fn_base)
         self.finger_l = trimesh.load(fn_finger)
         self.finger_r = self.finger_l.copy()
@@ -101,20 +100,30 @@ class PandaGripper(object):
         self.ray_directions = []
         for i in np.linspace(-0.01, 0.02, num_contact_points_per_finger):
             self.ray_origins.append(
-                np.r_[self.finger_l.bounding_box.centroid + [0, 0, i], 1])
+                np.r_[self.finger_l.bounding_box.centroid + [0, 0, i], 1]
+            )
             self.ray_origins.append(
-                np.r_[self.finger_r.bounding_box.centroid + [0, 0, i], 1])
+                np.r_[self.finger_r.bounding_box.centroid + [0, 0, i], 1]
+            )
             self.ray_directions.append(
-                np.r_[-self.finger_l.bounding_box.primitive.transform[:3, 0]])
+                np.r_[-self.finger_l.bounding_box.primitive.transform[:3, 0]]
+            )
             self.ray_directions.append(
-                np.r_[+self.finger_r.bounding_box.primitive.transform[:3, 0]])
+                np.r_[+self.finger_r.bounding_box.primitive.transform[:3, 0]]
+            )
 
         self.ray_origins = np.array(self.ray_origins)
         self.ray_directions = np.array(self.ray_directions)
 
-        self.standoff_range = np.array([max(self.finger_l.bounding_box.bounds[0, 2],
-                                            self.base.bounding_box.bounds[1, 2]),
-                                        self.finger_l.bounding_box.bounds[1, 2]])
+        self.standoff_range = np.array(
+            [
+                max(
+                    self.finger_l.bounding_box.bounds[0, 2],
+                    self.base.bounding_box.bounds[1, 2],
+                ),
+                self.finger_l.bounding_box.bounds[1, 2],
+            ]
+        )
         self.standoff_range[0] += 0.001
 
     def get_obbs(self):
@@ -123,7 +132,11 @@ class PandaGripper(object):
         Returns:
             list of trimesh -- bounding boxes used for collision checking
         """
-        return [self.finger_l.bounding_box, self.finger_r.bounding_box, self.base.bounding_box]
+        return [
+            self.finger_l.bounding_box,
+            self.finger_r.bounding_box,
+            self.base.bounding_box,
+        ]
 
     def get_meshes(self):
         """Get list of meshes that this gripper consists of.
@@ -134,7 +147,8 @@ class PandaGripper(object):
         return [self.finger_l, self.finger_r, self.base]
 
     def get_closing_rays(self, transform):
-        """Get an array of rays defining the contact locations and directions on the hand.
+        """Get an array of rays defining the contact locations and directions
+        on the hand.
 
         Arguments:
             transform {[nump.array]} -- a 4x4 homogeneous matrix
@@ -142,8 +156,10 @@ class PandaGripper(object):
         Returns:
             numpy.array -- transformed rays (origin and direction)
         """
-        return transform[:3, :].dot(
-            self.ray_origins.T).T, transform[:3, :3].dot(self.ray_directions.T).T
+        return (
+            transform[:3, :].dot(self.ray_origins.T).T,
+            transform[:3, :3].dot(self.ray_directions.T).T,
+        )
 
 
 def get_available_grippers():
@@ -152,13 +168,15 @@ def get_available_grippers():
     Returns:
         list of str -- a list of names for the gripper factory
     """
-    available_grippers = OrderedDict({
-        'panda': PandaGripper,
-    })
+    available_grippers = OrderedDict(
+        {
+            "panda": PandaGripper,
+        }
+    )
     return available_grippers
 
 
-def create_gripper(name, configuration=None, root_folder=''):
+def create_gripper(name, configuration=None, root_folder=""):
     """Create a gripper object.
 
     Arguments:
@@ -174,13 +192,15 @@ def create_gripper(name, configuration=None, root_folder=''):
     Returns:
         [type] -- gripper object
     """
-    if name.lower() == 'panda':
+    if name.lower() == "panda":
         return PandaGripper(q=configuration, root_folder=root_folder)
     else:
         raise Exception("Unknown gripper: {}".format(name))
 
 
-def in_collision_with_gripper(object_mesh, gripper_transforms, gripper_name, silent=False):
+def in_collision_with_gripper(
+    object_mesh, gripper_transforms, gripper_name, silent=False
+):
     """Check collision of object with gripper.
 
     Arguments:
@@ -195,18 +215,26 @@ def in_collision_with_gripper(object_mesh, gripper_transforms, gripper_name, sil
         [list of bool] -- Which gripper poses are in collision with object mesh
     """
     manager = trimesh.collision.CollisionManager()
-    manager.add_object('object', object_mesh)
+    manager.add_object("object", object_mesh)
     gripper_meshes = [create_gripper(gripper_name).hand]
     min_distance = []
     for tf in tqdm(gripper_transforms, disable=silent):
-        min_distance.append(np.min([manager.min_distance_single(
-            gripper_mesh, transform=tf) for gripper_mesh in gripper_meshes]))
+        min_distance.append(
+            np.min(
+                [
+                    manager.min_distance_single(gripper_mesh, transform=tf)
+                    for gripper_mesh in gripper_meshes
+                ]
+            )
+        )
 
     return [d == 0 for d in min_distance], min_distance
 
 
-def grasp_quality_point_contacts(transforms, collisions, object_mesh, gripper_name='panda', silent=False):
-    """Grasp quality function
+def grasp_quality_point_contacts(
+    transforms, collisions, object_mesh, gripper_name="panda", silent=False
+):
+    """Grasp quality function.
 
     Arguments:
         transforms {[type]} -- grasp poses
@@ -224,35 +252,45 @@ def grasp_quality_point_contacts(transforms, collisions, object_mesh, gripper_na
     gripper = create_gripper(gripper_name)
     if trimesh.ray.has_embree:
         intersector = trimesh.ray.ray_pyembree.RayMeshIntersector(
-            object_mesh, scale_to_box=True)
+            object_mesh, scale_to_box=True
+        )
     else:
         intersector = trimesh.ray.ray_triangle.RayMeshIntersector(object_mesh)
-    for p, colliding in tqdm(zip(transforms, collisions), total=len(transforms), disable=silent):
+    for p, colliding in tqdm(
+        zip(transforms, collisions), total=len(transforms), disable=silent
+    ):
         if colliding:
             res.append(-1)
         else:
             ray_origins, ray_directions = gripper.get_closing_rays(p)
             locations, index_ray, index_tri = intersector.intersects_location(
-                ray_origins, ray_directions, multiple_hits=False)
+                ray_origins, ray_directions, multiple_hits=False
+            )
 
             if len(locations) == 0:
                 res.append(0)
             else:
                 # this depends on the width of the gripper
-                valid_locations = np.linalg.norm(
-                    ray_origins[index_ray]-locations, axis=1) < 2.0*gripper.q
+                valid_locations = (
+                    np.linalg.norm(ray_origins[index_ray] - locations, axis=1)
+                    < 2.0 * gripper.q
+                )
 
                 if sum(valid_locations) == 0:
                     res.append(0)
                 else:
-                    contact_normals = object_mesh.face_normals[index_tri[valid_locations]]
+                    contact_normals = object_mesh.face_normals[
+                        index_tri[valid_locations]
+                    ]
                     motion_normals = ray_directions[index_ray[valid_locations]]
                     dot_prods = (motion_normals * contact_normals).sum(axis=1)
                     res.append(np.cos(dot_prods).sum() / len(ray_origins))
     return res
 
 
-def grasp_quality_antipodal(transforms, collisions, object_mesh, gripper_name='panda', silent=False):
+def grasp_quality_antipodal(
+    transforms, collisions, object_mesh, gripper_name="panda", silent=False
+):
     """Grasp quality function.
 
     Arguments:
@@ -271,48 +309,74 @@ def grasp_quality_antipodal(transforms, collisions, object_mesh, gripper_name='p
     gripper = create_gripper(gripper_name)
     if trimesh.ray.has_embree:
         intersector = trimesh.ray.ray_pyembree.RayMeshIntersector(
-            object_mesh, scale_to_box=True)
+            object_mesh, scale_to_box=True
+        )
     else:
         intersector = trimesh.ray.ray_triangle.RayMeshIntersector(object_mesh)
-    for p, colliding in tqdm(zip(transforms, collisions), total=len(transforms), disable=silent):
+    for p, colliding in tqdm(
+        zip(transforms, collisions), total=len(transforms), disable=silent
+    ):
         if colliding:
             res.append(0)
         else:
             ray_origins, ray_directions = gripper.get_closing_rays(p)
             locations, index_ray, index_tri = intersector.intersects_location(
-                ray_origins, ray_directions, multiple_hits=False)
+                ray_origins, ray_directions, multiple_hits=False
+            )
 
             if locations.size == 0:
                 res.append(0)
             else:
                 # chose contact points for each finger [they are stored in an alternating fashion]
-                index_ray_left = np.array([i for i, num in enumerate(
-                    index_ray) if num % 2 == 0 and np.linalg.norm(ray_origins[num]-locations[i]) < 2.0*gripper.q])
-                index_ray_right = np.array([i for i, num in enumerate(
-                    index_ray) if num % 2 == 1 and np.linalg.norm(ray_origins[num]-locations[i]) < 2.0*gripper.q])
+                index_ray_left = np.array(
+                    [
+                        i
+                        for i, num in enumerate(index_ray)
+                        if num % 2 == 0
+                        and np.linalg.norm(ray_origins[num] - locations[i])
+                        < 2.0 * gripper.q
+                    ]
+                )
+                index_ray_right = np.array(
+                    [
+                        i
+                        for i, num in enumerate(index_ray)
+                        if num % 2 == 1
+                        and np.linalg.norm(ray_origins[num] - locations[i])
+                        < 2.0 * gripper.q
+                    ]
+                )
 
                 if index_ray_left.size == 0 or index_ray_right.size == 0:
                     res.append(0)
                 else:
                     # select the contact point closest to the finger (which would be hit first during closing)
                     left_contact_idx = np.linalg.norm(
-                        ray_origins[index_ray[index_ray_left]] - locations[index_ray_left], axis=1).argmin()
+                        ray_origins[index_ray[index_ray_left]]
+                        - locations[index_ray_left],
+                        axis=1,
+                    ).argmin()
                     right_contact_idx = np.linalg.norm(
-                        ray_origins[index_ray[index_ray_right]] - locations[index_ray_right], axis=1).argmin()
+                        ray_origins[index_ray[index_ray_right]]
+                        - locations[index_ray_right],
+                        axis=1,
+                    ).argmin()
                     left_contact_point = locations[index_ray_left[left_contact_idx]]
                     right_contact_point = locations[index_ray_right[right_contact_idx]]
 
                     left_contact_normal = object_mesh.face_normals[
-                        index_tri[index_ray_left[left_contact_idx]]]
+                        index_tri[index_ray_left[left_contact_idx]]
+                    ]
                     right_contact_normal = object_mesh.face_normals[
-                        index_tri[index_ray_right[right_contact_idx]]]
+                        index_tri[index_ray_right[right_contact_idx]]
+                    ]
 
-                    l_to_r = (right_contact_point - left_contact_point) / \
-                        np.linalg.norm(right_contact_point -
-                                       left_contact_point)
-                    r_to_l = (left_contact_point - right_contact_point) / \
-                        np.linalg.norm(left_contact_point -
-                                       right_contact_point)
+                    l_to_r = (
+                        right_contact_point - left_contact_point
+                    ) / np.linalg.norm(right_contact_point - left_contact_point)
+                    r_to_l = (
+                        left_contact_point - right_contact_point
+                    ) / np.linalg.norm(left_contact_point - right_contact_point)
 
                     qual_left = np.dot(left_contact_normal, r_to_l)
                     qual_right = np.dot(right_contact_normal, l_to_r)
@@ -328,36 +392,46 @@ def grasp_quality_antipodal(transforms, collisions, object_mesh, gripper_name='p
 
 
 def raycast_collisioncheck(origins, expected_hit_points, object_mesh):
-    """ Check whether a set of ray casts turn out as expected.
+    """Check whether a set of ray casts turn out as expected.
 
-    :param origins: ray origins and directions as Nx4x4 homogenous matrices (use last two columns)
+    :param origins: ray origins and directions as Nx4x4 homogenous
+        matrices (use last two columns)
     :param expected_hit_points: 3d points Nx3
     :param object_mesh: trimesh mesh instance
-
     :return: boolean array of size N
     """
     assert len(origins) == len(expected_hit_points)
 
     if trimesh.ray.has_embree:
         intersector = trimesh.ray.ray_pyembree.RayMeshIntersector(
-            object_mesh, scale_to_box=True)
+            object_mesh, scale_to_box=True
+        )
     else:
         intersector = trimesh.ray.ray_triangle.RayMeshIntersector(object_mesh)
 
     locations, index_rays, _ = intersector.intersects_location(
-        origins[:, :3, 3], origins[:, :3, 2], multiple_hits=False)
+        origins[:, :3, 3], origins[:, :3, 2], multiple_hits=False
+    )
     res = np.array([False] * len(origins))
-    res[index_rays] = np.all(np.isclose(
-        locations, expected_hit_points[index_rays]), axis=1)
+    res[index_rays] = np.all(
+        np.isclose(locations, expected_hit_points[index_rays]), axis=1
+    )
 
     return res
 
 
-def sample_multiple_grasps(number_of_candidates, mesh, gripper_name, systematic_sampling,
-                           surface_density=0.005*0.005, standoff_density=0.01, roll_density=15,
-                           type_of_quality='antipodal',
-                           min_quality=-1.0,
-                           silent=False):
+def sample_multiple_grasps(
+    number_of_candidates,
+    mesh,
+    gripper_name,
+    systematic_sampling,
+    surface_density=0.005 * 0.005,
+    standoff_density=0.01,
+    roll_density=15,
+    type_of_quality="antipodal",
+    min_quality=-1.0,
+    silent=False,
+):
     """Sample a set of grasps for an object.
 
     Arguments:
@@ -397,21 +471,38 @@ def sample_multiple_grasps(number_of_candidates, mesh, gripper_name, systematic_
         # Resulting number of samples:
         # (Area/Surface Density) * (Finger length/Standoff density) * (360/Rotation Density)
         surface_samples = int(np.ceil(mesh.area / surface_density))
-        standoff_samples = np.linspace(gripper.standoff_range[0], gripper.standoff_range[1], max(
-            1, (gripper.standoff_range[1] - gripper.standoff_range[0]) / standoff_density))
+        standoff_samples = np.linspace(
+            gripper.standoff_range[0],
+            gripper.standoff_range[1],
+            max(
+                1,
+                (gripper.standoff_range[1] - gripper.standoff_range[0])
+                / standoff_density,
+            ),
+        )
         rotation_samples = np.arange(0, 1 * np.pi, np.deg2rad(roll_density))
 
-        number_of_candidates = surface_samples * \
-            len(standoff_samples) * len(rotation_samples)
+        number_of_candidates = (
+            surface_samples * len(standoff_samples) * len(rotation_samples)
+        )
 
-        tmp_points, face_indices = mesh.sample(
-            surface_samples, return_index=True)
+        tmp_points, face_indices = mesh.sample(surface_samples, return_index=True)
         tmp_normals = mesh.face_normals[face_indices]
 
-        number_of_candidates = len(tmp_points) * \
-            len(standoff_samples) * len(rotation_samples)
-        print("Number of samples ", number_of_candidates, "(", len(tmp_points), " x ", len(standoff_samples), " x ",
-              len(rotation_samples), ")")
+        number_of_candidates = (
+            len(tmp_points) * len(standoff_samples) * len(rotation_samples)
+        )
+        print(
+            "Number of samples ",
+            number_of_candidates,
+            "(",
+            len(tmp_points),
+            " x ",
+            len(standoff_samples),
+            " x ",
+            len(rotation_samples),
+            ")",
+        )
 
         points = []
         normals = []
@@ -428,7 +519,9 @@ def sample_multiple_grasps(number_of_candidates, mesh, gripper_name, systematic_
         batch_standoffs = []
         batch_transforms = []
 
-        for point, normal in tqdm(zip(tmp_points, tmp_normals), total=len(tmp_points), disable=silent):
+        for point, normal in tqdm(
+            zip(tmp_points, tmp_normals), total=len(tmp_points), disable=silent
+        ):
             for roll in rotation_samples:
                 for standoff in standoff_samples:
                     batch_position_idx.append(pos_cnt)
@@ -438,19 +531,27 @@ def sample_multiple_grasps(number_of_candidates, mesh, gripper_name, systematic_
                     batch_standoffs.append(standoff)
 
                     orientation = tra.quaternion_matrix(
-                        tra.quaternion_about_axis(roll, [0, 0, 1]))
+                        tra.quaternion_about_axis(roll, [0, 0, 1])
+                    )
                     origin = point + normal * standoff
 
                     batch_transforms.append(
-                        np.dot(np.dot(tra.translation_matrix(origin), trimesh.geometry.align_vectors([0, 0, -1], normal)),
-                               orientation))
+                        np.dot(
+                            np.dot(
+                                tra.translation_matrix(origin),
+                                trimesh.geometry.align_vectors([0, 0, -1], normal),
+                            ),
+                            orientation,
+                        )
+                    )
 
                     cnt += 1
             pos_cnt += 1
 
             if cnt % 1000 == 0 or cnt == len(tmp_points):
-                valid = raycast_collisioncheck(np.asarray(
-                    batch_transforms), np.asarray(batch_points), mesh)
+                valid = raycast_collisioncheck(
+                    np.asarray(batch_transforms), np.asarray(batch_points), mesh
+                )
                 transforms.extend(np.array(batch_transforms)[valid])
                 position_idx.extend(np.array(batch_position_idx)[valid])
                 points.extend(np.array(batch_points)[valid])
@@ -469,42 +570,61 @@ def sample_multiple_grasps(number_of_candidates, mesh, gripper_name, systematic_
         normals = np.array(normals)
         position_idx = np.array(position_idx)
     else:
-        points, face_indices = mesh.sample(
-            number_of_candidates, return_index=True)
+        points, face_indices = mesh.sample(number_of_candidates, return_index=True)
         normals = mesh.face_normals[face_indices]
 
         # generate transformations
-        for point, normal in tqdm(zip(points, normals), total=len(points), disable=silent):
+        for point, normal in tqdm(
+            zip(points, normals), total=len(points), disable=silent
+        ):
             # roll along approach vector
             angle = np.random.rand() * 2 * np.pi
             roll_angles.append(angle)
-            orientations.append(tra.quaternion_matrix(
-                tra.quaternion_about_axis(angle, [0, 0, 1])))
+            orientations.append(
+                tra.quaternion_matrix(tra.quaternion_about_axis(angle, [0, 0, 1]))
+            )
 
             # standoff from surface
-            standoff = (gripper.standoff_range[1] - gripper.standoff_range[0]) * np.random.rand() \
-                + gripper.standoff_range[0]
+            standoff = (
+                gripper.standoff_range[1] - gripper.standoff_range[0]
+            ) * np.random.rand() + gripper.standoff_range[0]
             standoffs.append(standoff)
             origins.append(point + normal * standoff)
 
             transforms.append(
-                np.dot(np.dot(tra.translation_matrix(origins[-1]),
-                              trimesh.geometry.align_vectors([0, 0, -1], normal)),
-                       orientations[-1]))
+                np.dot(
+                    np.dot(
+                        tra.translation_matrix(origins[-1]),
+                        trimesh.geometry.align_vectors([0, 0, -1], normal),
+                    ),
+                    orientations[-1],
+                )
+            )
 
     verboseprint("Checking collisions...")
     collisions = in_collision_with_gripper(
-        mesh, transforms, gripper_name=gripper_name, silent=silent)
+        mesh, transforms, gripper_name=gripper_name, silent=silent
+    )
 
     verboseprint("Labelling grasps...")
     quality = {}
-    quality_key = 'quality_' + type_of_quality
-    if type_of_quality == 'antipodal':
+    quality_key = "quality_" + type_of_quality
+    if type_of_quality == "antipodal":
         quality[quality_key] = grasp_quality_antipodal(
-            transforms, collisions, object_mesh=mesh, gripper_name=gripper_name, silent=silent)
-    elif type_of_quality == 'number_of_contacts':
+            transforms,
+            collisions,
+            object_mesh=mesh,
+            gripper_name=gripper_name,
+            silent=silent,
+        )
+    elif type_of_quality == "number_of_contacts":
         quality[quality_key] = grasp_quality_point_contacts(
-            transforms, collisions, object_mesh=mesh, gripper_name=gripper_name, silent=silent)
+            transforms,
+            collisions,
+            object_mesh=mesh,
+            gripper_name=gripper_name,
+            silent=silent,
+        )
     else:
         raise Exception("Quality metric unknown: ", quality)
 
@@ -547,57 +667,113 @@ def make_parser():
     Returns:
         argparse.ArgumentParser -- an argument parser
     """
-    parser = argparse.ArgumentParser(description='Sample grasps for an object.',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--object_file', type=str,
-                        default='/home/arsalan/data/models_selected/03797390/1be6b2c84cdab826c043c2d07bb83fc8/model.obj',
-                        help='Number of samples.')
-    parser.add_argument('--dataset', type=str, default='UNKNOWN',
-                        help='Metadata about the origin of the file.')
-    parser.add_argument('--classname', type=str, default='UNKNOWN',
-                        help='Metadata about the class of the object.')
-    parser.add_argument('--scale', type=float, default=1.0,
-                        help='Scale the object.')
-    parser.add_argument('--resize', type=float,
-                        help="""Resize the object, such that the longest of its \
-                            bounding box dimensions is of length --resize.""")
-    parser.add_argument('--use_stl', action='store_true',
-                        help='Use STL instead of obj.')
-    parser.add_argument('--gripper', choices=get_available_grippers().keys(), default='panda',
-                        help='Type of gripper.')
-    parser.add_argument('--quality', choices=['number_of_contacts', 'antipodal'],
-                        default='number_of_contacts',
-                        help='Which type of quality metric to evaluate.')
+    parser = argparse.ArgumentParser(
+        description="Sample grasps for an object.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--object_file",
+        type=str,
+        default="/home/arsalan/data/models_selected/03797390/1be6b2c84cdab826c043c2d07bb83fc8/model.obj",
+        help="Number of samples.",
+    )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default="UNKNOWN",
+        help="Metadata about the origin of the file.",
+    )
+    parser.add_argument(
+        "--classname",
+        type=str,
+        default="UNKNOWN",
+        help="Metadata about the class of the object.",
+    )
+    parser.add_argument("--scale", type=float, default=1.0, help="Scale the object.")
+    parser.add_argument(
+        "--resize",
+        type=float,
+        help="""Resize the object, such that the longest of its \
+                            bounding box dimensions is of length --resize.""",
+    )
+    parser.add_argument(
+        "--use_stl", action="store_true", help="Use STL instead of obj."
+    )
+    parser.add_argument(
+        "--gripper",
+        choices=get_available_grippers().keys(),
+        default="panda",
+        help="Type of gripper.",
+    )
+    parser.add_argument(
+        "--quality",
+        choices=["number_of_contacts", "antipodal"],
+        default="number_of_contacts",
+        help="Which type of quality metric to evaluate.",
+    )
 
-    parser.add_argument('--single_standoff', action='store_true',
-                        help='Use the closest possible standoff.')
+    parser.add_argument(
+        "--single_standoff",
+        action="store_true",
+        help="Use the closest possible standoff.",
+    )
 
-    parser.add_argument('--systematic_sampling', action='store_true',
-                        help='Systematically sample stuff.')
-    parser.add_argument('--systematic_surface_density', type=float, default=0.005*0.005,
-                        help='Surface density used for systematic sampling (in square meters).')
-    parser.add_argument('--systematic_standoff_density', type=float, default=0.01,
-                        help='Standoff density used for systematic sampling (in meters).')
-    parser.add_argument('--systematic_roll_density', type=float, default=15.,
-                        help='Roll density used for systematic sampling (in degrees).')
-    parser.add_argument('--filter_best_per_position', action='store_true',
-                        help='Only store one grasp (highest quality) if there are multiple per with the same position.')
+    parser.add_argument(
+        "--systematic_sampling",
+        action="store_true",
+        help="Systematically sample stuff.",
+    )
+    parser.add_argument(
+        "--systematic_surface_density",
+        type=float,
+        default=0.005 * 0.005,
+        help="Surface density used for systematic sampling (in square meters).",
+    )
+    parser.add_argument(
+        "--systematic_standoff_density",
+        type=float,
+        default=0.01,
+        help="Standoff density used for systematic sampling (in meters).",
+    )
+    parser.add_argument(
+        "--systematic_roll_density",
+        type=float,
+        default=15.0,
+        help="Roll density used for systematic sampling (in degrees).",
+    )
+    parser.add_argument(
+        "--filter_best_per_position",
+        action="store_true",
+        help="Only store one grasp (highest quality) if there are multiple per with the same position.",
+    )
 
-    parser.add_argument('--min_quality', type=float, default=0.0,
-                        help="""Only store grasps whose quality is at least this value. \
-                            Colliding grasps have quality -1, i.e. they are filtered out by default.""")
+    parser.add_argument(
+        "--min_quality",
+        type=float,
+        default=0.0,
+        help="""Only store grasps whose quality is at least this value. \
+                            Colliding grasps have quality -1, i.e. they are filtered out by default.""",
+    )
 
-    parser.add_argument('--num_samples', type=int, default=10,
-                        help='Number of samples.')
-    parser.add_argument('--output', type=str, default="tmp.json",
-                        help='File to store the results (json).')
-    parser.add_argument('--add_quality_metric', nargs=2, type=str, default="",
-                        help='File (json) to calculate additional quality metric for.')
-    parser.add_argument('--silent', action='store_true',
-                        help='No commandline output.')
+    parser.add_argument(
+        "--num_samples", type=int, default=10, help="Number of samples."
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="tmp.json",
+        help="File to store the results (json).",
+    )
+    parser.add_argument(
+        "--add_quality_metric",
+        nargs=2,
+        type=str,
+        default="",
+        help="File (json) to calculate additional quality metric for.",
+    )
+    parser.add_argument("--silent", action="store_true", help="No commandline output.")
 
-    parser.add_argument('--force', action='store_true',
-                        help='Do things my way.')
+    parser.add_argument("--force", action="store_true", help="Do things my way.")
 
     return parser
 
@@ -609,51 +785,60 @@ if __name__ == "__main__":
     verboseprint = print if not args.silent else lambda *a, **k: None
 
     if args.add_quality_metric:
-        with open(args.add_quality_metric[1], 'r') as f:
+        with open(args.add_quality_metric[1], "r") as f:
             grasps = json.load(f)
-        obj = Object(grasps['object'].replace('.obj', '.stl')
-                     if args.use_stl else grasps['object'])
-        obj.rescale(grasps['object_scale'])
+        obj = Object(
+            grasps["object"].replace(".obj", ".stl")
+            if args.use_stl
+            else grasps["object"]
+        )
+        obj.rescale(grasps["object_scale"])
 
-        grasp_tfs = np.array(grasps['transforms'])
-        collisions = np.array(grasps['collisions'])
+        grasp_tfs = np.array(grasps["transforms"])
+        collisions = np.array(grasps["collisions"])
 
-        key = 'quality_{}'.format(args.add_quality_metric[0])
+        key = "quality_{}".format(args.add_quality_metric[0])
 
         if key in grasps.keys() and not args.force:
             raise Exception(
-                "Quality metric already part of json file! (Needs --force option) ", key)
+                "Quality metric already part of json file! (Needs --force option) ", key
+            )
 
-        if key == 'quality_number_of_contacts':
+        if key == "quality_number_of_contacts":
             grasps[key] = grasp_quality_point_contacts(
                 grasp_tfs,
                 collisions,
                 object_mesh=obj.mesh,
-                gripper_name=grasps['gripper'],
-                silent=args.silent)
-        elif key == 'quality_antipodal':
+                gripper_name=grasps["gripper"],
+                silent=args.silent,
+            )
+        elif key == "quality_antipodal":
             grasps[key] = grasp_quality_antipodal(
                 grasp_tfs,
                 collisions,
                 object_mesh=obj.mesh,
-                gripper_name=grasps['gripper'],
-                silent=args.silent)
+                gripper_name=grasps["gripper"],
+                silent=args.silent,
+            )
         else:
             raise Exception("Unknown quality metric: ", key)
 
-        with open(args.add_quality_metric[1], 'w') as f:
+        with open(args.add_quality_metric[1], "w") as f:
             json.dump(grasps, f)
 
     else:
-        if os.path.dirname(args.output) != '':
+        if os.path.dirname(args.output) != "":
             try:
                 os.makedirs(os.path.dirname(args.output))
             except OSError as e:
                 if e.errno != errno.EEXIST:
                     raise
 
-        obj = Object(args.object_file.replace('.obj', '.stl')
-                     if args.use_stl else args.object_file)
+        obj = Object(
+            args.object_file.replace(".obj", ".stl")
+            if args.use_stl
+            else args.object_file
+        )
 
         if args.resize:
             obj.resize(args.resize)
@@ -662,36 +847,45 @@ if __name__ == "__main__":
 
         gripper = create_gripper(args.gripper)
 
-        points, normals, transforms, roll_angles, standoffs, collisions, qualities\
-            = sample_multiple_grasps(args.num_samples,
-                                     obj.mesh,
-                                     gripper_name=args.gripper,
-                                     systematic_sampling=args.systematic_sampling,
-                                     roll_density=args.systematic_roll_density,
-                                     standoff_density=args.systematic_standoff_density,
-                                     surface_density=args.systematic_surface_density,
-                                     type_of_quality=args.quality,
-                                     filter_best_per_position=args.filter_best_per_position,
-                                     min_quality=args.min_quality,
-                                     silent=args.silent)
+        (
+            points,
+            normals,
+            transforms,
+            roll_angles,
+            standoffs,
+            collisions,
+            qualities,
+        ) = sample_multiple_grasps(
+            args.num_samples,
+            obj.mesh,
+            gripper_name=args.gripper,
+            systematic_sampling=args.systematic_sampling,
+            roll_density=args.systematic_roll_density,
+            standoff_density=args.systematic_standoff_density,
+            surface_density=args.systematic_surface_density,
+            type_of_quality=args.quality,
+            filter_best_per_position=args.filter_best_per_position,
+            min_quality=args.min_quality,
+            silent=args.silent,
+        )
 
         # save transforms
         grasps = {
-            'object': obj.filename,
-            'object_scale': obj.scale,
-            'object_class': args.classname,
-            'object_dataset': args.dataset,
-            'gripper': args.gripper,
-            'gripper_configuration': [gripper.q],
-            'transforms': [t.tolist() for t in transforms],
-            'roll_angles': roll_angles.tolist(),
-            'standoffs': standoffs.tolist(),
-            'mesh_points': [p.tolist() for p in points],
-            'mesh_normals': [n.tolist() for n in normals],
-            'collisions': collisions,
+            "object": obj.filename,
+            "object_scale": obj.scale,
+            "object_class": args.classname,
+            "object_dataset": args.dataset,
+            "gripper": args.gripper,
+            "gripper_configuration": [gripper.q],
+            "transforms": [t.tolist() for t in transforms],
+            "roll_angles": roll_angles.tolist(),
+            "standoffs": standoffs.tolist(),
+            "mesh_points": [p.tolist() for p in points],
+            "mesh_normals": [n.tolist() for n in normals],
+            "collisions": collisions,
         }
         grasps.update(qualities)
 
-        with open(args.output, 'w') as f:
+        with open(args.output, "w") as f:
             verboseprint("Writing results to:", args.output)
             json.dump(grasps, f)

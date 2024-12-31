@@ -1,22 +1,12 @@
 import time
 
-from pybullet_tools.utils import joints_from_names, set_joint_positions
-
-from robots.movo.movo_sender import (
-    command,
-    command_gripper,
-    command_torso,
-    command_trajectory,
-    get_joint_states,
-)
-from open_world.simulation.controller import Controller
-from open_world.estimation.dnn import str_from_int_seg_general
-from open_world.estimation.geometry import cloud_from_depth
-from open_world.estimation.observation import image_from_labeled, save_camera_images
-from pybullet_tools.utils import (
-    CameraImage,
-    set_joint_positions,
-)
+import owt.pb_utils as pbu
+from owt.estimation.dnn import str_from_int_seg_general
+from owt.estimation.geometry import cloud_from_depth
+from owt.estimation.observation import image_from_labeled, save_camera_images
+from owt.simulation.controller import Controller
+from robots.movo.movo_sender import (command, command_gripper, command_torso,
+                                     command_trajectory, get_joint_states)
 
 
 class MovoController(Controller):
@@ -26,15 +16,14 @@ class MovoController(Controller):
 
     def simulate_trajectory(self, positions, joint_names):
         print(joint_names, positions)
-        joints = joints_from_names(self.robot, joint_names)
+        joints = pbu.joints_from_names(self.robot, joint_names)
         for position in positions:
-            set_joint_positions(self.robot, joints, position)
+            pbu.set_joint_positions(self.robot, joints, position)
             time.sleep(0.02)
 
     def command_group_trajectory(
         self, group, positions, times_from_start, blocking=True, simulate=True, **kwargs
     ):
-
         joint_names = self.robot.command_joint_groups[group]
 
         timeout = 1 / 10.0 * len(positions) * 1.1
@@ -113,7 +102,6 @@ class MovoController(Controller):
         point_cloud = cloud_from_depth(
             self.robot.intrinsics, depth_image, max_depth=float("inf")
         )
-        #  print(rgb_image.shape, depth_image.shape, point_cloud.shape)
 
         int_seg = seg_network.get_seg(
             rgb_image, point_cloud=point_cloud, return_int=True, depth_image=depth_image
@@ -123,7 +111,7 @@ class MovoController(Controller):
         )
         color_seg = image_from_labeled(str_seg)
         camera_pose = self.robot.get_camera_pose()
-        camera_image = CameraImage(
+        camera_image = pbu.CameraImage(
             rgb_image, depth_image, str_seg, camera_pose, self.robot.intrinsics
         )  # TODO: camera_pose
         save_camera_images(camera_image)

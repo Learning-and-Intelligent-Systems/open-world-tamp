@@ -1,3 +1,5 @@
+import sys
+
 import h5py
 import numpy as np
 import torch
@@ -5,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as data
-import sys
+
 
 class H5Dataset(data.Dataset):
     def __init__(self, file_path):

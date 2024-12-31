@@ -2,8 +2,10 @@ import torch.multiprocessing as mp
 
 # mp.set_start_method('spawn')
 
+
 def train(model):
     pass
+
 
 model = 1
 

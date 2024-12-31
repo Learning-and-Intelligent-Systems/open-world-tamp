@@ -1,11 +1,12 @@
-from options.test_options import TestOptions
 from data import DataLoader
-from models import create_model
+from options.test_options import TestOptions
 from utils.writer import Writer
+
+from models import create_model
 
 
 def run_test(epoch=-1, name=""):
-    print('Running Test')
+    print("Running Test")
     opt = TestOptions().parse()
     opt.serial_batches = True  # no shuffle
     opt.name = name
@@ -23,5 +24,5 @@ def run_test(epoch=-1, name=""):
     return writer.acc
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_test()

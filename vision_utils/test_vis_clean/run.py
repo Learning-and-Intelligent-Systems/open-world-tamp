@@ -36,26 +36,12 @@ import cv2
 import torch
 import torchvision.transforms as transforms
 from pybullet_tools.pr2_problems import create_floor
-from pybullet_tools.utils import (
-    LockRenderer,
-    WorldSaver,
-    add_data_path,
-    connect,
-    create_box,
-    disable_gravity,
-    disconnect,
-    enable_gravity,
-    get_pose,
-    save_image,
-    set_client,
-    set_euler,
-    set_joint_positions,
-    set_point,
-    set_pose,
-    set_quat,
-    step_simulation,
-    wait_for_user,
-)
+from pybullet_tools.utils import (LockRenderer, WorldSaver, add_data_path,
+                                  connect, create_box, disable_gravity,
+                                  disconnect, enable_gravity, get_pose,
+                                  save_image, set_client, set_euler,
+                                  set_joint_positions, set_point, set_pose,
+                                  set_quat, step_simulation, wait_for_user)
 
 from .primitives import get_image
 from .utils import ICC
@@ -95,7 +81,7 @@ bs = 1
 
 
 def init_vision_utils(maskrcnn=False, uois=False, densefusion=False):
-    """Detection & Segmentation"""
+    """Detection & Segmentation."""
     if maskrcnn:
         import detectron2
         from detectron2 import model_zoo
@@ -414,7 +400,8 @@ def main(time_step=0.01):
         print(f"Use {args.segment_network} for segmentation")
     if args.pose:
         init_densefusion = True
-        from lib.transformations import quaternion_from_matrix, quaternion_matrix
+        from lib.transformations import (quaternion_from_matrix,
+                                         quaternion_matrix)
 
         print(f"Use DenseFusion for 6D pose estimation")
 
