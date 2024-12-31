@@ -166,28 +166,36 @@ def image_from_labeled(seg_image, **kwargs):
                 color = color_from_body[category]
             else:
                 color = color_from_body[instance]
-            image[r, c, :] = color[:3]
+            image[r, c, :] = [color.red, color.green, color.blue]
     return (image * 255).astype(np.uint8)
 
 
 def save_camera_images(
-    camera_image, directory=TEMP_DIR, prefix="", predicted=True, **kwargs
+    camera_image: pbu.CameraImage,
+    directory=TEMP_DIR,
+    prefix="",
+    predicted=True,
+    **kwargs
 ):
     pbu.ensure_dir(directory)
-    rgb_image, depth_image, seg_image = camera_image[:3]
     pbu.save_image(
-        os.path.join(directory, "{}rgb.png".format(prefix)), rgb_image
+        os.path.join(directory, "{}rgb.png".format(prefix)), camera_image.rgbPixels
     )  # [0, 255]
 
+    print(type(camera_image.depthPixels))
     pbu.save_image(
-        os.path.join(directory, "{}depth.png".format(prefix)), depth_image
+        os.path.join(directory, "{}depth.png".format(prefix)), camera_image.depthPixels
     )  # [0, 1]
-    if seg_image is None:
+
+    if camera_image.segmentationMaskBuffer is None:
         return None
+
     if predicted:
-        segmented_image = image_from_labeled(seg_image, **kwargs)
+        segmented_image = image_from_labeled(
+            camera_image.segmentationMaskBuffer, **kwargs
+        )
     else:
-        segmented_image = pbu.image_from_segmented(seg_image)
+        segmented_image = pbu.image_from_segmented(camera_image.segmentationMaskBuffer)
     pbu.save_image(
         os.path.join(directory, "{}segmented.png".format(prefix)), segmented_image
     )  # [0, 255]

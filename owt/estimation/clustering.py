@@ -58,7 +58,7 @@ def relabel_nearby(labeled_points, max_distance=3e-2):
 
 
 def cluster_unassigned(labeled_points, groups, **kwargs):
-    assigned_indices = set(itertools.chain(groups))
+    assigned_indices = set(itertools.chain(*groups))
     indices = list(range(len(labeled_points)))
     unknown_indices = [index for index in indices if index not in assigned_indices]
     if not unknown_indices:

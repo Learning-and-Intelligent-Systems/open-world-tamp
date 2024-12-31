@@ -99,6 +99,10 @@ def iterate_array(array, dims=None):
     # return np.ndindex(*(array.shape[d] for d in dims))
 
 
+def implies(p1, p2):
+    return not p1 or p2
+
+
 def str_from_int_seg(int_seg, only_known=False):
     str_seg = np.full(
         int_seg.shape[:2] + (len(DEFAULT_VALUE),), DEFAULT_VALUE, dtype=object
@@ -179,9 +183,9 @@ class MaskRCNN(object):
             # a) detectron2/modeling/roi_heads/roi_heads.py#L749
             # b) detectron2/modeling/roi_heads/fast_rcnn.py#L432
             # 'predictions' of (a) is output of (b)
-            self.intermediate_result[
-                "box_predictions"
-            ] = output  # output = (scores, proposal_deltas)
+            self.intermediate_result["box_predictions"] = (
+                output  # output = (scores, proposal_deltas)
+            )
 
         self.predictor.model.roi_heads.register_forward_hook(proposal_hook)
         self.predictor.model.roi_heads.box_predictor.register_forward_hook(

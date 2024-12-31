@@ -1037,9 +1037,7 @@ class Observe_specific(Command):
                         if (
                             iou >= OBS_IOU_THRESHOLD
                         ):  # state.registered[obj_i].loc == self.pose:
-                            state.registered[
-                                obj_i
-                            ].pose_uncertain = (
+                            state.registered[obj_i].pose_uncertain = (
                                 False  # TODO how to determine pose is accurate?
                             )
                 entity_list.append(state.registered[obj_i])
@@ -1293,9 +1291,7 @@ class Observe(Command):
                         if (
                             iou >= OBS_IOU_THRESHOLD
                         ):  # state.registered[obj_i].loc == self.pose:
-                            state.registered[
-                                obj_i
-                            ].pose_uncertain = (
+                            state.registered[obj_i].pose_uncertain = (
                                 False  # TODO how to determine pose is accurate?
                             )
                 entity_list.append(state.registered[obj_i])

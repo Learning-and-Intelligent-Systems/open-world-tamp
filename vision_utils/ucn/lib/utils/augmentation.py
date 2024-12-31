@@ -548,9 +548,9 @@ def random_add(label):
                 x = int(round(add_percentage * sidelength)) + x_min
                 try:
                     temp = added_label[y_min + ty : y_max + 1 + ty, x_min - tx : x - tx]
-                    added_label[
-                        y_min + ty : y_max + 1 + ty, x_min - tx : x - tx
-                    ] = np.logical_or(temp, added_label[y_min : y_max + 1, x_min:x])
+                    added_label[y_min + ty : y_max + 1 + ty, x_min - tx : x - tx] = (
+                        np.logical_or(temp, added_label[y_min : y_max + 1, x_min:x])
+                    )
                 except ValueError as e:  # indices were out of bounds
                     num_tries += 1
                     continue
@@ -579,9 +579,9 @@ def random_add(label):
                 y = int(round(add_percentage * sidelength)) + y_min
                 try:
                     temp = added_label[y_min - ty : y - ty, x_min + tx : x_max + 1 + tx]
-                    added_label[
-                        y_min - ty : y - ty, x_min + tx : x_max + 1 + tx
-                    ] = np.logical_or(temp, added_label[y_min:y, x_min : x_max + 1])
+                    added_label[y_min - ty : y - ty, x_min + tx : x_max + 1 + tx] = (
+                        np.logical_or(temp, added_label[y_min:y, x_min : x_max + 1])
+                    )
                 except ValueError as e:  # indices were out of bounds
                     num_tries += 1
                     continue

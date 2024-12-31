@@ -8,10 +8,10 @@ except ModuleNotFoundError:
     # import tkinter as tk
 
 import traceback
+from _tkinter import TclError
 from collections import namedtuple
 
 import numpy as np
-from _tkinter import TclError
 
 from ..utils import (INF, get_delta, get_interval_center, get_interval_extent,
                      get_pairs)

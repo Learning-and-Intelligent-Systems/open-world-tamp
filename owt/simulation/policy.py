@@ -64,15 +64,23 @@ def link_seg_from_gt(seg_image):
 
 
 def fuse_predicted_labels(
-    seg_network, camera_image, fuse=False, use_depth=False, num_segs=1, **kwargs
+    seg_network,
+    camera_image: pbu.CameraImage,
+    fuse=False,
+    use_depth=False,
+    num_segs=1,
+    **kwargs
 ):
-    rgb, depth, bullet_seg, _, camera_matrix = camera_image
     if fuse:
-        print("Ground truth:", get_label_counts(bullet_seg))
+        print("Ground truth:", get_label_counts(camera_image.segmentationMaskBuffer))
 
     point_cloud = None
+
+    depth = camera_image.depthPixels
+    rgb = camera_image.rgbPixels
+
     if use_depth:
-        point_cloud = cloud_from_depth(camera_matrix, depth)
+        point_cloud = cloud_from_depth(camera_image.camera_matrix, depth)
 
     predicted_seg = seg_network.get_seg(
         rgb[:, :, :3],
@@ -82,7 +90,9 @@ def fuse_predicted_labels(
         num_segs=num_segs,
         **kwargs
     )
-    return pbu.CameraImage(rgb, depth, predicted_seg, *camera_image[3:])
+    return pbu.CameraImage(
+        rgb, depth, predicted_seg, camera_image.camera_pose, camera_image.camera_matrix
+    )
 
 
 class Policy(object):

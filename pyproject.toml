@@ -6,11 +6,15 @@ build-backend = "setuptools.build_meta"
 name = "owt"
 version = "1.0.0"
 dependencies = [
-    "numpy",
+    "numpy==1.26.4",
+    "torch==2.0.0",
+    "shapely>=2.0.6",
+    "isort",
+    "black",
+    "docformatter",
     "scipy",
     "pybullet",
     "trimesh",
-    "torch",
     "torchvision",
     "easydict",
     "transforms3d",
@@ -27,8 +31,7 @@ dependencies = [
     "openai",
     "pyyaml",
     "pytest",
-    "pytest-cov",
-    "shapely>=2.0.6"
+    "pytest-cov"
 ]
 
 [tool.setuptools.packages]

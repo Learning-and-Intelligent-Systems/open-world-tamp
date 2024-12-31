@@ -42,7 +42,7 @@ Build FastDownward:
 ### Segmentation
 
 If you're looking to use the segmentation network with the `--segmentation` flag, you will need to download the pretrained UCN checkpoint from
-[here](https://drive.google.com/file/d/1O-ymMGD_qDEtYxRU19zSv17Lgg6fSinQ/view) and place the checkpoints folder in `vision_utils/ucn/data`
+[here](https://github.com/IRVLUTD/UnseenObjectClustering) and place the checkpoints folder in `vision_utils/ucn/data`
 
 
 ## Estimator, Planner, Controller, and Simulation:

@@ -11,6 +11,7 @@ from collections import defaultdict
 from dataclasses import asdict, dataclass
 from typing import Any, List, Optional, Tuple
 
+import imageio
 import numpy as np
 import pybullet as p
 from scipy.interpolate import (CubicSpline, interp1d, make_interp_spline,
@@ -1499,7 +1500,10 @@ def ensure_dir(f):
 def spaced_colors(n, s=1, v=1):
     import colorsys
 
-    return [colorsys.hsv_to_rgb(h, s, v) for h in np.linspace(0, 1, n, endpoint=False)]
+    return [
+        RGBA(*colorsys.hsv_to_rgb(h, s, v), alpha=1.0)
+        for h in np.linspace(0, 1, n, endpoint=False)
+    ]
 
 
 def get_bodies(client=None, **kwargs):
@@ -1509,8 +1513,14 @@ def get_bodies(client=None, **kwargs):
 
 
 def save_image(filename, rgba):
-    import imageio
+    # Ensure the image is scaled to 0–255 and converted to uint8
+    if rgba.dtype == np.float32 or rgba.dtype == np.float64:
+        rgba = np.clip(rgba, 0, 1)  # Assuming the float values are in range 0.0–1.0
+        rgba = (rgba * 255).astype(np.uint8)
+    elif rgba.dtype != np.uint8:
+        raise ValueError("Unsupported image data type. Must be float or uint8.")
 
+    # Save the image
     imageio.imwrite(filename, rgba)
 
 

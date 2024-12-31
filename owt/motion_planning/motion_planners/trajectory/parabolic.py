@@ -90,9 +90,7 @@ def solve_three_stage(x1, x2, v1, v2, v_max, a):
 
 def min_three_stage(x1, x2, v1, v2, T, v_max, a_max=INF):
     # assert abs(v_max) < INF
-    a = (v_max**2 - v_max * (v1 + v2) + (v1**2 + v2**2) / 2) / (
-        T * v_max - (x2 - x1)
-    )
+    a = (v_max**2 - v_max * (v1 + v2) + (v1**2 + v2**2) / 2) / (T * v_max - (x2 - x1))
     if np.isnan(a) or (abs(a) > abs(a_max) + EPSILON) or (a == 0):
         return None
     durations = solve_three_stage(x1, x2, v1, v2, v_max, a)

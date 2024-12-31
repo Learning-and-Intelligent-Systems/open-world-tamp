@@ -19,6 +19,7 @@ import os.path as osp
 import numpy as np
 # `pip install easydict` if you don't have it
 from easydict import EasyDict as edict
+from yaml import FullLoader
 
 __C = edict()
 # Consumers can get config by:
@@ -438,7 +439,7 @@ def cfg_from_file(filename):
     import yaml
 
     with open(filename, "r") as f:
-        yaml_cfg = edict(yaml.load(f))
+        yaml_cfg = edict(yaml.load(f, Loader=FullLoader))
 
     _merge_a_into_b(yaml_cfg, __C)
 
@@ -448,5 +449,5 @@ def yaml_from_file(filename):
     import yaml
 
     with open(filename, "r") as f:
-        yaml_cfg = edict(yaml.load(f))
+        yaml_cfg = edict(yaml.load(f, Loader=FullLoader))
     return yaml_cfg
