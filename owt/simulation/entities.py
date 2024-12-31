@@ -493,21 +493,6 @@ class Robot(Object):
     def gripper_groups(self):
         return sorted(group for group in self.joint_groups if "gripper" in group)
 
-    @property
-    def base_group(self):  # TODO: head group
-        group = "base"
-        assert group in self.joint_groups
-        return group
-
-    @property
-    def head_group(self):
-        return None
-
-    @property
-    def base_link(self):
-        base_joint = self.get_group_joints(self.base_group)[-1]
-        return pbu.child_link_from_joint(base_joint)
-
     def get_tool_link_pose(self, manipulator):
         raise NotImplementedError
 

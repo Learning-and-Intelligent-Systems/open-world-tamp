@@ -209,7 +209,6 @@ def cluster_colors(colors, max_clusters=len(COLORS)):
         copy_x=True,
         algorithm="lloyd",
     )
-    print(colors)
     kmeans.fit(colors)
 
     indices_from_label = {}

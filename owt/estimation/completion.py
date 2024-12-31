@@ -8,41 +8,6 @@ from owt.estimation.bounding import get_trimesh_oobb
 from owt.estimation.observation import aggregate_color
 from owt.simulation.lis import SC_PATH
 
-
-def complete_shape(sc_network, points):  # deprecated
-    assert sc_network is not None
-    # TODO: only works for atlas
-
-    with torch.no_grad():
-        points_arr = np.asarray(points)
-        mean = points_arr.mean(0)
-        points_shift = points_arr - mean  # zero mean
-        scale_fac = (points_shift**2).sum(1).max() ** 0.5  # normalize
-        points_normed = (points_shift / scale_fac).transpose(1, 0)
-        net_input = (
-            torch.Tensor(points_normed).unsqueeze(0).to(sc_network.device)
-        )  # 1(batch_size) x 3 x N
-        mesh_list = sc_network.generate_mesh(net_input)
-
-        recon_list = []
-        for submesh in mesh_list:
-            vertices = submesh[0]
-            vertices *= scale_fac
-            vertices += mean
-            recon_list.append(submesh)
-
-        # TODO: smarter way to merge submesh
-        # len(mesh_list) is always 1 for now(using SPHERE atlas)
-        obj_estimate = (
-            recon_list[0]
-            if len(recon_list) == 1
-            else pbu.mesh_from_points(
-                np.concatenate([submesh[0] for submesh in mesh_list])
-            )
-        )
-    return obj_estimate
-
-
 ##################################################
 
 
@@ -79,12 +44,10 @@ def filter_visible(
     for idx, point_camera in enumerate(point_camera):
         pixel = pbu.pixel_from_point(camera_image.camera_matrix, point_camera)
         if pixel is not None:
-            depth = camera_image.depthPixels[
-                pixel.row, pixel.column
-            ]  # TODO: median filter
+            depth = camera_image.depthPixels[pixel.row, pixel.column]
             if np.isnan(depth):
                 depth = np.inf
-            x, y, z = point_camera
+            _, _, z = point_camera
             if z >= (depth - epsilon):
                 filtered_points.append(points[idx])
         else:

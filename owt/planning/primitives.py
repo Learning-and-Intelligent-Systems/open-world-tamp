@@ -192,10 +192,7 @@ class WorldState(pbu.State):
 #######################################################
 
 
-class Command(object):
-    # def __init__(self, state=[]):
-    #    self.state = tuple(state)
-
+class Command:
     def switch_client(self):
         raise NotImplementedError
 
@@ -318,9 +315,6 @@ class Switch(Command):
                 if (body != robot)
                 and not pbu.is_fixed_base(body, client=self.robot.client)
             ]
-            # collision_bodies = [body for body in movable_bodies if any_link_pair_collision(
-            #    robot, finger_links, body, max_distance=1e-2)]
-
             gripper_width = robot.get_gripper_width(gripper_joints)
             max_distance = gripper_width / 2.0
             collision_bodies = [
@@ -334,7 +328,6 @@ class Switch(Command):
                 )
             ]
             for body in collision_bodies:
-                # TODO: improve the PR2's gripper force
                 pbu.add_fixed_constraint(body, robot, tool_link, max_force=None)
         yield
 
@@ -348,11 +341,9 @@ class Wait(Command):
 
     def iterate(self, state, **kwargs):
         return pbu.empty_sequence()
-        # yield relative_pose
 
     def controller(self, *args, **kwargs):
         return stall_for_duration(duration=self.duration)
-        # return hold_for_duration(robot, duration=self.duration)
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, self.duration)
@@ -527,7 +518,6 @@ class GroupTrajectory(Trajectory):
             velocity_fraction=velocity_fraction
         )  # TODO: assumes the PyBullet robot is up-to-date
         times, positions = zip(*pbu.sample_curve(positions_curve, time_step=1e-1))
-        # = np.array(times) / self.velocity_scale
         print(
             "\nGroup: {} | Positions: {} | Duration: {:.3f}\nStart: {}\nEnd: {}".format(
                 self.group, len(positions), times[-1], positions[0], positions[-1]
@@ -538,7 +528,6 @@ class GroupTrajectory(Trajectory):
         )
         controller.wait(duration=1.0)
         self.robot.update_conf()
-        # return True
         if (
             self.group in self.robot.gripper_groups
         ):  # Never abort after gripper movement

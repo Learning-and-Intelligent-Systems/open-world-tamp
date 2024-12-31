@@ -26,6 +26,12 @@ else:
 
 ObjectGrid = namedtuple("ObjectGrid", ["voxelgrid", "category"])
 
+COLOR_FROM_NAME = {
+    "stove": "red",
+    "table": "brown",  # brown | tan
+    "shelf": "grey",
+}
+
 
 def is_object_label(label):
     category, instance = label
@@ -502,7 +508,7 @@ class Belief(object):
         )
         for i in range(len(self.estimated_objects)):
             self.estimated_objects[i].color = pbu.apply_alpha(
-                pbu.COLOR_FROM_NAME[class_to_name[relabeled_classes[i]]]
+                COLOR_FROM_NAME[class_to_name[relabeled_classes[i]]]
             )
         return self.estimated_objects
 

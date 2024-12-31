@@ -13,12 +13,13 @@ from robots.movo.movo_controller import MovoController
 from robots.movo.movo_sender import (get_color_image, get_depth_image,
                                      get_pointcloud)
 
-MOVO_URDF = "models/srl/movo_description/movo_robotiq_collision.urdf"
+MOVO_URDF = "models/srl/movo_description/movo_fixed_base.urdf"
 MOVO_PATH = os.path.abspath(MOVO_URDF)
 
 LEFT = "left"
 RIGHT = "right"
 
+# Left arm doesn't work because it has three fingers
 # ARMS = ["{}_arm".format(RIGHT), "{}_arm".format(LEFT)]
 ARMS = ["{}_arm".format(RIGHT)]
 

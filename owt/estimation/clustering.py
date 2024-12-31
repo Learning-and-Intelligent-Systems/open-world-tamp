@@ -4,6 +4,7 @@ from itertools import product
 
 import numpy as np
 import open3d
+import trimesh
 from sklearn.cluster import DBSCAN
 
 import owt.pb_utils as pbu
@@ -21,11 +22,7 @@ def has_open3d():
     return True
 
 
-##################################################
-
-
 def relabel_nearby(labeled_points, max_distance=3e-2):
-    # TODO: MST, closest distance to cluster, etc.
     indices = list(range(len(labeled_points)))
     edges = set()
     for index1, index2 in product(indices, repeat=2):
@@ -63,7 +60,6 @@ def relabel_nearby(labeled_points, max_distance=3e-2):
 def cluster_unassigned(labeled_points, groups, **kwargs):
     assigned_indices = set(itertools.chain(groups))
     indices = list(range(len(labeled_points)))
-    # unknown_indices = [index for index in indices if labeled_points[index].label[0] == UNKNOWN]
     unknown_indices = [index for index in indices if index not in assigned_indices]
     if not unknown_indices:
         return groups
@@ -121,8 +117,6 @@ DEFAULT_RADIUS = 5e-2  # 3e-2 | 5e-2
 def cluster_trimesh(
     labeled_points, groups=None, radius=DEFAULT_RADIUS, use_2d=True, **kwargs
 ):
-    import trimesh
-
     if groups is None:
         groups = [list(np.arange(len(labeled_points)))]
     new_groups = []
@@ -156,7 +150,6 @@ def cluster_sklearn(
         )  # the label -1 indicates noise
         if len(indices) == 0:
             continue
-        # print(Counter(indices))
         num_clusters = max(indices) + 1
         sub_groups_idx = [[] for _ in range(num_clusters)]
         for index, sub_group in enumerate(indices):
@@ -184,7 +177,6 @@ def cluster_open3d(
         )  # the label -1 indicates noise
         if len(indices) == 0:
             continue
-        # print(Counter(indices))
         num_clusters = max(indices) + 1
         sub_groups_idx = [[] for _ in range(num_clusters)]
         for index, sub_group in enumerate(indices):
@@ -237,24 +229,14 @@ def cluster_points(
     noise_only:         use geometric clustering for noise filtering only(do not decompose the object into subgroups)
     dist_threshold:     largest distance allowed between subgroups
     """
-    # import sklearn.cluster
-    # import open3d.geometry.KDTreeFlann
-    # import scipy.cluster
+
     assert (not noise_only) or use_instance_label
-
-    # handles = draw_labeled_points(labeled_points)
-
-    # TODO: incorporate the label
-    # TODO: label-only clustering as a baseline
-    # TODO: cluster in distance and label space and then assign outliers to closest
 
     if len(labeled_points) < min_points:
         return []
 
-    # labeled_points = relabel_nearby(labeled_points)
     clusters = [list(np.arange(len(labeled_points)))]
     if use_instance_label:
-        # TODO: still includes noisy boundaries
         clusters = cluster_segmented(labeled_points)
         clusters = cluster_unassigned(labeled_points, clusters, radius=3e-2)
         dump_groups(labeled_points, clusters)

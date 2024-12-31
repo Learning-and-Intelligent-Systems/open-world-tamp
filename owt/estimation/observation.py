@@ -8,7 +8,9 @@ from owt.simulation.entities import TABLE, UNKNOWN, Object
 from owt.utils import TEMP_DIR
 from owt.voxel_utils import MAX_PIXEL_VALUE
 
-LabeledPoint = namedtuple("LabeledPoint", ["point", "color", "label"])  # TODO: pixel
+LabeledPoint = namedtuple(
+    "LabeledPoint", ["point", "color", "label"]
+)  # TODO: dataclass
 BACKGROUND = -1
 
 
@@ -45,22 +47,18 @@ def tform_labeled_points(affine, labeled_points):
 
 
 def extract_point(camera_image: pbu.CameraImage, pixel: pbu.Pixel, world_frame=True):
-    # from trimesh.scene import Camera
     r, c = pixel.row, pixel.column
     height, width = camera_image.depthPixels.shape
     assert (0 <= r < height) and (0 <= c < width)
-    # body, link = seg_image[r, c, :]
     seg_image = camera_image.segmentationMaskBuffer
     label = seg_image if seg_image is None else seg_image[r, c]
     ray = pbu.ray_from_pixel(camera_image.camera_matrix, [c, r])  # NOTE: width, height
     depth = camera_image.depthPixels[r, c]
-    # assert not np.isnan(depth)
     point_camera = depth * ray
 
     point_world = pbu.tform_point(pbu.multiply(camera_image.camera_pose), point_camera)
-    point = (
-        point_world if world_frame else point_camera
-    )  # TODO: specify frame wrt the robot
+    point = point_world if world_frame else point_camera
+
     color = pbu.RGBA(*camera_image.rgbPixels[r, c, :] / MAX_PIXEL_VALUE)
     return LabeledPoint(point, color, label)
 
@@ -70,7 +68,7 @@ def iterate_image(camera_image, step_size=3, aabb=None, **kwargs):
         aabb = pbu.get_image_aabb(camera_image.camera_matrix)
 
     (height, width, _) = camera_image.rgbPixels.shape
-    # TODO: clip if out of range
+
     (x1, y1), (x2, y2) = np.array([aabb.lower, aabb.upper]).astype(int)
     for r in range(y1, height, step_size):
         for c in range(x1, width, step_size):
@@ -175,10 +173,8 @@ def image_from_labeled(seg_image, **kwargs):
 def save_camera_images(
     camera_image, directory=TEMP_DIR, prefix="", predicted=True, **kwargs
 ):
-    # safe_remove(directory)
     pbu.ensure_dir(directory)
     rgb_image, depth_image, seg_image = camera_image[:3]
-    # depth_image = simulate_depth(depth_image)
     pbu.save_image(
         os.path.join(directory, "{}rgb.png".format(prefix)), rgb_image
     )  # [0, 255]

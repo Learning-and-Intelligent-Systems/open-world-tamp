@@ -5,8 +5,7 @@ from itertools import islice
 import numpy as np
 
 import owt.pb_utils as pbu
-from owt.planning.primitives import (GroupTrajectory, RelativePose, Sequence,
-                                     Switch)
+from owt.planning.primitives import GroupTrajectory, RelativePose, Sequence
 from owt.planning.samplers import plan_workspace_motion
 from owt.simulation.entities import WORLD_BODY, ParentBody, Robot
 
@@ -150,24 +149,12 @@ def cartesian_path_collision(body, path, obstacles, **kwargs):
     return False
 
 
-def get_plan_push_fn(
-    robot: Robot,
-    environment=[],
-    max_samples=1,
-    max_attempts=5,
-    collisions=True,
-    parameter_fns={},
-    repeat=False,
-    **kwargs
-):
+def get_plan_push_fn(robot: Robot, environment=[], max_samples=1, **kwargs):
     environment = list(environment)
     robot_saver = pbu.BodySaver(robot, **kwargs)
     side = robot.get_arbitrary_side()
     arm_group, gripper_group, tool_name = robot.manipulators[side]
     robot.get_component(gripper_group)
-
-    # TODO(caelan): could also simulate the predicated sample
-    # TODO(caelan): make final the orientation be aligned with gripper
 
     robot.disabled_collisions
     backoff_distance = 0.03
@@ -279,18 +266,9 @@ def get_plan_push_fn(
                 time_after_contact=1e-1,
             )
 
-            switch = Switch(
-                body,
-                parent=ParentBody(
-                    body=robot, link=pbu.link_from_name(robot, tool_name)
-                ),
-            )
-            switch_off = Switch(body, parent=WORLD_BODY)
             commands = [
                 pre_arm_traj,
-                # switch,
                 arm_traj,
-                # switch_off,
                 post_arm_traj,
             ]
             sequence = Sequence(commands=commands, name="push-{}-{}".format(arm, body))

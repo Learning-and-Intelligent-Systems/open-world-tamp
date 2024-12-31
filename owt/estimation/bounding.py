@@ -2,7 +2,7 @@ from itertools import combinations
 
 import numpy as np
 import open3d
-from trimesh.bounds import oriented_bounds
+from trimesh.bounds import oriented_bounds, oriented_bounds_2D
 
 import owt.pb_utils as pbu
 from owt.simulation.utils import interpolate_exterior
@@ -34,8 +34,6 @@ def get_surface_oobb(points, min_z):
 
 
 def oriented_bounds_3D(points):
-    from trimesh.bounds import oriented_bounds_2D
-
     min_z = np.min(points, axis=0)[2]
     max_z = np.max(points, axis=0)[2]
     points2d = [point[:2] for point in points]

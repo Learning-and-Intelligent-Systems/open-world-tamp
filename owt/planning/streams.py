@@ -4,7 +4,6 @@ import time
 from itertools import count, cycle
 
 import numpy as np
-import pybullet as p
 from pddlstream.language.constants import get_args, get_prefix
 from pddlstream.utils import lowercase
 
@@ -16,18 +15,14 @@ from owt.estimation.surfaces import z_plane
 from owt.motion_planning.motion_planners.meta import birrt
 from owt.planning.grasping import (generate_mesh_grasps, get_grasp,
                                    sorted_grasps)
-from owt.planning.primitives import (BaseSwitch, Grasp, GroupConf,
-                                     GroupTrajectory, RelativePose, Sequence,
-                                     Switch)
+from owt.planning.primitives import (Grasp, GroupConf, GroupTrajectory,
+                                     RelativePose, Sequence, Switch)
 from owt.planning.pushing import TOOL_POSE
 from owt.planning.samplers import (COLLISION_DISTANCE, DISABLE_ALL_COLLISIONS,
                                    MOVABLE_DISTANCE, SELF_COLLISIONS,
                                    compute_gripper_path, plan_prehensile,
-                                   plan_workspace_motion,
-                                   sample_attachment_base_confs,
-                                   sample_prehensive_base_confs,
-                                   sample_visibility_base_confs,
-                                   set_open_positions, workspace_collision)
+                                   plan_workspace_motion, set_open_positions,
+                                   workspace_collision)
 from owt.planning.stacking import slice_mesh
 from owt.simulation.entities import WORLD_BODY, ParentBody, Robot
 
@@ -81,7 +76,9 @@ def close_until_collision(
     return close_path[-1][0]
 
 
-def get_grasp_candidates(robot, obj, grasp_mode="mesh", gripper_width=np.inf, **kwargs):
+def get_grasp_candidates(
+    robot: Robot, obj, grasp_mode="mesh", gripper_width=np.inf, **kwargs
+):
     grasp_parts = grasp_mode.split("_")
     grasp_mode = grasp_parts[0]
     if grasp_mode == "top":
@@ -114,7 +111,7 @@ def get_grasp_candidates(robot, obj, grasp_mode="mesh", gripper_width=np.inf, **
         if generated_grasps is not None:
             return (
                 grasp
-                for grasp, contact1, contact2, score in sorted_grasps(
+                for grasp, _, _, _ in sorted_grasps(
                     generated_grasps, max_candidates=10, p_random=0.0, **kwargs
                 )
             )
@@ -145,7 +142,6 @@ def get_grasp_candidates(robot, obj, grasp_mode="mesh", gripper_width=np.inf, **
             pbu.multiply(pbu.invert(grasp), obj.observed_pose) for grasp in grasps_world
         ]
         return grasps_tool
-        # return randomize(grasps_tool)
     raise NotImplementedError(grasp_mode)
 
 
@@ -153,7 +149,7 @@ def get_grasp_candidates(robot, obj, grasp_mode="mesh", gripper_width=np.inf, **
 
 
 def get_grasp_gen_fn(
-    robot,
+    robot: Robot,
     other_obstacles,
     grasp_mode="mesh",
     gripper_collisions=True,
@@ -167,7 +163,7 @@ def get_grasp_gen_fn(
         gripper_collisions = False
 
     def gen_fn(manipulator, obj):
-        arm_group, gripper_group, tool_name = robot.manipulators[manipulator]
+        _, gripper_group, tool_name = robot.manipulators[manipulator]
         robot.link_from_name(tool_name)
         closed_conf, open_conf = robot.get_group_limits(gripper_group)
         robot.get_group_subtree(gripper_group)
@@ -207,9 +203,7 @@ def get_grasp_gen_fn(
                     return
                 gripper_width = max_width
                 if RELAX_GRASP_COLLISIONS:
-                    enable_collisions = (
-                        False  # TODO: allow collisions with some parts of the gripper
-                    )
+                    enable_collisions = False
                 generator = iter(
                     get_grasp_candidates(
                         robot,
@@ -430,7 +424,7 @@ def get_placement_gen_fn(
     max_attempts=100,
     **kwargs,
 ):
-    base_pose = pbu.get_link_pose(robot, robot.base_link, **kwargs)
+    base_pose = pbu.get_pose(robot, **kwargs)
 
     def gen_fn(obj, surface, surface_pose):
         surface_pose.assign()
@@ -477,56 +471,8 @@ def get_placement_gen_fn(
     return gen_fn
 
 
-def get_mobile_placement_gen_fn(
-    robot,
-    other_obstacles,
-    environment=[],
-    floor=None,
-    buffer=2e-2,
-    max_distance=np.inf,
-    max_attempts=100,
-    **kwargs,
-):
-    pbu.get_link_pose(robot, robot.base_link, **kwargs)
-
-    def gen_fn(obj):
-        floor_pose = RelativePose(floor, important=True, **kwargs)
-        surface_oobb = (
-            floor.get_shape_oobb()
-        )  # TODO: change to as long as the COM is on
-        obstacles = set(environment) - {obj, floor}  # TODO: surface might have walls
-        aabb = surface_oobb.aabb
-        aabb = pbu.aabb_from_extent_center(
-            2 * buffer * np.array([1, 1, 0]) + pbu.get_aabb_extent(aabb),
-            pbu.get_aabb_center(aabb),
-        )
-        for top_pose in generate_stable_poses(obj):  # cycle
-            pose = pbu.sample_placement_on_aabb(
-                obj,
-                aabb,
-                max_attempts=max_attempts,
-                top_pose=top_pose,  # TODO: reference pose instead?
-                percent=1.0,
-                epsilon=1e-3,
-                **kwargs,
-            )  # TODO: Z_EPSILON
-            if pose is None:
-                continue
-            pose = pbu.multiply(surface_oobb.pose, pose)
-            pbu.set_pose(obj, pose, **kwargs)
-            rel_pose = RelativePose(
-                obj,
-                parent=ParentBody(floor, **kwargs),
-                parent_state=floor_pose,
-                **kwargs,
-            )
-            yield (rel_pose,)
-
-    return gen_fn
-
-
 def get_pose_cost_fn(robot, cost_per_m=1.0, **kwargs):
-    base_pose = pbu.get_link_pose(robot, robot.base_link, **kwargs)
+    base_pose = pbu.get_pose(robot, **kwargs)
 
     def cost_fn(obj, pose):
         cost = BASE_COST
@@ -578,14 +524,13 @@ def get_reachability_test(
 ):
     robot_saver = pbu.BodySaver(robot, client=robot.client)
 
-    def test(manipulator, obj, pose, base_conf):
+    def test(manipulator, obj, pose):
         arm_group, gripper_group, _ = robot.get_manipulator_parts(manipulator)
         target_link = robot.get_group_parent(gripper_group)
         arm_joints = robot.get_group_joints(arm_group)
 
         robot_saver.restore()
         pose.assign()
-        base_conf.assign()
 
         success = False
         start_time = time.time()
@@ -630,35 +575,13 @@ def get_reachability_test(
 #######################################################
 
 
-def get_plan_mobile_detach_fn(robot, **kwargs):
-    robot_saver = pbu.BodySaver(robot, client=robot.client)
-
-    def fn(obj, pose, base_grasp):
-        robot_saver.restore()
-        base_pose = pbu.multiply(pose.get_pose(), pbu.invert(base_grasp))
-        base_point, base_quat = base_pose
-        base_euler = p.getEulerFromQuaternion(base_quat)
-        base_positions = robot.get_default_conf()[robot.base_group]
-        base_positions[:3] = [base_point[0], base_point[1], base_euler[2]]
-        base_conf = GroupConf(
-            robot, robot.base_group, positions=base_positions, **kwargs
-        )
-        switch = BaseSwitch(obj, parent=WORLD_BODY)
-        commands = [switch]
-        sequence = Sequence(commands=commands, name="place-{}".format(obj))
-        return (base_conf, sequence)
-
-    return fn
-
-
 def get_plan_pick_fn(robot: Robot, environment=[], **kwargs):
     robot_saver = pbu.BodySaver(robot, client=robot.client)
     environment = environment
 
-    def fn(manipulator, obj, pose, grasp: Grasp, base_conf: GroupConf):
+    def fn(manipulator, obj, pose, grasp: Grasp):
         robot_saver.restore()
-        base_conf.assign()
-        arm_path = plan_prehensile(robot, manipulator, obj, pose, grasp, **kwargs)
+        arm_path = plan_prehensile(robot, manipulator, pose, grasp, **kwargs)
 
         if arm_path is None:
             return None
@@ -721,10 +644,9 @@ def get_plan_pick_fn(robot: Robot, environment=[], **kwargs):
 def get_plan_place_fn(robot: Robot, **kwargs):
     robot_saver = pbu.BodySaver(robot, client=robot.client)
 
-    def fn(manipulator, obj, pose, grasp, base_conf):
+    def fn(manipulator, obj, pose, grasp):
         robot_saver.restore()
-        base_conf.assign()
-        arm_path = plan_prehensile(robot, manipulator, obj, pose, grasp, **kwargs)
+        arm_path = plan_prehensile(robot, manipulator, pose, grasp, **kwargs)
         if arm_path is None:
             return None
 
@@ -769,76 +691,12 @@ def get_plan_place_fn(robot: Robot, **kwargs):
     return fn
 
 
-def get_plan_mobile_place_fn(robot, **kwargs):
-    robot_saver = pbu.BodySaver(robot, client=robot.client)
-    place_fn = get_plan_place_fn(robot, **kwargs)
-
-    def fn(arm, obj, pose, grasp):
-        robot_saver.restore()
-        for base_conf in sample_prehensive_base_confs(
-            robot, arm, obj, pose, grasp, **kwargs
-        ):
-            outputs = place_fn(arm, obj, pose, grasp, base_conf)
-            if outputs is None:
-                continue
-            yield (base_conf,) + outputs
-
-    return fn
-
-
-def get_plan_mobile_look_fn(
-    robot, environment=[], max_head_attempts=10, max_base_attempts=100, **kwargs
-):
+def get_plan_look_fn(robot, environment=[], max_attempts=1000, **kwargs):
     robot_saver = pbu.BodySaver(robot, client=robot.client)
 
     def fn(obj, pose):
         while True:
             robot_saver.restore()
-            # TODO: Return a head conf that will lead to visibility of obj at pose
-            if robot.head_group is None:
-                return None
-            else:
-                pose.assign()
-                limits = list(robot.get_group_limits(robot.head_group))
-                num_base_attempts = 0
-                for base_conf in sample_visibility_base_confs(
-                    robot, obj, pose, client=robot.client
-                ):
-                    visible = False
-                    base_conf.assign()
-                    num_head_attempts = 0
-                    while not visible:
-                        random_head_pos = [
-                            random.uniform(*limit) for limit in zip(*limits)
-                        ]
-                        robot.set_group_positions(robot.head_group, random_head_pos)
-                        visible = robot.cameras[0].object_visible(obj)
-                        num_head_attempts += 1
-                        if num_head_attempts >= max_head_attempts:
-                            break
-                    if num_head_attempts >= max_head_attempts:
-                        continue
-                    gp = random_head_pos
-                    current_hq = GroupConf(
-                        robot, robot.head_group, gp, client=robot.client
-                    )
-                    num_base_attempts += 1
-
-                    yield (base_conf, current_hq)
-                    if num_base_attempts > max_base_attempts:
-                        return None
-            num_attempts += 1
-
-    return fn
-
-
-def get_plan_look_fn(robot, environment=[], max_attempts=1000, **kwargs):
-    robot_saver = pbu.BodySaver(robot, client=robot.client)
-
-    def fn(obj, pose, base_conf):
-        while True:
-            robot_saver.restore()
-            base_conf.assign()
             if robot.head_group is None:
                 return None
             else:
@@ -866,9 +724,8 @@ def get_plan_look_fn(robot, environment=[], max_attempts=1000, **kwargs):
 def get_plan_drop_fn(robot: Robot, environment=[], z_offset=2e-2, **kwargs):
     robot_saver = pbu.BodySaver(robot, client=robot.client)
 
-    def fn(manipulator, obj, grasp, bin, bin_pose, base_conf):
+    def fn(manipulator, obj, grasp, bin, bin_pose):
         robot_saver.restore()
-        base_conf.assign()
         bin_pose.assign()
         obstacles = list(environment)
 
@@ -1045,48 +902,25 @@ def get_plan_motion_fn(robot, environment=[], **kwargs):
         obstacles = set(obstacles) - attached
         q1.assign()
 
-        # TODO: separate collision resolution for movable
-        if group == robot.base_group:
-            resolutions = 0.1 * np.ones(len(q2.joints))
-            min_vals, max_vals = robot.get_group_limits(robot.base_group)
-            path = pbu.plan_2d_joint_motion(
-                robot,
-                robot_aabb,
-                q2.joints,
-                min_vals,
-                max_vals,
-                q1.positions,
-                q2.positions,
-                resolutions=resolutions,
-                obstacle_oobbs=[obstacle.get_shape_oobb() for obstacle in obstacles],
-                restarts=0,
-                max_iterations=100,
-                smooth=100,
-                attachments=base_attachments,
-                disable_collisions=DISABLE_ALL_COLLISIONS,
-                **kwargs,
-            )
-            print("Output path: " + str(path))
-        else:
-            resolutions = math.radians(10) * np.ones(len(q2.joints))
+        resolutions = math.radians(10) * np.ones(len(q2.joints))
 
-            path = plan_joint_motion(
-                robot,
-                q2.joints,
-                q2.positions,
-                resolutions=resolutions,
-                obstacles=obstacles,
-                attachments=attachments,
-                self_collisions=SELF_COLLISIONS,
-                disabled_collisions=robot.disabled_collisions,
-                max_distance=COLLISION_DISTANCE,
-                custom_limits=robot.custom_limits,
-                restarts=1,
-                iterations=5,
-                smooth=100,
-                disable_collisions=DISABLE_ALL_COLLISIONS,
-                **kwargs,
-            )
+        path = plan_joint_motion(
+            robot,
+            q2.joints,
+            q2.positions,
+            resolutions=resolutions,
+            obstacles=obstacles,
+            attachments=attachments,
+            self_collisions=SELF_COLLISIONS,
+            disabled_collisions=robot.disabled_collisions,
+            max_distance=COLLISION_DISTANCE,
+            custom_limits=robot.custom_limits,
+            restarts=1,
+            iterations=5,
+            smooth=100,
+            disable_collisions=DISABLE_ALL_COLLISIONS,
+            **kwargs,
+        )
 
         if path is None:
             for conf in [q1, q2]:

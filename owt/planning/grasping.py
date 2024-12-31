@@ -7,6 +7,7 @@ from collections import namedtuple
 from heapq import heapify, heappop, heappush
 
 import numpy as np
+import trimesh
 from trimesh.ray.ray_triangle import RayMeshIntersector
 
 import owt.pb_utils as pbu
@@ -85,7 +86,6 @@ def filter_grasps(
     draw=False,
     **kwargs
 ):
-    # TODO: move to experiment.py
     obj_pose = pbu.get_pose(obj)
     for grasp_tool in grasp_generator:
         if grasp_tool is None:
@@ -98,7 +98,6 @@ def filter_grasps(
             if any(pbu.pairwise_collision(gripper, obst) for obst in [obj] + obstacles):
                 continue
             if draw:
-                # print([pairwise_collision(gripper, obst) for obst in [obj] + obstacles])
                 handles = pbu.draw_pose(grasp_pose)
                 pbu.wait_if_gui()
                 pbu.remove_handles(handles)
@@ -176,9 +175,7 @@ def sample_grasp(
         grasp_quat = pbu.multiply_quats(
             quat,
             pbu.quat_from_euler(pbu.Euler(roll=np.pi / 2)),
-            pbu.quat_from_euler(
-                pbu.Euler(pitch=np.pi + pitch)
-            ),  # TODO: local pitch or world pitch?
+            pbu.quat_from_euler(pbu.Euler(pitch=np.pi + pitch)),
             pbu.quat_from_euler(pbu.Euler(roll=roll)),  # Switches fingers
         )
         grasp_pose = pbu.Pose(grasp_point, pbu.euler_from_quat(grasp_quat))
@@ -193,7 +190,6 @@ def sample_grasp(
             handles.extend(
                 itertools.chain(
                     *[
-                        # draw_point(grasp_point),
                         pbu.draw_point(point1, parent=obj),
                         pbu.draw_point(point2, parent=obj),
                         pbu.draw_pose(grasp_pose, length=draw_length, parent=obj),
@@ -356,10 +352,6 @@ def generate_mesh_grasps(
     **kwargs
 ):
     target_vector = pbu.get_unit_vector(Z_AXIS)
-
-    import trimesh
-
-    print(obj)
     mesh = mesh_from_obj(obj, **kwargs)
     mesh = trimesh.Trimesh(mesh.vertices, mesh.faces)
     mesh.fix_normals()

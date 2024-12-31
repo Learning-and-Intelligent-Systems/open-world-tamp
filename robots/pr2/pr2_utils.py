@@ -19,7 +19,7 @@ from owt.simulation.controller import SimulatedController
 from owt.simulation.environment import set_gripper_friction
 from robots.pr2.pr2_controller import PR2Controller
 
-PR2_PATH = os.path.abspath("models/ltamp/pr2_description/pr2.urdf")
+PR2_PATH = os.path.abspath("models/ltamp/pr2_description/pr2_fixed_base.urdf")
 
 warnings.filterwarnings("ignore")
 
@@ -53,8 +53,6 @@ def gripper_from_arm(arm: str) -> str:
 gripper_from_side = gripper_from_arm
 
 PR2_GROUPS = {
-    "base": ["x", "y", "theta"],
-    "torso": ["torso_lift_joint"],
     "head": ["head_pan_joint", "head_tilt_joint"],
     LEFT_ARM: [
         "l_shoulder_pan_joint",
@@ -140,12 +138,6 @@ class PR2Robot(Robot):
         self.real_execute = real_execute
         self.real_camera = real_camera
 
-        base_side = 5.0
-        base_limits = -base_side * np.ones(2) / 2, +base_side * np.ones(2) / 2
-        custom_limits = pbu.custom_limits_from_base_limits(
-            robot_body, base_limits, client=client
-        )
-
         self.joint_groups = PR2_GROUPS
         self.body = robot_body
         self.max_depth = float("inf")
@@ -187,7 +179,6 @@ class PR2Robot(Robot):
         super(PR2Robot, self).__init__(
             robot_body,
             joint_groups=PR2_GROUPS,
-            custom_limits=custom_limits,
             cameras=cameras,
             manipulators=manipulators,
             disabled_collisions=PR2_DISABLED_COLLISIONS,
@@ -234,11 +225,10 @@ class PR2Robot(Robot):
                 client=self.client,
             )
 
-    def get_default_conf(self, torso=0.25, tilt=np.pi / 3):
+    def get_default_conf(self, tilt=np.pi / 3):
         conf = {
             "left_arm": DEFAULT_LEFT_ARM,
             "right_arm": rightarm_from_leftarm(DEFAULT_LEFT_ARM),
-            "torso": [torso],
             "head": [0, tilt],
         }
         conf.update(
@@ -254,13 +244,6 @@ class PR2Robot(Robot):
 
     def set_default_conf(self):
         group_positions = self.get_default_conf()
-        group_positions.update(
-            {
-                "base": [-0.5, 0, 0],
-                "torso": [0.2],  # TODO: varying torso limits
-            }
-        )
-
         for group, positions in group_positions.items():
             self.set_group_positions(group, positions)
         self.open_arm(LEFT_ARM)
@@ -271,8 +254,6 @@ class PR2Robot(Robot):
         conf = self.get_default_conf(**kwargs)
         clients = []
         for group in conf:
-            if group in [self.base_group]:  # + robot.gripper_groups:
-                continue
             positions = conf[group]
             if self.real_execute:
                 client = self.controller.command_group(

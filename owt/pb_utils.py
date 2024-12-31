@@ -1190,7 +1190,13 @@ def dimensions_from_camera_matrix(camera_matrix: list):
 
 def get_collision_data(body, link=BASE_LINK, client=None, **kwargs):
     client = client or DEFAULT_CLIENT
-    tups = client.getCollisionShapeData(int(body), link)
+    while True:
+        try:
+            tups = client.getCollisionShapeData(int(body), link)
+            break
+        except:
+            print("Pybullet error getting collision shape. Trying again.")
+
     return [CollisionShapeData(*tup) for tup in tups]
 
 
@@ -1382,10 +1388,7 @@ def control_joints(
             }
         )
     if max_force is not None:
-        # max_forces = [get_max_force(body, joint) for joint in joints]
         max_forces = [max_force] * len(joints)
-        # max_forces = [5000]*len(joints) # 20000
-        # print(max_forces)
         kwargs.update(
             {
                 "forces": max_forces,
@@ -1401,10 +1404,7 @@ def control_joints(
     )
 
 
-def simulate_controller(
-    controller, max_time=np.inf, **kwargs
-):  # Allow option to sleep rather than yield?
-    # TODO: deprecate
+def simulate_controller(controller, max_time=np.inf, **kwargs):
     sim_dt = get_time_step(**kwargs)
     sim_time = 0.0
     for _ in controller:
@@ -3121,7 +3121,6 @@ def uniform_pose_generator(robot, gripper_pose, **kwargs):
 
 
 def custom_limits_from_base_limits(robot, base_limits, yaw_limit=None, **kwargs):
-    # TODO: unify with SS-Replan
     x_limits, y_limits = zip(*base_limits)
     custom_limits = {
         joint_from_name(robot, "x", **kwargs): x_limits,
@@ -3632,7 +3631,6 @@ def multiple_sub_inverse_kinematics(
     first_close=True,
     **kwargs,
 ):
-    # TODO: gradient descent using collision_info
     start_time = time.time()
     ancestor_joints = prune_fixed_joints(
         robot, get_ordered_ancestors(robot, target_link)
@@ -3641,17 +3639,12 @@ def multiple_sub_inverse_kinematics(
     sub_robot, selected_joints, sub_target_link = create_sub_robot(
         robot, first_joint, target_link
     )
-    # sub_joints = get_movable_joints(sub_robot)
-    # sub_from_real = dict(safe_zip(sub_joints, selected_joints))
     sub_joints = prune_fixed_joints(
         sub_robot, get_ordered_ancestors(sub_robot, sub_target_link)
     )
     selected_joints = affected_joints
-    # sub_from_real = dict(safe_zip(sub_joints, selected_joints))
 
-    # sample_fn = get_sample_fn(sub_robot, sub_joints, custom_limits=custom_limits) # [-PI, PI]
     sample_fn = get_sample_fn(robot, selected_joints, custom_limits=custom_limits)
-    # lower_limits, upper_limits = get_custom_limits(robot, get_movable_joints(robot), custom_limits)
     solutions = []
     for attempt in range(max_attempts):
         if (len(solutions) >= max_solutions) or (elapsed_time(start_time) >= max_time):
@@ -3667,17 +3660,13 @@ def multiple_sub_inverse_kinematics(
             **kwargs,
         )
         if sub_kinematic_conf is not None:
-            # set_configuration(sub_robot, sub_kinematic_conf)
             sub_kinematic_conf = get_joint_positions(sub_robot, sub_joints, **kwargs)
             set_joint_positions(robot, selected_joints, sub_kinematic_conf, **kwargs)
-            kinematic_conf = get_configuration(
-                robot, **kwargs
-            )  # TODO: test on the resulting robot state (e.g. collisions)
-            # if not all_between(lower_limits, kinematic_conf, upper_limits):
-            solutions.append(kinematic_conf)  # kinematic_conf | sub_kinematic_conf
+            kinematic_conf = get_configuration(robot, **kwargs)
+            solutions.append(kinematic_conf)
     if solutions:
         set_configuration(robot, solutions[-1])
-    # TODO: test for redundant configurations
+
     remove_body(sub_robot)
     return solutions
 
@@ -3687,7 +3676,6 @@ def matrix_from_quat(quat):
 
 
 def get_pairs(sequence):
-    # TODO: lazy version
     sequence = list(sequence)
     return safe_zip(sequence[:-1], sequence[1:])
 
@@ -3697,7 +3685,6 @@ def adjust_path(robot, joints, path, initial_conf=None, **kwargs):
         return path
     if initial_conf is None:
         initial_conf = path[0]
-        # initial_conf = get_joint_positions(robot, joints)
     difference_fn = get_difference_fn(robot, joints, **kwargs)
     differences = [difference_fn(q2, q1) for q1, q2 in get_pairs(path)]
     adjusted_path = [np.array(initial_conf)]  # Assumed the same as path[0] mod rotation
@@ -3761,7 +3748,6 @@ class HideOutput(object):
         if not self.enable:
             return
         self.fd = 1
-        # self.fd = sys.stdout.fileno()
         self._newstdout = os.dup(self.fd)
         os.dup2(self._devnull, self.fd)
         os.close(self._devnull)

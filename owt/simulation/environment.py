@@ -7,6 +7,7 @@ from itertools import product
 
 import numpy as np
 import pybullet as p
+import trimesh
 
 import owt.pb_utils as pbu
 from owt.estimation.geometry import project_base_points
@@ -59,8 +60,6 @@ def create_ycb(
         reference_pose = pbu.Pose(euler=pbu.Euler(yaw=0))
         pbu.set_pose(body, reference_pose)
     elif mesh_type == "centered":
-        import trimesh
-
         mesh = trimesh.load(ycb_path)
         visual_geometry = pbu.get_mesh_geometry(
             ycb_path, scale=1.0
@@ -101,11 +100,7 @@ def create_ycb(
 
     pbu.set_all_color(body, pbu.apply_alpha(color, alpha=1.0), client=client)
     set_grasping_dynamics(body, client=client, **kwargs)
-    # dump_body(body)
-    # wait_if_gui()
-    return Object(
-        body, category=name, client=client, **kwargs
-    )  # TODO: record the name/color
+    return Object(body, category=name, client=client, **kwargs)
 
 
 def create_object(name, mass=pbu.STATIC_MASS, color=pbu.WHITE, **kwargs):
@@ -116,7 +111,7 @@ def create_object(name, mass=pbu.STATIC_MASS, color=pbu.WHITE, **kwargs):
         path = os.path.join(CUPS_PATH, "{}.obj".format(name))
         body = pbu.create_obj(path, mass=mass, color=color)
     else:
-        return create_ycb(name, **kwargs)  # mass=mass, color=color
+        return create_ycb(name, **kwargs)
 
     pbu.set_all_color(body, pbu.apply_alpha(color, alpha=1.0))
     set_grasping_dynamics(body, **kwargs)
@@ -218,8 +213,6 @@ def create_cubby(*args, **kwargs):
 def create_fence(*args, **kwargs):
     return create_hollow("fence", *args, **kwargs)
 
-
-# TODO: create a grid of regions
 
 ################################################################################
 

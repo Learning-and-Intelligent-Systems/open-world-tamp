@@ -33,12 +33,12 @@
 
     ; Static
     (Motion ?j ?q1 ?q2 ?bt)
-    (Pick ?a ?o ?p ?g ?bq ?aq ?at)
-    (Place ?a ?o ?p ?g ?bq ?aq ?at)
-    (Push ?a ?o ?p1 ?p2 ?bq ?aq1 ?aq2 ?at)
+    (Pick ?a ?o ?p ?g ?aq ?at)
+    (Place ?a ?o ?p ?g ?aq ?at)
+    (Push ?a ?o ?p1 ?p2 ?aq1 ?aq2 ?at)
     (Pour ?a ?o1 ?p1 ?o2 ?g ?aq1 ?aq2 ?at)
-    (Drop ?a ?o ?g ?b ?bp ?bq ?aq ?at)
-    (Inspect ?a ?o ?g ?bq ?aq ?at)
+    (Drop ?a ?o ?g ?b ?bp ?aq ?at)
+    (Inspect ?a ?o ?g ?aq ?at)
     (Supported ?o ?p ?s ?sp)
 
     (CFreePosePose ?o1 ?p1 ?o2 ?p2)
@@ -80,7 +80,7 @@
     (AheadOf ?o1 ?o2)
     (Behind ?o1 ?o2)
 
-    (Handoff ?a1 ?a2 ?g1 ?g2 ?o ?bq ?aq1 ?aq2 ?at1 ?at2)
+    (Handoff ?a1 ?a2 ?g1 ?g2 ?o ?aq1 ?aq2 ?at1 ?at2)
     (DidHandoff ?o) ; TODO: Just for debugging, remove
 
     (UnsafePose ?o ?p)
@@ -115,9 +115,9 @@
                  (increase (total-cost) (MoveCost ?j))))
 
   (:action push
-      :parameters (?a ?o ?p1 ?p2 ?bq ?aq1 ?aq2 ?at)
-      :precondition (and (Push ?a ?o ?p1 ?p2 ?bq ?aq1 ?aq2 ?at)
-                         (AtPose ?o ?p1) (ArmEmpty ?a) (AtConf ?a ?aq1) (AtConf @base ?bq)
+      :parameters (?a ?o ?p1 ?p2 ?aq1 ?aq2 ?at)
+      :precondition (and (Push ?a ?o ?p1 ?p2 ?aq1 ?aq2 ?at)
+                         (AtPose ?o ?p1) (ArmEmpty ?a) (AtConf ?a ?aq1)
                          ;(or (HasReplanned) (ConfidentInPose ?o ?p1))
                          (not (Supporting ?o)))
       :effect (and (AtPose ?o ?p2) (AtConf ?a ?aq2) (CanMove ?a)
@@ -137,14 +137,13 @@
                      (increase (total-cost) 1)))
 
   (:action pick
-    :parameters (?a ?g ?o ?p ?bq ?aq ?at)
+    :parameters (?a ?g ?o ?p ?aq ?at)
     :precondition (and (CanPick ?o)
                        (not (Supporting ?o))
-                       (Pick ?a ?o ?p ?g ?bq ?aq ?at)
+                       (Pick ?a ?o ?p ?g ?aq ?at)
                        (AtPose ?o ?p) 
                        (ArmEmpty ?a) 
                        (AtConf ?a ?aq) 
-                       (AtConf @base ?bq)
                        (not (UnsafePregrasp ?a ?o ?p ?g))
                        (not (UnsafeTraj ?a ?at))
                   )
@@ -155,59 +154,10 @@
                  (not (ConfidentInPose ?o ?p))
                  (increase (total-cost) (PoseCost ?o ?p)))) ; TODO(caelan): apply elsewhere
 
-  ;(:action handoff
-  ;  :parameters (?a1 ?a2 ?g1 ?g2 ?o ?bq ?aq1 ?aq2 ?aq1_s ?aq2_s ?at1 ?at2)
-  ;  :precondition (and (Handoff ?a1 ?a2 ?g1 ?g2 ?o ?bq ?aq1 ?aq2 ?at1 ?at2)
-  ;
-  ;                     (AtGrasp ?a1 ?o ?g1) 
-  ;                     (Arm ?a1)
-  ;                     (Arm ?a2)
-  ;                     (AtConf @base ?bq) 
-  ;
-  ;                     (Conf ?a1 ?aq1)
-  ;                     (Conf ?a2 ?aq2)
-  ;
-  ;                     (Conf ?a1 ?aq1_s)
-  ;                     (Conf ?a2 ?aq2_s)
-
-  ;                     (AtConf ?a1 ?aq1_s)
-  ;                     ;(AtConf ?a2 ?aq2_s)
-
-  ;                     (not (AtConf ?a1 ?aq1))
-  ;                     (not (AtConf ?a2 ?aq2))
-
-  ;                     (Grasp ?a1 ?o ?g1)
-  ;                     (Grasp ?a2 ?o ?g2)
-  ;                     (Traj ?a1 ?at1)
-  ;                     (Traj ?a2 ?at2)
-  ;                     (not (ArmEmpty ?a1))
-  ;                     (ArmEmpty ?a2)
-
-  ;                     (Movable ?o)
-  ;                )
-  ;  :effect (and (ArmEmpty ?a1)
-  ;               (not (ArmEmpty ?a2))
-
-  ;               (CanMove ?a1)
-  ;               (CanMove ?a2)
-
-  ;               (AtConf ?a1 ?aq1)
-  ;               (AtConf ?a2 ?aq2)
-
-  ;               (not (AtConf ?a1 ?aq1_s))
-  ;               (not (AtConf ?a2 ?aq2_s))
-
-  ;               (not (AtGrasp ?a1 ?o ?g1))
-  ;               (AtGrasp ?a2 ?o ?g2)
-
-  ;               (not (ArmHolding ?a1 ?o))
-  ;               (ArmHolding ?a2 ?o)
-  ;))
-
   (:action place ; TODO: pick and drop action for testing grasp success
-    :parameters (?a ?g ?o ?p ?s ?sp ?bq ?aq ?at)
-    :precondition (and (Place ?a ?o ?p ?g ?bq ?aq ?at) (Supported ?o ?p ?s ?sp)
-                       (AtGrasp ?a ?o ?g) (AtPose ?s ?sp) (AtConf ?a ?aq) (AtConf @base ?bq)
+    :parameters (?a ?g ?o ?p ?s ?sp ?aq ?at)
+    :precondition (and (Place ?a ?o ?p ?g ?aq ?at) (Supported ?o ?p ?s ?sp)
+                       (AtGrasp ?a ?o ?g) (AtPose ?s ?sp) (AtConf ?a ?aq)
                        (not (UnsafePose ?o ?p))
                        (not (UnsafePregrasp ?a ?o ?p ?g))
                        (not (UnsafeTraj ?a ?at))
@@ -219,42 +169,14 @@
                  (increase (total-cost) (PlaceCost ?o ?s))))
 
   (:action drop
-    :parameters (?a ?g ?o ?b ?bp ?bq ?aq ?at)
-    :precondition (and (Drop ?a ?o ?g ?b ?bp ?bq ?aq ?at)
-                       (AtPose ?b ?bp) (AtGrasp ?a ?o ?g) (AtConf ?a ?aq) (AtConf @base ?bq)
+    :parameters (?a ?g ?o ?b ?bp ?aq ?at)
+    :precondition (and (Drop ?a ?o ?g ?b ?bp ?aq ?at)
+                       (AtPose ?b ?bp) (AtGrasp ?a ?o ?g) (AtConf ?a ?aq)
                   )
     :effect (and (ArmEmpty ?a) (In ?o ?b) (CanMove ?a)
                  (not (AtGrasp ?a ?o ?g))
                  (not (ArmHolding ?a ?o)) (not (Holding ?o))
                  (increase (total-cost) (DropCost ?o ?b))))
-
-  ;(:action inspect
-  ;  :parameters (?a ?g ?o ?bq ?aq ?at)
-  ;  :precondition (and (Inspect ?a ?o ?g ?bq ?aq ?at) ; TODO: precondition that the arms are at rest
-  ;                     (AtGrasp ?a ?o ?g) (AtConf ?a ?aq) (AtConf @base ?bq) ; TODO: head conf
-  ;                )
-  ;  :effect (and (Inspected ?o)
-  ;               (increase (total-cost) 1)))
-
-  ;(:action perceive
-  ;  :parameters ()
-  ;  :precondition (forall (?j ?q) (imply (RestConf ?j ?q) ; TODO(caelan): complete
-  ;                                (AtConf ?j ?q)))
-  ;  :effect (and (ConfidentInState)
-  ;               (forall (?obj ?pose) (when (and (Pose ?obj ?pose) (AtPose ?obj ?pose))
-  ;                                               (ConfidentInPose ?obj ?pose)))
-  ;               (HasReplanned)
-  ;               (not (StillActing))
-  ;               (increase (total-cost) 0)))
-
-  ;(:action localize
-  ;  :parameters (?o ?p)
-  ;  :precondition (and (Pose ?o ?p)
-  ;                     (AtPose ?o ?p)
-  ;                     (forall (?a) (imply (Arm ?a) (Resting ?a)))
-  ;                )
-  ;  :effect (and (Localized ?o) ; TODO: quantify over all placed objects
-  ;               (increase (total-cost) 0)))
 
   ;--------------------------------------------------
 
@@ -312,12 +234,4 @@
                            (not (CFreeTrajPose ?j ?t ?o2 ?p2))
                            (AtPose ?o2 ?p2)))))
 
-  ; TODO: use to simplify structure
-  ;(:derived (UnsafePick ?a ?o ?p ?g ?bq ?aq ?at) (and (Pick ?a ?o ?p ?g ?bq ?aq ?at)
-  ;  (exists (?o2 ?p2) (and (Pose ?o2 ?p2) ; (Movable ?o2)
-  ;                         (not (and (CFreePosePose ?o1 ?p1 ?o2 ?p2
-  ;                                   (CFreePregraspPose ?a ?o1 ?p1 ?g1 ?o2 ?p2)
-  ;                                   (CFreeTrajPose ?j ?t ?o2 ?p2))))
-  ;                         (AtPose ?o2 ?p2)))
-  ;))
 )

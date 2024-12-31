@@ -1,6 +1,5 @@
 import itertools
 import math
-import os
 import random
 
 import numpy as np
@@ -8,13 +7,17 @@ import pybullet as p
 
 import owt.pb_utils as pbu
 from owt.simulation.entities import RealWorld
-from owt.simulation.environment import (Pose2D, create_floor_object,
-                                        create_pillar, create_table_object,
-                                        create_ycb, place_object,
-                                        place_surface)
+from owt.simulation.environment import (Pose2D, create_bin, create_cubbies,
+                                        create_cubby, create_floor_object,
+                                        create_object, create_pillar,
+                                        create_table_object, create_tray,
+                                        create_ycb, get_grid_cells,
+                                        place_object, place_surface)
 
 
-def create_default_env(**kwargs):
+def create_default_env(robot, **kwargs):
+    # pbu.set_pose(robot, pbu.Pose(pbu.Point(x=-0.5)), **kwargs)
+
     pbu.set_camera_pose(
         camera_point=[0.75, -0.75, 1.25], target_point=[-0.75, 0.75, 0.0], **kwargs
     )
@@ -24,6 +27,8 @@ def create_default_env(**kwargs):
     with pbu.HideOutput(enable=True):
         create_floor_object(**kwargs)
         table = create_table_object(**kwargs)
+
+        pbu.set_pose(table, pbu.Pose(pbu.Point(x=0.5)), **kwargs)
         obstacles = [table]
 
         for obst in obstacles:
@@ -56,7 +61,7 @@ def create_world(robot, movable=[], fixed=[], surfaces=[], **kwargs):
 
 
 def problem0(args, robot, **kwargs):
-    table, obstacles = create_default_env(**kwargs)
+    table, obstacles = create_default_env(robot, **kwargs)
     region = place_surface(
         create_pillar(width=0.3, length=0.3, color=pbu.GREEN, **kwargs),
         table,
@@ -75,7 +80,9 @@ def problem0(args, robot, **kwargs):
     return real_world
 
 
-def create_pybullet_block(color, half_extents, mass, friction, orientation):
+def create_pybullet_block(
+    color, half_extents, mass, friction, orientation, client=None
+):
     """A generic utility for creating a new block.
 
     Returns the PyBullet ID of the newly created block.
@@ -85,22 +92,22 @@ def create_pybullet_block(color, half_extents, mass, friction, orientation):
     pose = (0, 0, 0)
 
     # Create the collision shape.
-    collision_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_extents)
+    collision_id = client.createCollisionShape(p.GEOM_BOX, halfExtents=half_extents)
 
     # Create the visual_shape.
-    visual_id = p.createVisualShape(
+    visual_id = client.createVisualShape(
         p.GEOM_BOX, halfExtents=half_extents, rgbaColor=color
     )
 
     # Create the body.
-    block_id = p.createMultiBody(
+    block_id = client.createMultiBody(
         baseMass=mass,
         baseCollisionShapeIndex=collision_id,
         baseVisualShapeIndex=visual_id,
         basePosition=pose,
         baseOrientation=orientation,
     )
-    p.changeDynamics(
+    client.changeDynamics(
         block_id, linkIndex=-1, lateralFriction=friction  # -1 for the base
     )
 
@@ -109,7 +116,7 @@ def create_pybullet_block(color, half_extents, mass, friction, orientation):
 
 def problem_five_blocks(args, robot, **kwargs):
     arms = args.arms  # ARM_NAMES
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
 
     table_width = 0.6
     table_length = 1.2
@@ -136,7 +143,7 @@ def problem_five_blocks(args, robot, **kwargs):
         half_extents = (block_size / 2.0, block_size / 2.0, block_size / 2.0)
         objs.append(
             create_pybullet_block(
-                color, half_extents, _obj_mass, _obj_friction, _default_orn
+                color, half_extents, _obj_mass, _obj_friction, _default_orn, **kwargs
             )
         )
 
@@ -154,13 +161,14 @@ def problem_five_blocks(args, robot, **kwargs):
                 table_pose[1] - table_length / 2.0 + padding,
                 table_pose[1] + table_length / 2.0 - padding,
             )
-            print(rx, ry)
-            p.resetBasePositionAndOrientation(
-                block_id, [rx, ry, table_height + block_size / 2.0], _default_orn
+            pbu.set_pose(
+                block_id,
+                ([rx, ry, table_height + block_size / 2.0], _default_orn),
+                **kwargs
             )
             collision = False
             for placed_block in objs[:block_index]:
-                if pairwise_collision(block_id, placed_block):
+                if pbu.pairwise_collision(block_id, placed_block, **kwargs):
                     collision = True
                     break
             if not collision:
@@ -175,7 +183,7 @@ def problem_five_blocks(args, robot, **kwargs):
 
 def problem1(args, robot, **kwargs):
     arms = args.arms  # ARM_NAMES
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(
         create_pillar(width=0.3, length=0.3, color=pbu.GREEN, **kwargs),
         table,
@@ -194,30 +202,9 @@ def problem1(args, robot, **kwargs):
     return real_world
 
 
-def from_lisdf(args, robot, **kwargs):
-    from lisdf.parsing.parse_sdf import load_sdf
-
-    scene_dir = "/Users/aidancurtis/lisdf/models/m0m"
-    sdf_struct = load_sdf(scene_dir)
-    world = sdf_struct.aggregate_order[0]
-    objects = []
-    for mi, model in enumerate(world.models):
-        intermediate_path = os.path.join(TEMP_DIR, "{}.sdf".format(str(mi)))
-        print(intermediate_path)
-        with open(intermediate_path, "w") as f:
-            xml_string = "\n".join(model.to_xml_string().split("\n")[1:])
-            f.write("<sdf>\n{}\n</sdf>".format(xml_string))
-        objects.append(p.loadSDF(intermediate_path))
-
-    arms = args.arms
-
-    real_world = create_world(robot, movable=[], fixed=[], surfaces=[])
-    return real_world
-
-
 def full_occlusion_mem(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(
         create_pillar(width=0.18, color=pbu.GREEN, **kwargs), table, **kwargs
     )
@@ -247,7 +234,7 @@ def full_occlusion_mem(args, robot, **kwargs):
 
 def full_occlusion(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(create_pillar(color=pbu.GREEN, **kwargs), table, **kwargs)
 
     # cracker_box | tomato_soup_can | potted_meat_can | bowl
@@ -264,7 +251,7 @@ def full_occlusion(args, robot, **kwargs):
 
 def problem1_non_convex(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(create_pillar(color=pbu.GREEN, **kwargs), table, **kwargs)
 
     # cracker_box | tomato_soup_can | potted_meat_can | bowl
@@ -284,10 +271,9 @@ def problem1_non_convex(args, robot, **kwargs):
 
 def problem1_color(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(create_pillar(color=pbu.GREEN, **kwargs), table, **kwargs)
 
-    # cracker_box | tomato_soup_can | potted_meat_can | bowl
     obj1 = place_object(
         create_ycb("potted_meat_can", **kwargs), table, Pose2D(yaw=np.pi / 4), **kwargs
     )
@@ -300,7 +286,7 @@ def problem1_color(args, robot, **kwargs):
 
 def problem2(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(
         create_pillar(width=0.15, length=0.15, color=pbu.GREEN, **kwargs),
         table,
@@ -319,7 +305,7 @@ def problem2(args, robot, **kwargs):
 
 def problem3(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     red_region = place_surface(
         create_pillar(width=0.15, length=0.15, height=0.05, color=pbu.RED), table, y=0.2
     )
@@ -347,7 +333,7 @@ def problem3(args, robot, **kwargs):
 
 def place_tray(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(
         create_tray(width=0.25, length=0.25, height=0.05, color=pbu.RED), table
     )
@@ -362,7 +348,7 @@ def place_tray(args, robot, **kwargs):
 
 def stow_cubby(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(
         create_cubby(width=0.25, length=0.25, height=0.25),
         table,
@@ -381,7 +367,7 @@ def stow_cubby(args, robot, **kwargs):
 
 def dump_bin(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(create_bin(width=0.3, length=0.3, height=0.15), table)
 
     obj1 = place_object(create_ycb(args.ycb, **kwargs), table, Pose2D(yaw=np.pi / 4))
@@ -394,7 +380,7 @@ def dump_bin(args, robot, **kwargs):
 
 def dump_bin_color(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     red_region = place_surface(
         create_bin(width=0.25, length=0.25, height=0.12, color=pbu.RED), table, x=-0.15
     )
@@ -432,7 +418,7 @@ def dump_bin_color(args, robot, **kwargs):
 
 def stow_cubbies(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(
         create_cubbies(
             get_grid_cells(rows=2, columns=3), width=0.25, length=0.25, height=0.25
@@ -455,7 +441,7 @@ def stow_cubbies(args, robot, **kwargs):
 
 def stack_mem(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
 
     obj1 = place_object(create_ycb("pudding_box", **kwargs), table, Pose2D(), **kwargs)
     obj2 = place_object(
@@ -463,8 +449,7 @@ def stack_mem(args, robot, **kwargs):
     )
     obj3 = place_object(
         create_ycb("potted_meat_can", **kwargs), table, Pose2D(y=-0.1), **kwargs
-    )  # table, Pose2D(y=0.2))
-    # place_object_rotate(obj1.body, table, roll=np.pi/2)
+    )
     real_world = create_world(
         robot, movable=[obj1, obj2, obj3], fixed=obstacles, surfaces=[table]
     )
@@ -474,25 +459,22 @@ def stack_mem(args, robot, **kwargs):
 
 def rearrange_mem(args, robot, **kwargs):
     arms = args.arms
-    robot, table, obstacles = create_default_env(arms=arms, **kwargs)
+    robot, table, obstacles = create_default_env(robot, robot, arms=arms, **kwargs)
 
-    color = "blue"
-    color_val = COLOR_FROM_NAME[color]
-
-    base_color = "red"
-    base_color_val = COLOR_FROM_NAME[base_color]
+    color_val = pbu.BLUE
+    base_color_val = pbu.RED
 
     obj2 = create_pillar(
         width=0.08, length=0.13, height=0.03, color=color_val, mass=0.15, **kwargs
-    )  # TODO create box
+    )
     place_object_rotate(obj2.body, table, **kwargs)
     obj1 = create_pillar(
         width=0.04, length=0.04, height=0.1, color=color_val, mass=0.1, **kwargs
-    )  # TODO create box
+    )
     place_object_rotate(obj1.body, table, x=0.03, **kwargs)
     obj3 = create_pillar(
         width=0.05, length=0.2, height=0.03, color=base_color_val, mass=0.2, **kwargs
-    )  # TODO create box
+    )
     place_object_rotate(obj3.body, table, y=0.3, **kwargs)
 
     region = place_surface(create_pillar(**kwargs), table, x=-0.1)
@@ -507,14 +489,12 @@ def rearrange_mem(args, robot, **kwargs):
         surfaces=[table, region],
         **kwargs
     )
-
-    # TODO: describe using category
     return real_world
 
 
 def stack(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
 
     obj1 = place_object(
         create_ycb("potted_meat_can", **kwargs), table, Pose2D(), **kwargs
@@ -525,14 +505,12 @@ def stack(args, robot, **kwargs):
     real_world = create_world(
         robot, movable=[obj1, obj2], fixed=obstacles, surfaces=[table]
     )
-
-    # NOTE need to turn on '-o' flag
     return real_world
 
 
 def inspect(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
 
     obj1 = place_object(
         create_ycb(args.ycb, **kwargs), table, Pose2D(yaw=np.pi / 4), **kwargs
@@ -541,16 +519,13 @@ def inspect(args, robot, **kwargs):
         robot, movable=[obj1], fixed=obstacles, surfaces=[table], **kwargs
     )
 
-    # TODO: describe using category
     return real_world
 
 
 def push(args, robot, **kwargs):
     arms = args.arms
-    # arms = ARM_NAMES
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
 
-    # cracker_box | tomato_soup_can | potted_meat_can | bowl
     obj1 = place_object(
         create_pillar(
             width=0.19,
@@ -570,8 +545,7 @@ def push(args, robot, **kwargs):
 
 def pour(args, robot, **kwargs):
     arms = args.arms
-    # arms = ARM_NAMES
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     cup = "teal_cup"  # mug | teal_cup
     bowl = "brown_bowl"  # bowl | brown_bowl
     material = "water"
@@ -596,7 +570,7 @@ def pour(args, robot, **kwargs):
 
 def large_obstructing(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(create_pillar(), table, y=0.0)
 
     # cracker_box | tomato_soup_can | potted_meat_can | bowl
@@ -618,14 +592,12 @@ def large_obstructing(args, robot, **kwargs):
         robot, movable=[obj1, obj2], fixed=obstacles, surfaces=[table, region], **kwargs
     )
 
-    # assume: no assumption on observation. if not detected then declare success
     return real_world
 
 
 def drop_in_bowl(args, robot, **kwargs):
     arms = args.arms
-    # arms = ARM_NAMES
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
 
     # cracker_box | tomato_soup_can | potted_meat_can | bowl
     obj1 = place_object(
@@ -646,7 +618,7 @@ def drop_in_bowl(args, robot, **kwargs):
 
 def drop_in_bowl_on_shelf(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
     region = place_surface(create_pillar(), table, y=0.4)
 
     # cracker_box | tomato_soup_can | potted_meat_can | bowl
@@ -688,10 +660,9 @@ def place_object_rotate(
 
 def tight_pack(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
 
-    region_color = "red"
-    region_color_val = pbu.apply_alpha(COLOR_FROM_NAME[region_color], alpha=0.1)
+    region_color_val = pbu.apply_alpha(pbu.BLUE, alpha=0.1)
     region = place_surface(
         create_pillar(width=0.06, length=0.06, color=region_color_val), table, y=0.4
     )
@@ -700,13 +671,7 @@ def tight_pack(args, robot, **kwargs):
     )
     real_world = create_world(robot, movable=[], fixed=obstacles, surfaces=[])
 
-    # cup = "simplified_teal_cup"
-    color = "blue"
-    color_val = COLOR_FROM_NAME[color]
-
-    obj1 = create_pillar(
-        width=0.05, length=0.05, height=0.15, color=color_val, mass=0.1
-    )  # TODO create box
+    obj1 = create_pillar(width=0.05, length=0.05, height=0.15, color=pbu.BLUE, mass=0.1)
     place_object_rotate(obj1.body, table, roll=np.pi / 2, **kwargs)
     obj2 = place_object(
         create_ycb(args.ycb, **kwargs), table, Pose2D(y=0.2, yaw=np.pi / 4), **kwargs
@@ -717,13 +682,9 @@ def tight_pack(args, robot, **kwargs):
 
 def tight_pack_occlusion(args, robot, **kwargs):
     arms = args.arms
-    table, obstacles = create_default_env(arms=arms, **kwargs)
+    table, obstacles = create_default_env(robot, arms=arms, **kwargs)
 
-    region_color = "red"
-    color = "red"
-    color_val = COLOR_FROM_NAME[color]
-
-    region_color_val = pbu.apply_alpha(COLOR_FROM_NAME[region_color], alpha=0.1)
+    region_color_val = pbu.apply_alpha(pbu.RED, alpha=0.1)
     region = place_surface(
         create_pillar(width=0.3, length=0.08, color=region_color_val), table, y=0.4
     )
@@ -736,9 +697,7 @@ def tight_pack_occlusion(args, robot, **kwargs):
     large_obj = "cracker_box"
     obstacle = "mustard_bottle"
 
-    obj1 = create_pillar(
-        width=0.05, length=0.05, height=0.15, color=color_val, mass=0.1
-    )  # TODO create box
+    obj1 = create_pillar(width=0.05, length=0.05, height=0.15, color=pbu.RED, mass=0.1)
     place_object_rotate(obj1.body, table, roll=np.pi / 2, **kwargs)
     obj2 = place_object(create_ycb(large_obj), table, Pose2D(x=-0.06), **kwargs)
     obj3 = place_object(create_ycb(obstacle), table, Pose2D(y=0.4), **kwargs)
@@ -772,7 +731,6 @@ def simulate_until_stable(robot, objects, epsilon=1e-4, steps=10, **kwargs):
         for _ in range(steps):
             p.stepSimulation()
     pbu.disable_gravity()
-    set_default_conf(robot)
 
 
 def pose_pile_distance_check(objects, max_distance=0.1, origin=[0.0, 0.0], **kwargs):
@@ -817,7 +775,6 @@ def pile_of_objects(args, robot, **kwargs):
 
     seed = 0
     random.seed(seed)
-    # arms = ARM_NAMES
     table, obstacles = create_default_env(arms=arms, **kwargs)
     region = place_surface(create_pillar(width=0.4, length=0.4), table, y=0.4)
 
@@ -843,8 +800,6 @@ def pile_of_objects(args, robot, **kwargs):
         for name, concave in picked_object_name_set
     ]
     sample_object_placements(robot, table, picked_objects, td_placement_points)
-
-    # obj2 = place_object(create_ycb("bowl", use_concave=True), table, Pose2D(yaw=np.pi / 4, y=0.16))
 
     real_world = create_world(
         robot, movable=picked_objects, fixed=obstacles, surfaces=[table, region]
@@ -876,7 +831,6 @@ WORLDS = [
     pile_of_objects,
     tight_pack,
     tight_pack_occlusion,
-    from_lisdf,
     problem_five_blocks,
 ]
 

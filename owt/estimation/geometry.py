@@ -4,6 +4,7 @@ import time
 
 import numpy as np
 import trimesh
+from trimesh.intersections import slice_faces_plane
 
 import owt.pb_utils as pbu
 from owt.estimation.bounding import convex_hull_2d, estimate_oobb, min_circle
@@ -114,8 +115,6 @@ def cloud_from_depth(camera_matrix, depth, max_depth=10.0, top_left_origin=False
 
 
 def trim_mesh(submesh, **kwargs):
-    from trimesh.intersections import slice_faces_plane
-
     planes = [
         Plane(Z_AXIS, pbu.Point(z=np.min(submesh.vertices, axis=0)[2])),
     ]
@@ -180,11 +179,10 @@ def estimate_mesh(
     labeled_points = [
         lp for lp in labeled_points if lp.point[2] >= min_z
     ]  # TODO: could project instead of filtering
-    points = [point.point for point in labeled_points]
-    # planes = estimate_planes(points)
 
-    # COM: get_com_pose
+    points = [point.point for point in labeled_points]
     aabb = pbu.aabb_from_points(points)
+
     if any([(aabb.upper[i] - aabb.lower[i]) > max_aspect for i in range(3)]):
         return None
     if (
@@ -193,20 +191,20 @@ def estimate_mesh(
         or (pbu.get_aabb_volume(aabb) < min_volume)
         or (pbu.get_aabb_area(aabb) < min_area)
     ):
-        print("aabb smaller than min volume")
+        print("[Warning] skipping mesh: aabb smaller than min volume")
         return None
-    obj_oobb = estimate_oobb(points)  # , min_z=min_z)
+    obj_oobb = estimate_oobb(points)
     if (pbu.get_aabb_volume(obj_oobb.aabb) < min_volume) or (
         pbu.get_aabb_area(obj_oobb.aabb) < min_area
     ):
-        print("oobb smaller than min volume")
+        print("[Warning] skipping mesh: oobb smaller than min volume")
         return None
     origin_pose = obj_oobb.pose  # TODO: adjust pose to be the base
     color = pbu.apply_alpha(pbu.RGBA(*aggregate_color(labeled_points)), alpha=0.75)
 
     base_vertices_2d = convex_hull_2d(points)
     if pbu.convex_area(base_vertices_2d) < min_area:
-        print("base vertices aabb smaller than min area")
+        print("[Warning] skipping mesh: base vertices aabb smaller than min area")
         return None
 
     if AUGMENT_BOWLS and (category == BOWL):
@@ -234,27 +232,23 @@ def estimate_mesh(
         )
         if obj_mesh is None:
             return None
-    else:  # estimate mesh using DNNs
+    else:
         obj_mesh = refine_shape(
             sc_network, points_origin, use_points=use_points, min_z=min_z, **kwargs
         )
-        if use_image and (
-            camera_image is not None
-        ):  # TODO: account for the change in frame
+        if use_image and (camera_image is not None):
             obj_mesh = pbu.Mesh(
                 filter_visible(
                     obj_mesh.vertices, origin_pose, camera_image, instance=instance
                 ),
                 faces=None,
             )
-            # assert len(obj_mesh.vertices) >= 3
             if len(obj_mesh.vertices) < min_points:
                 return None
+
         if use_hull or (obj_mesh.faces is None):
-            # TODO: unify with the above
             merged_origin = obj_mesh.vertices
             if use_points:
-                # Could also project obj_mesh.vertices
                 merged_origin = np.vstack(
                     [merged_origin, base_origin if project_base else points_origin]
                 )
@@ -285,7 +279,6 @@ def estimate_mesh(
 def estimate_surface_mesh(
     labeled_points, surface_pose=None, camera_image: pbu.CameraImage = None, **kwargs
 ):
-    # TODO: surface instead of surface_pose
     if surface_pose is None:
         min_z = min(lp.point[2] for lp in labeled_points)
         surface_pose = pbu.Pose(pbu.Point(z=min_z))

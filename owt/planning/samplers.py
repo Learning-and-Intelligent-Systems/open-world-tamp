@@ -5,7 +5,7 @@ import random
 import numpy as np
 
 import owt.pb_utils as pbu
-from owt.planning.primitives import GroupConf
+from owt.planning.primitives import Grasp, GroupConf, RelativePose
 from owt.simulation.entities import Robot
 
 COLLISION_DISTANCE = 5e-3  # Distance from fixed obstacles
@@ -18,7 +18,9 @@ MAX_TOOL_DISTANCE = np.inf
 DISABLE_ALL_COLLISIONS = True
 
 
-def get_closest_distance(robot, arm_joints, parent_link, tool_link, gripper_pose, obj):
+def get_closest_distance(
+    robot: Robot, arm_joints, parent_link, tool_link, gripper_pose, obj
+):
     reach_pose = (pbu.point_from_pose(gripper_pose), None)
     sample_fn = pbu.get_sample_fn(robot, arm_joints)
     pbu.set_joint_positions(robot, arm_joints, sample_fn())
@@ -38,7 +40,7 @@ def get_closest_distance(robot, arm_joints, parent_link, tool_link, gripper_pose
 #######################################################
 
 
-def compute_gripper_path(pose, grasp, pos_step_size=0.02):
+def compute_gripper_path(pose: RelativePose, grasp: Grasp, pos_step_size: float = 0.02):
     grasp_pose = pbu.multiply(pose.get_pose(), pbu.invert(grasp.grasp))
     pregrasp_pose = pbu.multiply(pose.get_pose(), pbu.invert(grasp.pregrasp))
     gripper_path = list(
@@ -47,7 +49,7 @@ def compute_gripper_path(pose, grasp, pos_step_size=0.02):
     return gripper_path
 
 
-def create_grasp_attachment(robot, manipulator, grasp, **kwargs):
+def create_grasp_attachment(robot: Robot, manipulator: str, grasp: Grasp, **kwargs):
     _, _, tool_name = robot.get_manipulator_parts(manipulator)
     return grasp.create_attachment(
         robot, link=pbu.link_from_name(robot, tool_name, **kwargs)
@@ -56,11 +58,11 @@ def create_grasp_attachment(robot, manipulator, grasp, **kwargs):
 
 def plan_workspace_motion(
     robot: Robot,
-    manipulator,
+    manipulator: str,
     tool_waypoints,
     attachment=None,
     obstacles=[],
-    max_attempts=2,
+    max_attempts=10,
     **kwargs
 ):
     assert tool_waypoints
@@ -91,7 +93,7 @@ def plan_workspace_motion(
             pbu.set_joint_positions(robot, arm_joints, initialization_sample, **kwargs)
 
         arm_conf = pbu.inverse_kinematics(
-            robot, tool_link, tool_waypoints[0], arm_joints, max_iterations=5, **kwargs
+            robot, tool_link, tool_waypoints[0], arm_joints, max_iterations=10, **kwargs
         )
         if arm_conf is None:
             break
@@ -103,7 +105,7 @@ def plan_workspace_motion(
 
         for tool_pose in tool_waypoints[1:]:
             arm_conf = pbu.inverse_kinematics(
-                robot, tool_link, tool_pose, arm_joints, max_iterations=1, **kwargs
+                robot, tool_link, tool_pose, arm_joints, max_iterations=10, **kwargs
             )
 
             if arm_conf is None:
@@ -155,7 +157,7 @@ def workspace_collision(
     robot: Robot,
     manipulator: str,
     gripper_path,
-    grasp=None,
+    grasp: Grasp = None,
     open_gripper=True,
     obstacles=[],
     max_distance=0.0,
@@ -167,24 +169,21 @@ def workspace_collision(
     gripper = robot.get_component(gripper_group)
 
     if open_gripper:
-        # TODO: make a separate method?
         _, open_conf = robot.get_group_limits(gripper_group)
         gripper_joints = robot.get_component_joints(gripper_group)
         pbu.set_joint_positions(gripper, gripper_joints, open_conf, **kwargs)
 
     parent_from_tool = robot.get_parent_from_tool(manipulator)
-    parts = [gripper]  # , obj]
+    parts = [gripper]
     if grasp is not None:
         parts.append(grasp.body)
-    for i, gripper_pose in enumerate(
-        gripper_path
-    ):  # TODO: be careful about the initial pose
+    for i, gripper_pose in enumerate(gripper_path):
         pbu.set_pose(
             gripper, pbu.multiply(gripper_pose, pbu.invert(parent_from_tool)), **kwargs
         )
         if grasp is not None:
             pbu.set_pose(grasp.body, pbu.multiply(gripper_pose, grasp.value), **kwargs)
-        # attachment.assign()
+
         distance = (
             (COLLISION_DISTANCE + EPSILON)
             if (i == len(gripper_path) - 1)
@@ -201,7 +200,12 @@ def workspace_collision(
 
 
 def plan_prehensile(
-    robot: Robot, manipulator, obj, pose, grasp, environment=[], **kwargs
+    robot: Robot,
+    manipulator,
+    pose: RelativePose,
+    grasp: Grasp,
+    environment=[],
+    **kwargs
 ):
     pose.assign()
     gripper_path = compute_gripper_path(pose, grasp)  # grasp -> pregrasp
@@ -215,61 +219,6 @@ def plan_prehensile(
         robot, manipulator, gripper_waypoints, attachment=None, obstacles=[], **kwargs
     )
     return arm_path
-
-
-def sample_attachment_base_confs(robot, obj, pose, environment=[], **kwargs):
-    robot_saver = pbu.BodySaver(robot, **kwargs)
-    obstacles = environment
-
-    base_generator = robot.base_sample_gen(pose)
-
-    for base_conf in base_generator:
-        robot_saver.restore()
-        pose.assign()
-        base_conf = GroupConf(robot, robot.base_group, positions=base_conf, **kwargs)
-        base_conf.assign()
-        if pbu.pairwise_collisions(robot, obstacles, max_distance=COLLISION_DISTANCE):
-            continue
-        yield base_conf
-
-
-def sample_visibility_base_confs(robot, obj, pose, environment=[], **kwargs):
-    robot_saver = pbu.BodySaver(robot, **kwargs)  # TODO: reset the rest conf
-    obstacles = environment
-    base_generator = robot.base_sample_gen(pose)
-    for base_conf in base_generator:
-        robot_saver.restore()
-        pose.assign()
-        base_conf = GroupConf(robot, robot.base_group, positions=base_conf, **kwargs)
-        base_conf.assign()
-        if pbu.pairwise_collisions(robot, obstacles, max_distance=COLLISION_DISTANCE):
-            continue
-        yield base_conf
-
-
-def sample_prehensive_base_confs(
-    robot, arm, obj, pose, grasp, environment=[], **kwargs
-):
-    robot_saver = pbu.BodySaver(robot, **kwargs)  # TODO: reset the rest conf
-    obstacles = environment
-
-    gripper_path = compute_gripper_path(pose, grasp)
-    if workspace_collision(
-        robot, arm, gripper_path, grasp=None, obstacles=obstacles, **kwargs
-    ):
-        return
-
-    base_generator = pbu.uniform_pose_generator(
-        robot, gripper_path[0], reachable_range=(0.5, 1.0)
-    )
-    for base_conf in base_generator:
-        robot_saver.restore()
-        pose.assign()
-        base_conf = GroupConf(robot, robot.base_group, positions=base_conf, **kwargs)
-        base_conf.assign()
-        if pbu.pairwise_collisions(robot, obstacles, max_distance=COLLISION_DISTANCE):
-            continue
-        yield base_conf
 
 
 def set_closed_positions(robot: Robot, gripper_group: str) -> GroupConf:

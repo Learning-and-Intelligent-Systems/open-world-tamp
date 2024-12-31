@@ -3,12 +3,11 @@ from collections import defaultdict, deque
 from itertools import combinations
 
 import numpy as np
-from trimesh.intersections import mesh_multiplane
+from trimesh.intersections import mesh_multiplane, mesh_plane
 from trimesh.path.exchange.misc import lines_to_path, polygon_to_path
 from trimesh.path.path import Path2D
 from trimesh.path.polygons import plot, projected
 
-import owt.pb_utils as pbu
 from owt.estimation.surfaces import create_surface, z_plane
 
 
@@ -86,16 +85,11 @@ def project_mesh(mesh, plane=z_plane()):
         traceback.print_exc()
         return []
     plot(polygon_shapely)
-    polygon = Path2D(
-        **polygon_to_path(polygon_shapely)
-    )  # TODO: AttributeError: 'MultiPolygon' object has no attribute 'exterior'
+    polygon = Path2D(**polygon_to_path(polygon_shapely))
     return polygon
 
 
 def slice_mesh(mesh, plane=z_plane()):
-    # TODO: could instead use slice_mesh_plane and compute the surface area of the volume
-    from trimesh.intersections import mesh_plane
-
     plane_normal, plane_origin = plane
     lines = mesh_plane(
         mesh, plane_normal, plane_origin, return_faces=False, cached_dots=None
